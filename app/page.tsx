@@ -158,7 +158,95 @@ export default function Home() {
               </div>
             </div>
           </div>
-          
+
+        </div>
+      </section>
+
+      {/* When */}
+      <section className="relative z-10 px-6 border-b border-[#1a1917] bg-[#0e0d0c]">
+        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-[#1a1917] px-24">
+          {/* Left — copy */}
+          <div className="py-40">
+            <span className="text-xs uppercase tracking-[0.25em] text-[#3d3a36]">
+              when
+            </span>
+
+            <h2 className="mt-12 font-heading italic text-4xl text-[#e8e4de]">
+              February 23 &rarr; March 1
+            </h2>
+
+            <p className="mt-6 font-heading italic text-xl text-[#6b6560]">
+              Seven days. Your pace.
+            </p>
+
+            <p className="mt-6 font-mono text-base text-[#6b6560] leading-relaxed">
+              Not everyone can clear their calendar for a week. That&apos;s
+              fine. Tell us how you&apos;re planning to show up.
+            </p>
+          </div>
+
+          {/* Right — commitment cards */}
+          <div className="py-40 flex items-center">
+            <div className="w-full grid grid-cols-2 gap-3">
+              {/* All-in */}
+              <div className="border border-[#1a1917] p-5">
+                <div className="flex gap-1 mb-3">
+                  <span className="w-5 h-[3px] bg-[#c4a35a]" />
+                  <span className="w-5 h-[3px] bg-[#c4a35a]" />
+                  <span className="w-5 h-[3px] bg-[#c4a35a]" />
+                  <span className="w-5 h-[3px] bg-[#c4a35a]" />
+                </div>
+                <p className="text-sm font-semibold text-[#e8e4de]">All-in</p>
+                <p className="mt-1 font-mono text-xs text-[#6b6560]">
+                  Full days, full week. Clearing the decks.
+                </p>
+              </div>
+
+              {/* Daily */}
+              <div className="border border-[#1a1917] p-5">
+                <div className="flex gap-1 mb-3">
+                  <span className="w-5 h-[3px] bg-[#c4a35a]" />
+                  <span className="w-5 h-[3px] bg-[#c4a35a]" />
+                  <span className="w-5 h-[3px] bg-[#c4a35a]" />
+                  <span className="w-5 h-[3px] bg-[#3d3a36]" />
+                </div>
+                <p className="text-sm font-semibold text-[#e8e4de]">Daily</p>
+                <p className="mt-1 font-mono text-xs text-[#6b6560]">
+                  A few focused hours each day.
+                </p>
+              </div>
+
+              {/* Nights & Weekends */}
+              <div className="border border-[#1a1917] p-5">
+                <div className="flex gap-1 mb-3">
+                  <span className="w-5 h-[3px] bg-[#c4a35a]" />
+                  <span className="w-5 h-[3px] bg-[#c4a35a]" />
+                  <span className="w-5 h-[3px] bg-[#3d3a36]" />
+                  <span className="w-5 h-[3px] bg-[#3d3a36]" />
+                </div>
+                <p className="text-sm font-semibold text-[#e8e4de]">
+                  Nights &amp; Weekends
+                </p>
+                <p className="mt-1 font-mono text-xs text-[#6b6560]">
+                  Building around a day job.
+                </p>
+              </div>
+
+              {/* Unsure */}
+              <div className="border border-[#1a1917] p-5">
+                <div className="flex gap-1 mb-3">
+                  <span className="w-5 h-[3px] bg-[#c4a35a]" />
+                  <span className="w-5 h-[3px] bg-[#3d3a36]" />
+                  <span className="w-5 h-[3px] bg-[#3d3a36]" />
+                  <span className="w-5 h-[3px] bg-[#3d3a36]" />
+                </div>
+                <p className="text-sm font-semibold text-[#e8e4de]">Unsure</p>
+                <p className="mt-1 font-mono text-xs text-[#6b6560]">
+                  You&apos;ll figure it out. That&apos;s fine.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
