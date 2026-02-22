@@ -23,6 +23,14 @@ const colors = [
   "bg-teal-700/60",
 ];
 
+function getActivityIcon(action: string) {
+  if (action.startsWith("signed up")) return "→";
+  if (action.startsWith("added a project")) return "◆";
+  if (action.startsWith("created a new team")) return "⬡";
+  if (action.startsWith("volunteer")) return "✦";
+  return "→";
+}
+
 interface FeedItem {
   id: number;
   name: string;
@@ -54,7 +62,7 @@ export function ActivityFeed() {
   }, [addItem]);
 
   return (
-    <div className="relative h-full overflow-hidden">
+    <div className="relative h-full overflow-hidden max-w-lg">
         {/* Top fade */}
         <div className="pointer-events-none absolute inset-x-px top-0 z-10 h-16 bg-gradient-to-b from-neutral-950 to-transparent" />
         {/* Bottom fade */}
@@ -74,8 +82,13 @@ export function ActivityFeed() {
                   scale: { duration: 0.3 },
                   layout: { type: "spring", stiffness: 300, damping: 28 },
                 }}
-                className="flex items-center gap-3 rounded-lg bg-white/[0.03] px-4 py-3"
+                className="flex items-center gap-3 bg-white/[0.03] px-4 py-3"
               >
+                {/* Activity type icon */}
+                <span className="w-4 shrink-0 text-center text-sm text-buildstory-300">
+                  {getActivityIcon(item.action)}
+                </span>
+
                 {/* Avatar */}
                 <div
                   className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-medium text-white/80 ${colors[i % colors.length]}`}
@@ -89,11 +102,11 @@ export function ActivityFeed() {
                     <span className="truncate text-sm font-semibold text-white/90">
                       {item.name}
                     </span>
-                    <span className="shrink-0 text-xs text-white/30">
+                    <span className="shrink-0 text-sm text-white/30">
                       {item.handle}
                     </span>
                   </div>
-                  <p className="mt-0.5 text-xs text-white/50">{item.action}</p>
+                  <p className="mt-0.5 text-sm text-white/50">{item.action}</p>
                 </div>
               </motion.div>
             ))}

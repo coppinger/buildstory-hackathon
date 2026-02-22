@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans, Libre_Baskerville, JetBrains_Mono } from "next/font/google";
+import { DM_Sans, Instrument_Serif, DM_Mono } from "next/font/google";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -7,14 +7,15 @@ const dmSans = DM_Sans({
   subsets: ["latin"],
 });
 
-const libreBaskerville = Libre_Baskerville({
-  variable: "--font-libre-baskerville",
-  weight: ["400", "700"],
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  weight: ["400"],
   subsets: ["latin"],
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
+const dmMono = DM_Mono({
+  variable: "--font-dm-mono",
+  weight: ["300", "400", "500"],
   subsets: ["latin"],
 });
 
@@ -29,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`dark ${dmSans.variable} ${libreBaskerville.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`dark ${dmSans.variable} ${instrumentSerif.variable} ${dmMono.variable}`}>
       <body className="antialiased">
 
         {children}

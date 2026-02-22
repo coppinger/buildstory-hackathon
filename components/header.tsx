@@ -30,11 +30,11 @@ export function Header() {
         </nav>
 
         <Button
-          variant="default"
+          variant="outline"
           size="lg"
-          className="border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+          className="border-border  text-white hover:bg-white/10 hover:text-white"
         >
-          Sign in
+          sign in
         </Button>
       </div>
     </header>

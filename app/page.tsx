@@ -25,7 +25,7 @@ export default function Home() {
         </span>
 
         {/* Headline */}
-        <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl max-w-4xl text-white leading-tight">
+        <h1 className="font-heading font-normal text-4xl sm:text-5xl md:text-7xl max-w-4xl text-white leading-tight">
           One week. Build your thing.
           <br className="hidden sm:block" /> Share your story.
         </h1>
@@ -43,7 +43,7 @@ export default function Home() {
         <div className="flex items-center gap-4">
           <Button
             size="lg"
-            className="bg-white text-black hover:bg-white/90 px-8 h-12 text-sm font-medium rounded-lg"
+            className="bg-white text-black hover:bg-white/90 px-8 h-12 text-sm font-medium"
           >
             I&apos;m in, sign me up
           </Button>
@@ -51,7 +51,7 @@ export default function Home() {
             variant="outline"
             size="lg"
             asChild
-            className="border-white/20 text-white bg-transparent hover:bg-white/5 hover:text-white px-8 h-12 text-sm font-medium rounded-lg"
+            className="border-white/20 text-white bg-transparent hover:bg-white/5 hover:text-white px-8 h-12 text-sm font-medium"
           >
             <a href="#what">tell me more</a>
           </Button>
@@ -68,26 +68,26 @@ export default function Home() {
 
       {/* Why */}
       <section className="relative z-10 px-6 border-b border-border bg-neutral-950">
-        <div className="mx-auto grid max-w-7xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-24">
+        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-24">
           {/* Left — copy */}
           <div className="py-40">
             <span className="text-xs uppercase tracking-[0.25em] text-white/30">
               why
             </span>
 
-            <div className="mt-12 flex flex-col gap-10">
-              <p className="font-medium leading-snug text-white/85 text-3xl">
+            <div className="mt-12 flex flex-col gap-10 font-heading">
+              <p className="text-white/85 text-4xl">
                 Timelines are filling up with people who have things to sell
                 you.
               </p>
-              <p className="font-medium leading-snug text-white/85 text-3xl">
+              <p className="text-white/85 text-4xl">
                 The builders with insights to share? Lost in the noise.
               </p>
-              <p className="font-medium leading-snug text-white/85 text-3xl">
+              <p className="text-white/85 text-4xl">
                 We want to see that change, so we&apos;re going to do something
                 about it.
               </p>
-              <p className="text-3xl font-medium leading-snug text-orange-500 sm:text-3xl">
+              <p className=" font-medium leading-snug text-buildstory-500 text-4xl">
                 Let&apos;s put builders back in the spotlight.
               </p>
             </div>
@@ -104,21 +104,41 @@ export default function Home() {
 
       {/* What */}
       <section id="what" className="relative z-10 px-6 border-b border-border bg-neutral-950">
-        <div className="mx-auto grid max-w-7xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-24">
+        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-24">
+          <div className="py-40">
+            <span className="text-xs uppercase tracking-[0.25em] text-white/30">
+              what
+            </span>
+
+            <div className="mt-12 flex flex-col gap-10 font-heading">
+              <p className="text-white/85 text-4xl">
+                A one week hackathon, by builders for builders.
+              </p>
+              <p className="text-white/85 text-4xl">
+                We won&apos;t make you use a certain tool: use whatever you like.
+              </p>
+              <p className="text-white/85 text-4xl">
+                Oh, and there&apos;s nothing to sell you.
+              </p>
+              <p className="text-4xl text-buildstory-500">
+                We&apos;re all here to build and learn.
+              </p>
+            </div>
+          </div>
           {/* Left — info cards */}
           <div className="py-40 flex items-start">
             <div className="w-full flex flex-col gap-3">
               <div className="flex gap-3">
-                <div className="w-full rounded-lg border border-white/10 px-6 py-5">
+                <div className="w-full  border border-white/10 px-6 py-5">
                 <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Format</span>
                 <p className="text-white/85 mt-1">7 days, solo or team</p>
               </div>
-              <div className="w-full rounded-lg border border-white/10 px-6 py-5">
+              <div className="w-full  border border-white/10 px-6 py-5">
                 <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Judging</span>
                 <p className="text-white/85 mt-1">Peer-to-peer voting + panel favorites</p>
               </div>
               </div>
-              <div className="rounded-lg border border-white/10 px-6 py-5">
+              <div className=" border border-white/10 px-6 py-5">
                 <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Categories</span>
                 <ul className="text-white/85 mt-1 list-disc list-inside space-y-0.5 pl-1">
                   <li>Creativity</li>
@@ -128,38 +148,17 @@ export default function Home() {
                   <li>Design</li>
                 </ul>
               </div>
-              <div className="rounded-lg border border-white/10 px-6 py-5">
+              <div className=" border border-white/10 px-6 py-5">
                 <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Recognition</span>
                 <p className="text-white/85 mt-1">By category, by country, by region, overall</p>
               </div>
-              <div className="rounded-lg border border-white/10 px-6 py-5">
+              <div className=" border border-white/10 px-6 py-5">
                 <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Prizes</span>
                 <p className="text-white/85 mt-1">None! Recognition is the reward.</p>
               </div>
             </div>
           </div>
-
-          {/* Right — copy */}
-          <div className="py-40">
-            <span className="text-xs uppercase tracking-[0.25em] text-white/30">
-              what
-            </span>
-
-            <div className="mt-12 flex flex-col gap-10">
-              <p className="font-medium leading-snug text-white/85 text-3xl">
-                A one week hackathon, by builders for builders.
-              </p>
-              <p className="font-medium leading-snug text-white/85 text-3xl">
-                We won&apos;t make you use a certain tool: use whatever you like.
-              </p>
-              <p className="font-medium leading-snug text-white/85 text-3xl">
-                Oh, and there&apos;s nothing to sell you.
-              </p>
-              <p className="text-3xl font-medium leading-snug text-orange-500 sm:text-3xl">
-                We&apos;re all here to build and learn.
-              </p>
-            </div>
-          </div>
+          
         </div>
       </section>
     </div>
