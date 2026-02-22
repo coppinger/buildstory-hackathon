@@ -3,6 +3,7 @@ import { CountdownTimer } from "@/components/countdown-timer";
 import { Globe } from "@/components/globe";
 import { Button } from "@/components/ui/button";
 import { ActivityFeed } from "@/components/activity-feed";
+import { FAQ } from "@/components/faq";
 
 const stats = [
   "134 people",
@@ -130,13 +131,13 @@ export default function Home() {
             <div className="w-full flex flex-col gap-3">
               <div className="flex gap-3">
                 <div className="w-full  border border-white/10 px-6 py-5">
-                <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Format</span>
-                <p className="text-white/85 mt-1">7 days, solo or team</p>
-              </div>
-              <div className="w-full  border border-white/10 px-6 py-5">
-                <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Judging</span>
-                <p className="text-white/85 mt-1">Peer-to-peer voting + panel favorites</p>
-              </div>
+                  <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Format</span>
+                  <p className="text-white/85 mt-1">7 days, solo or team</p>
+                </div>
+                <div className="w-full  border border-white/10 px-6 py-5">
+                  <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Judging</span>
+                  <p className="text-white/85 mt-1">Peer-to-peer voting + panel favorites</p>
+                </div>
               </div>
               <div className=" border border-white/10 px-6 py-5">
                 <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Categories</span>
@@ -163,8 +164,8 @@ export default function Home() {
       </section>
 
       {/* When */}
-      <section className="relative z-10 px-6 border-b border-[#1a1917] ">
-        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-[#1a1917] px-24">
+      <section className="relative z-10 px-6 border-b border-border ">
+        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-24">
           {/* Left — copy */}
           <div className="py-40">
             <span className="text-xs uppercase tracking-[0.25em] text-[#3d3a36]">
@@ -189,7 +190,7 @@ export default function Home() {
           <div className="py-40 flex items-center">
             <div className="w-full grid grid-cols-2 gap-3">
               {/* All-in */}
-              <div className="border border-[#1a1917] p-5">
+              <div className="border border-border p-5">
                 <div className="flex gap-1 mb-3">
                   <span className="w-5 h-[3px] bg-[#c4a35a]" />
                   <span className="w-5 h-[3px] bg-[#c4a35a]" />
@@ -203,7 +204,7 @@ export default function Home() {
               </div>
 
               {/* Daily */}
-              <div className="border border-[#1a1917] p-5">
+              <div className="border border-border p-5">
                 <div className="flex gap-1 mb-3">
                   <span className="w-5 h-[3px] bg-[#c4a35a]" />
                   <span className="w-5 h-[3px] bg-[#c4a35a]" />
@@ -217,7 +218,7 @@ export default function Home() {
               </div>
 
               {/* Nights & Weekends */}
-              <div className="border border-[#1a1917] p-5">
+              <div className="border border-border p-5">
                 <div className="flex gap-1 mb-3">
                   <span className="w-5 h-[3px] bg-[#c4a35a]" />
                   <span className="w-5 h-[3px] bg-[#c4a35a]" />
@@ -233,7 +234,7 @@ export default function Home() {
               </div>
 
               {/* Unsure */}
-              <div className="border border-[#1a1917] p-5">
+              <div className="border border-border p-5">
                 <div className="flex gap-1 mb-3">
                   <span className="w-5 h-[3px] bg-[#c4a35a]" />
                   <span className="w-5 h-[3px] bg-[#3d3a36]" />
@@ -251,8 +252,8 @@ export default function Home() {
       </section>
 
       {/* Where */}
-      <section className="relative z-10 px-6 border-b border-[#1a1917] ">
-        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-[#1a1917] px-24">
+      <section className="relative z-10 px-6 border-b border-border ">
+        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-24">
           {/* Left — copy */}
           <div className="py-40">
             <span className="text-xs uppercase tracking-[0.25em] text-[#3d3a36]">
@@ -283,7 +284,7 @@ export default function Home() {
           <div className="py-40 flex items-center">
             <div className="w-full flex flex-col gap-3">
               {/* Discord */}
-              <div className="border border-[#1a1917] p-8">
+              <div className="border border-border p-8">
                 <span className="text-lg text-[#6b6560]">&#9671;</span>
                 <p className="mt-3 text-sm font-semibold text-[#e8e4de]">
                   Discord
@@ -294,7 +295,7 @@ export default function Home() {
               </div>
 
               {/* Stream it */}
-              <div className="border border-[#1a1917] p-8">
+              <div className="border border-border p-8">
                 <span className="text-lg text-[#6b6560]">&#9670;</span>
                 <p className="mt-3 text-sm font-semibold text-[#e8e4de]">
                   Stream it
@@ -313,7 +314,7 @@ export default function Home() {
               </div>
 
               {/* Buildstory CLI */}
-              <div className="border border-[#1a1917] p-8">
+              <div className="border border-border p-8">
                 <span className="text-lg text-[#6b6560]">&#9656;</span>
                 <p className="mt-3 text-sm font-semibold text-[#e8e4de]">
                   Buildstory CLI
@@ -328,8 +329,8 @@ export default function Home() {
       </section>
 
       {/* Who */}
-      <section className="relative z-10 px-6 border-b border-[#1a1917] bg-[#0e0d0c]">
-        <div className="mx-auto max-w-8xl border-x border-[#1a1917] px-24">
+      <section className="relative z-10 px-6 border-b border-border ">
+        <div className="mx-auto max-w-8xl border-x border-border px-24">
           {/* Top — full width intro */}
           <div className="pt-40 pb-24">
             <span className="text-xs uppercase tracking-[0.25em] text-[#3d3a36]">
@@ -372,23 +373,23 @@ export default function Home() {
               </p>
 
               <div className="mt-8">
-                <div className="flex items-baseline justify-between border-t border-[#1a1917] py-4">
+                <div className="flex items-baseline justify-between border-t border-border py-4">
                   <span className="text-sm font-semibold text-[#e8e4de]">Mentors</span>
                   <span className="font-mono text-xs text-[#6b6560]">Help participants get unstuck</span>
                 </div>
-                <div className="flex items-baseline justify-between border-t border-[#1a1917] py-4">
+                <div className="flex items-baseline justify-between border-t border-border py-4">
                   <span className="text-sm font-semibold text-[#e8e4de]">Co-facilitators</span>
                   <span className="font-mono text-xs text-[#6b6560]">Help run the event day-to-day</span>
                 </div>
-                <div className="flex items-baseline justify-between border-t border-[#1a1917] py-4">
+                <div className="flex items-baseline justify-between border-t border-border py-4">
                   <span className="text-sm font-semibold text-[#e8e4de]">Moderators</span>
                   <span className="font-mono text-xs text-[#6b6560]">Keep Discord healthy</span>
                 </div>
-                <div className="flex items-baseline justify-between border-t border-[#1a1917] py-4">
+                <div className="flex items-baseline justify-between border-t border-border py-4">
                   <span className="text-sm font-semibold text-[#e8e4de]">Panel</span>
                   <span className="font-mono text-xs text-[#6b6560]">Review &amp; recognise standout projects</span>
                 </div>
-                <div className="flex items-baseline justify-between border-t border-b border-[#1a1917] py-4">
+                <div className="flex items-baseline justify-between border-t border-b border-border py-4">
                   <span className="text-sm font-semibold text-[#e8e4de]">Interviewees</span>
                   <span className="font-mono text-xs text-[#6b6560]">Share your process with the community</span>
                 </div>
@@ -409,10 +410,10 @@ export default function Home() {
               </span>
 
               <div className="mt-6 grid grid-cols-2 gap-3">
-                <div className="border border-[#1a1917] h-20" />
-                <div className="border border-[#1a1917] h-20" />
-                <div className="border border-[#1a1917] h-20" />
-                <div className="border border-[#1a1917] h-20" />
+                <div className="border border-border h-20" />
+                <div className="border border-border h-20" />
+                <div className="border border-border h-20" />
+                <div className="border border-border h-20" />
               </div>
 
               <p className="mt-6 font-mono text-base text-[#6b6560] leading-relaxed">
@@ -428,6 +429,26 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="relative z-10 px-6 border-b border-border ">
+        <div className="mx-auto max-w-8xl border-x border-border px-24">
+          <div className="py-40">
+            <span className="text-xs uppercase tracking-[0.25em] text-[#3d3a36]">
+              faq
+            </span>
+
+            <div className="mt-12">
+              <FAQ />
+            </div>
+          </div>
+        </div>
+      </section>
+      <section className="border-border border-x flex justify-between max-w-8xl mx-auto px-6 py-8 ">
+        <p className="font-mono text-neutral-600">© 2025 Buildstory
+        </p>
+        <p className="font-mono text-neutral-600">Show, don't tell.</p>
       </section>
     </div>
   );
