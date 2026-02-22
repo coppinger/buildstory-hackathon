@@ -249,6 +249,83 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Where */}
+      <section className="relative z-10 px-6 border-b border-[#1a1917] bg-[#0e0d0c]">
+        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-[#1a1917] px-24">
+          {/* Left — copy */}
+          <div className="py-40">
+            <span className="text-xs uppercase tracking-[0.25em] text-[#3d3a36]">
+              where
+            </span>
+
+            <h2 className="mt-12 font-heading italic text-4xl text-[#e8e4de]">
+              Everywhere.
+            </h2>
+            <h2 className="mt-2 font-heading italic text-4xl text-[#6b6560]">
+              Online, open, global.
+            </h2>
+
+            <p className="mt-10 font-mono text-base text-[#6b6560] leading-relaxed">
+              Build from wherever you are. The community lives on Discord,
+              builds are tracked through the Buildstory CLI, and streaming
+              happens on Twitch via doitlive.club.
+            </p>
+
+            <p className="mt-6 font-mono text-base text-[#6b6560] leading-relaxed">
+              You&apos;re competing globally but recognised locally &mdash;
+              projects are grouped by country and region so standout work gets
+              seen no matter where you are.
+            </p>
+          </div>
+
+          {/* Right — platform cards */}
+          <div className="py-40 flex items-center">
+            <div className="w-full flex flex-col gap-3">
+              {/* Discord */}
+              <div className="border border-[#1a1917] p-8">
+                <span className="text-lg text-[#6b6560]">&#9671;</span>
+                <p className="mt-3 text-sm font-semibold text-[#e8e4de]">
+                  Discord
+                </p>
+                <p className="mt-1 font-mono text-xs text-[#6b6560]">
+                  Find teammates, share progress, get help, hang out.
+                </p>
+              </div>
+
+              {/* Stream it */}
+              <div className="border border-[#1a1917] p-8">
+                <span className="text-lg text-[#6b6560]">&#9670;</span>
+                <p className="mt-3 text-sm font-semibold text-[#e8e4de]">
+                  Stream it
+                </p>
+                <p className="mt-1 font-mono text-xs text-[#6b6560]">
+                  Stream your build. Get real-time feedback. Inspire others.
+                </p>
+                <a
+                  href="https://doitlive.club"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block font-mono text-xs text-[#c4a35a] underline underline-offset-4"
+                >
+                  doitlive.club &rarr;
+                </a>
+              </div>
+
+              {/* Buildstory CLI */}
+              <div className="border border-[#1a1917] p-8">
+                <span className="text-lg text-[#6b6560]">&#9656;</span>
+                <p className="mt-3 text-sm font-semibold text-[#e8e4de]">
+                  Buildstory CLI
+                </p>
+                <p className="mt-1 font-mono text-xs text-[#6b6560]">
+                  Auto-log your progress from your terminal as you build.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
