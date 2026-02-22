@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
-const navItems = ["What", "Why", "When", "Where", "Who", "FAQ"];
+const navItems = ["What", "Why", "Where", "Who", "FAQ"];
 
 export function Header() {
   return (

@@ -48,6 +48,17 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  --color-di-serria-50: #fcf8f0;
+  --color-di-serria-100: #f7eedd;
+  --color-di-serria-200: #eedaba;
+  --color-di-serria-300: #e3c08e;
+  --color-di-serria-400: #d69f61;
+  --color-di-serria-500: #d18f50;
+  --color-di-serria-600: #bf7037;
+  --color-di-serria-700: #9f592f;
+  --color-di-serria-800: #80482c;
+  --color-di-serria-900: #683c26;
+  --color-di-serria-950: #371e13;
 }
 
 :root {
