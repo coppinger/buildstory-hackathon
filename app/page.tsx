@@ -2,6 +2,7 @@ import { Header } from "@/components/header";
 import { CountdownTimer } from "@/components/countdown-timer";
 import { Globe } from "@/components/globe";
 import { Button } from "@/components/ui/button";
+import { ActivityFeed } from "@/components/activity-feed";
 
 const stats = [
   "134 people",
@@ -17,7 +18,7 @@ export default function Home() {
       <Header />
 
       {/* Hero */}
-      <section className="flex flex-col items-center px-6 pt-48 pb-12 gap-10 text-center overflow-hidden">
+      <section className="flex flex-col items-center px-6 pt-48 pb-96 gap-10 text-center border-b border-border overflow-hidden">
         {/* Label */}
         <span className="text-xs uppercase tracking-[0.2em] text-white/40">
           open source AI-first hackathon
@@ -61,8 +62,44 @@ export default function Home() {
           {stats.join(" \u00B7 ")}
         </p>
 
-      {/* Globe */}
-      <Globe />
+        {/* Globe */}
+        <Globe />
+      </section>
+
+      {/* Why */}
+      <section className="relative z-10 px-6 border-b border-border bg-neutral-950">
+        <div className="mx-auto grid max-w-7xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-24">
+          {/* Left — copy */}
+          <div className="py-40">
+            <span className="text-xs uppercase tracking-[0.25em] text-white/30">
+              why
+            </span>
+
+            <div className="mt-12 flex flex-col gap-10">
+              <p className="font-medium leading-snug text-white/85 text-3xl">
+                Timelines are filling up with people who have things to sell
+                you.
+              </p>
+              <p className="font-medium leading-snug text-white/85 text-3xl">
+                The builders with insights to share? Lost in the noise.
+              </p>
+              <p className="font-medium leading-snug text-white/85 text-3xl">
+                We want to see that change, so we&apos;re going to do something
+                about it.
+              </p>
+              <p className="text-3xl font-medium leading-snug text-orange-500 sm:text-3xl">
+                Let&apos;s put builders back in the spotlight.
+              </p>
+            </div>
+          </div>
+
+          {/* Right — activity feed */}
+          <div className="relative">
+            <div className="absolute inset-0 overflow-hidden">
+              <ActivityFeed />
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );
