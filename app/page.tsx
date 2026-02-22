@@ -163,7 +163,7 @@ export default function Home() {
       </section>
 
       {/* When */}
-      <section className="relative z-10 px-6 border-b border-[#1a1917] bg-[#0e0d0c]">
+      <section className="relative z-10 px-6 border-b border-[#1a1917] ">
         <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-[#1a1917] px-24">
           {/* Left — copy */}
           <div className="py-40">
@@ -251,7 +251,7 @@ export default function Home() {
       </section>
 
       {/* Where */}
-      <section className="relative z-10 px-6 border-b border-[#1a1917] bg-[#0e0d0c]">
+      <section className="relative z-10 px-6 border-b border-[#1a1917] ">
         <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-[#1a1917] px-24">
           {/* Left — copy */}
           <div className="py-40">
@@ -322,6 +322,109 @@ export default function Home() {
                   Auto-log your progress from your terminal as you build.
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Who */}
+      <section className="relative z-10 px-6 border-b border-[#1a1917] bg-[#0e0d0c]">
+        <div className="mx-auto max-w-8xl border-x border-[#1a1917] px-24">
+          {/* Top — full width intro */}
+          <div className="pt-40 pb-24">
+            <span className="text-xs uppercase tracking-[0.25em] text-[#3d3a36]">
+              who
+            </span>
+
+            <h2 className="mt-12 font-heading italic text-4xl text-[#e8e4de]">
+              First-time builders. Seasoned shippers.
+            </h2>
+            <h2 className="mt-2 font-heading italic text-4xl text-[#6b6560]">
+              If you want to build something, this is your week.
+            </h2>
+
+            <p className="mt-10 font-mono text-base text-[#6b6560] leading-relaxed max-w-3xl">
+              Whether you&apos;re writing your first line of code with an AI
+              assistant or you&apos;ve shipped ten products this year. Solo or
+              team &mdash; bring your own or find collaborators through the
+              hackathon.
+            </p>
+
+            <a
+              href="#"
+              className="mt-8 inline-block border border-[#3d3a36] bg-transparent font-mono text-sm text-[#e8e4de] px-8 py-4 hover:border-[#6b6560] transition-colors"
+            >
+              Sign up &rarr;
+            </a>
+          </div>
+
+          {/* Bottom — two-column grid */}
+          <div className="grid gap-16 md:grid-cols-2 md:gap-20 pb-40">
+            {/* Left — Help run this */}
+            <div>
+              <span className="text-xs uppercase tracking-[0.25em] text-[#3d3a36]">
+                help run this
+              </span>
+
+              <p className="mt-6 font-mono text-base text-[#6b6560] leading-relaxed">
+                This hackathon is open-source and community-powered.
+                Here&apos;s how to get involved.
+              </p>
+
+              <div className="mt-8">
+                <div className="flex items-baseline justify-between border-t border-[#1a1917] py-4">
+                  <span className="text-sm font-semibold text-[#e8e4de]">Mentors</span>
+                  <span className="font-mono text-xs text-[#6b6560]">Help participants get unstuck</span>
+                </div>
+                <div className="flex items-baseline justify-between border-t border-[#1a1917] py-4">
+                  <span className="text-sm font-semibold text-[#e8e4de]">Co-facilitators</span>
+                  <span className="font-mono text-xs text-[#6b6560]">Help run the event day-to-day</span>
+                </div>
+                <div className="flex items-baseline justify-between border-t border-[#1a1917] py-4">
+                  <span className="text-sm font-semibold text-[#e8e4de]">Moderators</span>
+                  <span className="font-mono text-xs text-[#6b6560]">Keep Discord healthy</span>
+                </div>
+                <div className="flex items-baseline justify-between border-t border-[#1a1917] py-4">
+                  <span className="text-sm font-semibold text-[#e8e4de]">Panel</span>
+                  <span className="font-mono text-xs text-[#6b6560]">Review &amp; recognise standout projects</span>
+                </div>
+                <div className="flex items-baseline justify-between border-t border-b border-[#1a1917] py-4">
+                  <span className="text-sm font-semibold text-[#e8e4de]">Interviewees</span>
+                  <span className="font-mono text-xs text-[#6b6560]">Share your process with the community</span>
+                </div>
+              </div>
+
+              <a
+                href="#"
+                className="mt-8 inline-block border border-[#3d3a36] bg-transparent font-mono text-sm text-[#e8e4de] px-8 py-4 hover:border-[#6b6560] transition-colors"
+              >
+                Volunteer &rarr;
+              </a>
+            </div>
+
+            {/* Right — Sponsors */}
+            <div>
+              <span className="text-xs uppercase tracking-[0.25em] text-[#3d3a36]">
+                sponsors
+              </span>
+
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <div className="border border-[#1a1917] h-20" />
+                <div className="border border-[#1a1917] h-20" />
+                <div className="border border-[#1a1917] h-20" />
+                <div className="border border-[#1a1917] h-20" />
+              </div>
+
+              <p className="mt-6 font-mono text-base text-[#6b6560] leading-relaxed">
+                Support builders with tool credits and resources.
+              </p>
+
+              <a
+                href="#"
+                className="mt-4 inline-block font-mono text-xs text-[#c4a35a] underline underline-offset-4"
+              >
+                Become a sponsor &rarr;
+              </a>
             </div>
           </div>
         </div>
