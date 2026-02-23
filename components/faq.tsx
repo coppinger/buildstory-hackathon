@@ -51,7 +51,7 @@ export function FAQ() {
               className="w-full flex items-center justify-between py-5 text-left group"
             >
               <span
-                className={`font-mono text-sm transition-colors ${
+                className={`font-mono text-base transition-colors ${
                   isOpen ? "text-[#e8e4de]" : "text-[#a09890]"
                 } group-hover:text-[#e8e4de]`}
               >
@@ -70,7 +70,7 @@ export function FAQ() {
                 isOpen ? "max-h-40 pb-5" : "max-h-0"
               }`}
             >
-              <p className="font-mono text-sm text-[#6b6560] leading-relaxed pr-12">
+              <p className="font-mono text-base text-[#6b6560] leading-relaxed pr-12">
                 {faq.a}
               </p>
             </div>
