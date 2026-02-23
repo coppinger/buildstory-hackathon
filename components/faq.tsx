@@ -70,7 +70,7 @@ export function FAQ() {
                 isOpen ? "max-h-40 pb-5" : "max-h-0"
               }`}
             >
-              <p className="font-mono text-base text-[#6b6560] leading-relaxed pr-12">
+              <p className="font-mono text-base text-[#6b6560] leading-relaxed pr-4 md:pr-12">
                 {faq.a}
               </p>
             </div>

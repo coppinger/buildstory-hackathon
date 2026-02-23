@@ -21,7 +21,7 @@ export default function Home() {
       <Header />
 
       {/* Hero */}
-      <section className="flex flex-col items-center px-6 pt-48 pb-96 gap-10 text-center border-b border-border overflow-hidden">
+      <section className="flex flex-col items-center px-6 pt-32 md:pt-48 pb-48 md:pb-96 gap-10 text-center border-b border-border overflow-hidden">
         {/* Label */}
         <BlurFade delay={0.1}>
           <span className="text-xs uppercase tracking-[0.2em] text-white/40">
@@ -83,16 +83,16 @@ export default function Home() {
 
       {/* Why */}
       <section className="relative z-10 px-6 border-b border-border bg-neutral-950">
-        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-24">
+        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-6 md:px-12 lg:px-24">
           {/* Left — copy */}
-          <div className="py-40">
+          <div className="py-16 md:py-40">
             <BlurFade inView>
               <span className="text-xs uppercase tracking-[0.25em] text-white/30">
                 why
               </span>
             </BlurFade>
 
-            <div className="mt-12 flex flex-col gap-10 font-heading text-5xl">
+            <div className="mt-12 flex flex-col gap-10 font-heading text-3xl md:text-5xl">
               <BlurFade inView delay={0.1}>
                 <p className="text-white/85">
                   Timelines are filling up with people who have things to sell
@@ -119,7 +119,7 @@ export default function Home() {
           </div>
 
           {/* Right — activity feed */}
-          <div className="relative">
+          <div className="relative min-h-[400px] md:min-h-0">
             <div className="absolute inset-0 overflow-hidden">
               <ActivityFeed />
             </div>
@@ -129,15 +129,15 @@ export default function Home() {
 
       {/* What */}
       <section id="what" className="relative z-10 px-6 border-b border-border bg-neutral-950">
-        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-24">
-          <div className="py-40">
+        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-6 md:px-12 lg:px-24">
+          <div className="py-16 md:py-40">
             <BlurFade inView>
               <span className="text-xs uppercase tracking-[0.25em] text-white/30">
                 what
               </span>
             </BlurFade>
 
-            <div className="mt-12 flex flex-col gap-10 font-heading  text-5xl">
+            <div className="mt-12 flex flex-col gap-10 font-heading text-3xl md:text-5xl">
               <BlurFade inView delay={0.1}>
                 <p className="text-white/85 ">
                   A one week hackathon, by builders for builders.
@@ -161,10 +161,10 @@ export default function Home() {
             </div>
           </div>
           {/* Left — info cards */}
-          <div className="py-40 flex items-start">
+          <div className="py-16 md:py-40 flex items-start">
             <div className="w-full flex flex-col gap-3">
               <BlurFade inView delay={0.1}>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <div className="w-full  border border-white/10 px-6 py-5">
                     <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Format</span>
                     <p className="text-white/85 mt-1">7 days, solo or team</p>
@@ -207,9 +207,9 @@ export default function Home() {
 
       {/* When */}
       <section className="relative z-10 px-6 border-b border-border ">
-        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-24">
+        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-6 md:px-12 lg:px-24">
           {/* Left — copy */}
-          <div className="py-40">
+          <div className="py-16 md:py-40">
             <BlurFade inView>
               <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
                 when
@@ -217,13 +217,13 @@ export default function Home() {
             </BlurFade>
 
             <BlurFade inView delay={0.1}>
-              <h2 className="mt-12 font-heading italic text-5xl text-[#e8e4de]">
+              <h2 className="mt-12 font-heading italic text-3xl md:text-5xl text-[#e8e4de]">
                 February 23 &rarr; March 1
               </h2>
             </BlurFade>
 
             <BlurFade inView delay={0.2}>
-              <p className="mt-2 font-heading italic text-3xl text-neutral-500">
+              <p className="mt-2 font-heading italic text-2xl md:text-3xl text-neutral-500">
                 Seven days. Set your own pace.
               </p>
             </BlurFade>
@@ -237,8 +237,8 @@ export default function Home() {
           </div>
 
           {/* Right — commitment cards */}
-          <div className="py-40 flex items-center">
-            <div className="w-full grid grid-cols-2 gap-3">
+          <div className="py-16 md:py-40 flex items-center">
+            <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* All-in */}
               <BlurFade inView delay={0.1}>
                 <div className="border border-border p-5">
@@ -311,9 +311,9 @@ export default function Home() {
 
       {/* Where */}
       <section className="relative z-10 px-6 border-b border-border ">
-        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-24">
+        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-6 md:px-12 lg:px-24">
           {/* Left — copy */}
-          <div className="py-40">
+          <div className="py-16 md:py-40">
             <BlurFade inView>
               <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
                 where
@@ -321,12 +321,12 @@ export default function Home() {
             </BlurFade>
 
             <BlurFade inView delay={0.1}>
-              <h2 className="mt-12 font-heading italic text-5xl text-[#e8e4de]">
+              <h2 className="mt-12 font-heading italic text-3xl md:text-5xl text-[#e8e4de]">
                 Everywhere.
               </h2>
             </BlurFade>
             <BlurFade inView delay={0.15}>
-              <h2 className="mt-2 font-heading italic text-3xl text-neutral-500">
+              <h2 className="mt-2 font-heading italic text-2xl md:text-3xl text-neutral-500">
                 Online, open, global.
               </h2>
             </BlurFade>
@@ -349,7 +349,7 @@ export default function Home() {
           </div>
 
           {/* Right — platform cards */}
-          <div className="py-40 flex items-center">
+          <div className="py-16 md:py-40 flex items-center">
             <div className="w-full flex flex-col gap-3">
               {/* Discord */}
               <BlurFade inView delay={0.1}>
@@ -419,9 +419,9 @@ export default function Home() {
 
       {/* Who */}
       <section className="relative z-10 px-6 border-b border-border ">
-        <div className="mx-auto max-w-8xl border-x border-border px-24">
+        <div className="mx-auto max-w-8xl border-x border-border px-6 md:px-12 lg:px-24">
           {/* Top — full width intro */}
-          <div className="pt-40 pb-24">
+          <div className="pt-16 pb-12 md:pt-40 md:pb-24">
             <BlurFade inView>
               <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
                 who
@@ -429,12 +429,12 @@ export default function Home() {
             </BlurFade>
 
             <BlurFade inView delay={0.1}>
-              <h2 className="mt-12 font-heading italic text-5xl text-[#e8e4de]">
+              <h2 className="mt-12 font-heading italic text-3xl md:text-5xl text-[#e8e4de]">
                 First-time builders &amp; seasoned shippers.
               </h2>
             </BlurFade>
             <BlurFade inView delay={0.15}>
-              <h2 className="mt-2 font-heading italic text-3xl text-neutral-500">
+              <h2 className="mt-2 font-heading italic text-2xl md:text-3xl text-neutral-500">
                 If you want to build something, this is your week.
               </h2>
             </BlurFade>
@@ -459,7 +459,7 @@ export default function Home() {
           </div>
 
           {/* Bottom — two-column grid */}
-          <div className="grid gap-16 md:grid-cols-2 md:gap-20 pb-40">
+          <div className="grid gap-16 md:grid-cols-2 md:gap-20 pb-16 md:pb-40">
             {/* Left — Help run this */}
             <div>
               <BlurFade inView>
@@ -477,23 +477,23 @@ export default function Home() {
 
               <BlurFade inView delay={0.2}>
                 <div className="mt-8">
-                  <div className="flex items-baseline justify-between border-t border-border py-6">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-t border-border py-6">
                     <span className="text-lg font-medium text-[#e8e4de]">Mentors</span>
                     <span className="text-base text-neutral-500">Help participants get unstuck</span>
                   </div>
-                  <div className="flex items-baseline justify-between border-t border-border py-6">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-t border-border py-6">
                     <span className="text-lg font-medium text-[#e8e4de]">Co-facilitators</span>
                     <span className="text-base text-neutral-500">Help run the event day-to-day</span>
                   </div>
-                  <div className="flex items-baseline justify-between border-t border-border py-6">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-t border-border py-6">
                     <span className="text-lg font-medium text-[#e8e4de]">Moderators</span>
                     <span className="text-base text-neutral-500">Keep Discord healthy</span>
                   </div>
-                  <div className="flex items-baseline justify-between border-t border-border py-6">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-t border-border py-6">
                     <span className="text-lg font-medium text-[#e8e4de]">Panel</span>
                     <span className="text-base text-neutral-500">Review &amp; recognise standout projects</span>
                   </div>
-                  <div className="flex items-baseline justify-between border-t border-b border-border py-4">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-t border-b border-border py-4">
                     <span className="text-lg font-medium text-[#e8e4de]">Interviewees</span>
                     <span className="text-base text-neutral-500">Share your process with the community</span>
                   </div>
@@ -548,8 +548,8 @@ export default function Home() {
 
       {/* FAQ */}
       <section id="faq" className="relative z-10 px-6 border-b border-border ">
-        <div className="mx-auto max-w-8xl border-x border-border px-24">
-          <div className="py-40">
+        <div className="mx-auto max-w-8xl border-x border-border px-6 md:px-12 lg:px-24">
+          <div className="py-16 md:py-40">
             <BlurFade inView>
               <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
                 faq
@@ -567,8 +567,8 @@ export default function Home() {
 
       {/* CTA */}
       <section id="cta" className="relative z-10 px-6 border-b border-border">
-        <div className="mx-auto max-w-8xl border-x border-border px-24">
-          <div className="py-40 flex flex-col items-center text-center">
+        <div className="mx-auto max-w-8xl border-x border-border px-6 md:px-12 lg:px-24">
+          <div className="py-16 md:py-40 flex flex-col items-center text-center">
             <BlurFade inView>
               <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
                 join us
