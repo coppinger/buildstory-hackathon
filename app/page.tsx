@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ActivityFeed } from "@/components/activity-feed";
 import { FAQ } from "@/components/faq";
 import { Badge } from "@/components/ui/badge"
+import { BlurFade } from "@/components/blur-fade"
 
 const stats = [
   "134 people",
@@ -22,47 +23,59 @@ export default function Home() {
       {/* Hero */}
       <section className="flex flex-col items-center px-6 pt-48 pb-96 gap-10 text-center border-b border-border overflow-hidden">
         {/* Label */}
-        <span className="text-xs uppercase tracking-[0.2em] text-white/40">
-          open source AI-first hackathon
-        </span>
+        <BlurFade delay={0.1}>
+          <span className="text-xs uppercase tracking-[0.2em] text-white/40">
+            open source AI-first hackathon
+          </span>
+        </BlurFade>
 
         {/* Headline */}
-        <h1 className="font-heading font-normal text-4xl sm:text-5xl md:text-7xl max-w-4xl text-white leading-tight">
-          One week. Build your thing.
-          <br className="hidden sm:block" /> Share your story.
-        </h1>
+        <BlurFade delay={0.25} blur="16px">
+          <h1 className="font-heading font-normal text-4xl sm:text-5xl md:text-7xl max-w-4xl text-white leading-tight">
+            One week. Build your thing.
+            <br className="hidden sm:block" /> Share your story.
+          </h1>
+        </BlurFade>
 
         {/* Subline */}
-        <p className="max-w-2xl text-lg text-white/50">
-          A global, fully remote hackathon focused on good vibes and good
-          practices.
-        </p>
+        <BlurFade delay={0.4}>
+          <p className="max-w-2xl text-lg text-white/50">
+            A global, fully remote hackathon focused on good vibes and good
+            practices.
+          </p>
+        </BlurFade>
 
         {/* Countdown */}
-        <CountdownTimer />
+        <BlurFade delay={0.55}>
+          <CountdownTimer />
+        </BlurFade>
 
         {/* CTAs */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="lg"
-            asChild
-            className="border-white/20 text-white bg-transparent hover:bg-white/5 hover:text-white px-8 h-12 text-sm font-medium"
-          >
-            <a href="#what">tell me more ↓</a>
-          </Button>
-          <Button
-            size="lg"
-            className="bg-buildstory-500 text-black hover:bg-white/90 px-8 h-12 text-sm font-medium animate-[glow_3s_ease-in-out_infinite] ease-in duration-200"
-          >
-            I&apos;m in, sign me up
-          </Button>
-        </div>
+        <BlurFade delay={0.7}>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="lg"
+              asChild
+              className="border-white/20 text-white bg-transparent hover:bg-white/5 hover:text-white px-8 h-12 text-sm font-medium"
+            >
+              <a href="#what">tell me more ↓</a>
+            </Button>
+            <Button
+              size="lg"
+              className="bg-buildstory-500 text-black hover:bg-white/90 px-8 h-12 text-sm font-medium animate-[glow_3s_ease-in-out_infinite] ease-in duration-200"
+            >
+              I&apos;m in, sign me up
+            </Button>
+          </div>
+        </BlurFade>
 
         {/* Stats bar */}
-        <p className="text-base text-white/35 tracking-wide">
-          {stats.join(" \u00B7 ")}
-        </p>
+        <BlurFade delay={0.85}>
+          <p className="text-base text-white/35 tracking-wide">
+            {stats.join(" \u00B7 ")}
+          </p>
+        </BlurFade>
 
         {/* Globe */}
         <Globe />

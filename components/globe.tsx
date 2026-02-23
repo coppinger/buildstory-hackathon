@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { motion } from "motion/react";
 
 const PARTICIPANT_LOCATIONS: [number, number][] = [
   [-73.935, 40.73],    // New York
@@ -119,7 +120,7 @@ export function Globe() {
       // Slow rotation
       function rotate() {
         const center = map.getCenter();
-        center.lng += 0.03;
+        center.lng += 0.01;
         map.setCenter(center);
         animationId = requestAnimationFrame(rotate);
       }
@@ -133,7 +134,13 @@ export function Globe() {
   }, []);
 
   return (
-    <div className="absolute -z-10 w-full overflow-hidden" style={{ height: "80vh" }}>
+    <motion.div
+      className="absolute -z-10 w-full overflow-hidden"
+      style={{ height: "80vh" }}
+      initial={{ opacity: 0, filter: "blur(20px)" }}
+      animate={{ opacity: 1, filter: "blur(0px)" }}
+      transition={{ duration: 1.8, delay: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
+    >
       <div
         ref={containerRef}
         className="absolute left-0 right-0"
@@ -143,6 +150,6 @@ export function Globe() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-background to-transparent" />
       {/* Bottom clip */}
       {/* <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent" /> */}
-    </div>
+    </motion.div>
   );
 }
