@@ -333,7 +333,7 @@ export default function Home() {
                 <p className="mt-1 text-neutral-500">
                   Auto-log your progress from your terminal as you build.
                 </p>
-                <div className="mt-1 border border-border border-dashed p-4">
+                <div className="mt-4 border border-buildstory-700 border-dashed p-4">
                   <p className="text-neutral-500">
                   npm i -g buildstory
                 </p>
@@ -461,6 +461,40 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* CTA */}
+      <section id="cta" className="relative z-10 px-6 border-b border-border">
+        <div className="mx-auto max-w-8xl border-x border-border px-24">
+          <div className="py-40 flex flex-col items-center text-center">
+            <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
+              join us
+            </span>
+
+            <h2 className="mt-8 font-heading text-5xl md:text-6xl text-[#e8e4de] max-w-3xl leading-tight">
+              Stop planning. Start building.
+            </h2>
+
+            <p className="mt-6 max-w-xl font-mono text-base text-neutral-500 leading-relaxed">
+              One week, no gatekeeping, no prerequisites. Just you, your ideas, and a community
+              that actually wants to see you ship.
+            </p>
+
+            <div className="mt-10 flex items-center gap-4">
+              <Button
+                size="lg"
+                className="bg-buildstory-500 text-black hover:bg-white/90 px-8 h-12 text-sm font-medium animate-[glow_3s_ease-in-out_infinite] ease-in duration-200"
+              >
+                I&apos;m in, sign me up
+              </Button>
+            </div>
+
+            <p className="mt-6 font-mono text-sm text-white/30">
+              Free to enter &middot; All skill levels &middot; Solo or team
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className="border-border border-x flex justify-between max-w-8xl mx-auto px-6 py-8 ">
         <p className="font-mono text-neutral-600">© 2025 Buildstory
         </p>
