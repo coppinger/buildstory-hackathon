@@ -10,6 +10,10 @@ interface BlurFadeProps {
   blur?: string;
   yOffset?: number;
   className?: string;
+  /** If true, animates on scroll into view instead of on mount */
+  inView?: boolean;
+  /** Margin for triggering inView (e.g. "-100px") */
+  inViewMargin?: string;
 }
 
 export function BlurFade({
@@ -19,11 +23,17 @@ export function BlurFade({
   blur = "12px",
   yOffset = 6,
   className,
+  inView = false,
+  inViewMargin = "-50px",
 }: BlurFadeProps) {
+  const resolved = { filter: "blur(0px)", opacity: 1, y: 0 };
+
   return (
     <motion.div
       initial={{ filter: `blur(${blur})`, opacity: 0, y: yOffset }}
-      animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+      {...(inView
+        ? { whileInView: resolved, viewport: { once: true, margin: inViewMargin } }
+        : { animate: resolved })}
       transition={{
         duration,
         delay,

@@ -181,15 +181,6 @@
   --container-9xl: 112rem;
 }
 
-@keyframes glow {
-  0%, 100% {
-    box-shadow: 0 10px 15px -3px rgba(161, 72, 11, 0.4), 0 4px 6px -4px rgba(161, 72, 11, 0.4);
-  }
-  50% {
-    box-shadow: 0 10px 30px -3px rgba(255, 152, 10, 0.9), 0 4px 12px -4px rgba(255, 152, 10, 0.8);
-  }
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;

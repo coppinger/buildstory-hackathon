@@ -139,7 +139,7 @@ export function Globe() {
       style={{ height: "80vh" }}
       initial={{ opacity: 0, filter: "blur(20px)" }}
       animate={{ opacity: 1, filter: "blur(0px)" }}
-      transition={{ duration: 1.8, delay: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={{ duration: 1.2, delay: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
     >
       <div
         ref={containerRef}
