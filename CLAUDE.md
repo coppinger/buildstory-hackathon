@@ -30,6 +30,8 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 - **Auth**: Clerk (`@clerk/nextjs`) -- custom sign-in/sign-up forms (not Clerk pre-built components)
 - **Database**: Neon Postgres via `@neondatabase/serverless` (HTTP adapter), Drizzle ORM
 - **UI primitives**: Radix UI via `radix-ui` package
+- **Monitoring**: Sentry (`@sentry/nextjs`) -- error tracking on server, edge, and client; server actions use `Sentry.captureException` with component/action tags
+- **Testing**: Vitest (integration tests against real Neon DB)
 - **AI enrichment:** Anthropic API (future — build log processing)
 
 ## Commands
@@ -38,6 +40,8 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 npm run dev      # Start dev server (localhost:3000)
 npm run build    # Production build
 npm run lint     # ESLint
+npm test         # Run integration tests (Vitest, hits real DB)
+npm run test:watch  # Run tests in watch mode
 npx drizzle-kit generate   # Generate migrations from schema changes
 npx drizzle-kit migrate    # Apply migrations to database
 npx drizzle-kit studio     # Open Drizzle Studio (DB browser)
@@ -76,6 +80,14 @@ Config reads `DATABASE_URL` from `.env.local` (via dotenv in `drizzle.config.ts`
 ### Page Structure
 
 `app/page.tsx` is a single server component composing all landing page sections. Client-side interactivity is isolated to individual components (countdown timer, globe, activity feed, FAQ accordion). Components use `BlurFade` wrapper for staggered scroll-triggered animations.
+
+### Error Handling
+
+Sentry is configured for server (`sentry.server.config.ts`), edge (`sentry.edge.config.ts`), and client (`instrumentation-client.ts`) runtimes. Server actions catch errors and report via `Sentry.captureException` with `tags: { component: "server-action", action }` and relevant `extra` context before returning `{ success: false, error }`.
+
+### Testing
+
+Integration tests in `__tests__/integration/` run against the real Neon database via Vitest. Tests mock Clerk auth (`vi.mock("@clerk/nextjs/server")`), `next/cache`, and Sentry, then exercise server actions and DB helpers directly. Each test file manages its own cleanup in `afterAll`. Config in `vitest.config.ts`.
 
 ## Environment Variables
 
