@@ -106,14 +106,57 @@ export const eventRegistrations = pgTable(
 export type EventRegistration = typeof eventRegistrations.$inferSelect;
 export type NewEventRegistration = typeof eventRegistrations.$inferInsert;
 
+// --- Projects ---
+
+export const projects = pgTable("projects", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  profileId: uuid("profile_id")
+    .notNull()
+    .references(() => profiles.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  githubUrl: text("github_url"),
+  liveUrl: text("live_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+export type Project = typeof projects.$inferSelect;
+export type NewProject = typeof projects.$inferInsert;
+
+// --- Event Projects (junction) ---
+
+export const eventProjects = pgTable(
+  "event_projects",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+  },
+  (t) => [unique().on(t.eventId, t.projectId)]
+);
+
+export type EventProject = typeof eventProjects.$inferSelect;
+export type NewEventProject = typeof eventProjects.$inferInsert;
+
 // --- Relations ---
 
 export const profilesRelations = relations(profiles, ({ many }) => ({
   eventRegistrations: many(eventRegistrations),
+  projects: many(projects),
 }));
 
 export const eventsRelations = relations(events, ({ many }) => ({
   eventRegistrations: many(eventRegistrations),
+  eventProjects: many(eventProjects),
 }));
 
 export const eventRegistrationsRelations = relations(
@@ -129,3 +172,22 @@ export const eventRegistrationsRelations = relations(
     }),
   })
 );
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  profile: one(profiles, {
+    fields: [projects.profileId],
+    references: [profiles.id],
+  }),
+  eventProjects: many(eventProjects),
+}));
+
+export const eventProjectsRelations = relations(eventProjects, ({ one }) => ({
+  event: one(events, {
+    fields: [eventProjects.eventId],
+    references: [events.id],
+  }),
+  project: one(projects, {
+    fields: [eventProjects.projectId],
+    references: [projects.id],
+  }),
+}));
