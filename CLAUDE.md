@@ -34,15 +34,22 @@ app/
   layout.tsx          # Root layout (ClerkProvider, dark mode, font variables)
   page.tsx            # Single landing page with all sections
   globals.css
+  (auth)/             # Route group for auth pages (two-column layout)
+    layout.tsx        # Two-column auth layout (logo + content left, dark panel right)
+    sign-in/page.tsx       # Custom sign-in form (useSignIn hook)
+    sign-in/sso-callback/page.tsx  # OAuth redirect callback
+    sign-up/page.tsx       # Custom sign-up form (useSignUp hook, email verification)
+    sign-up/sso-callback/page.tsx  # OAuth redirect callback
 components/
-  header.tsx          # Site header/nav
+  header.tsx          # Site header/nav (SignedOut/SignedIn/UserButton from Clerk)
   countdown-timer.tsx # Countdown to hackathon start
   globe.tsx           # Mapbox GL globe visualization
   activity-feed.tsx   # Mock activity feed (uses data/mock-activity.json)
   faq.tsx             # FAQ accordion
   blur-fade.tsx       # BlurFade animation wrapper (delay, inView props)
   shader-background.tsx
-  ui/                 # shadcn/ui primitives (button, badge)
+  icons.tsx           # OAuth brand icons (Google, GitHub)
+  ui/                 # shadcn/ui primitives (button, badge, input, label, card, separator)
 data/
   mock-activity.json  # Static mock data for activity feed
 lib/
@@ -70,6 +77,10 @@ Config reads `DATABASE_URL` from `.env.local` (via dotenv in `drizzle.config.ts`
 - `DATABASE_URL` -- Neon Postgres connection string (in `.env.local`)
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` -- Clerk publishable key
 - `CLERK_SECRET_KEY` -- Clerk secret key
+- `NEXT_PUBLIC_CLERK_SIGN_IN_URL` -- Sign-in page URL (set to `/sign-in`)
+- `NEXT_PUBLIC_CLERK_SIGN_UP_URL` -- Sign-up page URL (set to `/sign-up`)
+- `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` -- Post-login redirect (set to `/`)
+- `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` -- Post-signup redirect (set to `/`)
 
 ## Path Aliases
 
