@@ -10,6 +10,7 @@ Landing page for the Buildstory hackathon -- a global, remote, one-week hackatho
 - **Animation**: Motion (Framer Motion), custom BlurFade component with scroll-triggered `inView` mode
 - **Map**: Mapbox GL (`mapbox-gl`) for the Globe component
 - **Shaders**: `@paper-design/shaders-react` for ShaderBackground
+- **Auth**: Clerk (`@clerk/nextjs`) -- ClerkProvider wraps root layout, `proxy.ts` middleware
 - **Database**: Neon Postgres via `@neondatabase/serverless`, Drizzle ORM
 - **UI primitives**: Radix UI via `radix-ui` package
 
@@ -28,8 +29,9 @@ npx drizzle-kit studio     # Open Drizzle Studio (DB browser)
 ## Project Structure
 
 ```
+proxy.ts              # Clerk middleware (Next.js 16 proxy convention)
 app/
-  layout.tsx          # Root layout (dark mode, font variables)
+  layout.tsx          # Root layout (ClerkProvider, dark mode, font variables)
   page.tsx            # Single landing page with all sections
   globals.css
 components/
@@ -66,6 +68,8 @@ Config reads `DATABASE_URL` from `.env.local` (via dotenv in `drizzle.config.ts`
 ## Environment Variables
 
 - `DATABASE_URL` -- Neon Postgres connection string (in `.env.local`)
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` -- Clerk publishable key
+- `CLERK_SECRET_KEY` -- Clerk secret key
 
 ## Path Aliases
 
