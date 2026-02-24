@@ -1,44 +1,54 @@
-"use client";
-
-import Image from "next/image";
 import Link from "next/link";
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { currentUser } from "@clerk/nextjs/server";
 
-export function AppTopbar() {
+export async function AppTopbar() {
+  const user = await currentUser();
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center border-b border-border bg-background">
-      {/* Logo area — matches sidebar width */}
-      <div className="flex h-full w-60 shrink-0 items-center px-5">
-        <Link href="/">
-          <Image
-            src="/buildstory-logo.svg"
-            alt="BuildStory"
-            width={120}
-            height={24}
-            priority
-          />
-        </Link>
-      </div>
+    <header className="border-b border-border">
+      <div className="max-w-8xl mx-auto h-20 flex items-center border-border">
+        {/* Logo area — matches sidebar column width */}
+        <div className="max-w-xs w-full border-r border-border h-full flex items-center px-16">
+          <Link href="/">
+            <Image
+              src="/buildstory-logo.svg"
+              alt="BuildStory"
+              width={140}
+              height={28}
+            />
+          </Link>
+        </div>
 
-      {/* Vertical border from sidebar column */}
-      <div className="h-full w-px bg-border" />
-
-      {/* Right section */}
-      <div className="flex flex-1 items-center justify-end px-5">
-        <SignedOut>
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="border-border text-foreground hover:bg-white/10 hover:text-white"
-          >
-            <Link href="/sign-in">sign in</Link>
-          </Button>
-        </SignedOut>
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
+        {/* Right section */}
+        <div className="flex justify-end w-full items-center px-8">
+          {user ? (
+            <div className="flex items-center gap-3">
+              <Image
+                src={user.imageUrl}
+                alt={user.firstName ?? "Avatar"}
+                width={48}
+                height={48}
+                className="rounded-full"
+              />
+              <div className="flex flex-col">
+                <p className="text-base font-semibold">
+                  {user.firstName ?? user.username ?? "Builder"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  @{user.username ?? user.primaryEmailAddress?.emailAddress?.split("@")[0] ?? "user"}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <Link
+              href="/sign-in"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Sign in
+            </Link>
+          )}
+        </div>
       </div>
     </header>
   );

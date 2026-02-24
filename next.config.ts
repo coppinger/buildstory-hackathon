@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      { hostname: "img.clerk.com" },
+    ],
+  },
   experimental: {
     // Propagate tracing headers for pageload performance monitoring
     clientTraceMetadata: ["sentry-trace", "baggage"],
