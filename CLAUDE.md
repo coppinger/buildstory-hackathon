@@ -1,86 +1,89 @@
-# Buildstory Hackathon
+# CLAUDE.md
 
-Landing page for the Buildstory hackathon -- a global, remote, one-week hackathon for builders. Single-page marketing site with sections: Hero, Why, What, When, Where, Who, FAQ, CTA, Footer.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+# Buildstory
+
+Buildstory is a community platform for AI builders. The core thesis: "what have you built?" is the ultimate signal of credibility in a landscape full of noise.
+
+The platform combines profiles, project showcases, automated build logs (via GitHub webhook integration), and a reputation system where verified building experience earns authority. Projects are tagged with the tools used to build them, and those tags double as permanent discussion threads — so conversations about a tool are anchored to real usage, not speculation.
+
+## Current Focus
+
+Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building event. Everything built for v1 serves this event but is architected to outlive it. Participants register, create projects, log updates, and ship something real by the end of the week.
+
+## Principles
+
+- Show, don't tell — verifiable work over marketing claims
+- Zero-friction capture — automated build logs after initial setup
+- Projects are first-class, independent entities that can optionally be linked to events
+- Inclusive by default — designed for builders at every experience level
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router, React 19, TypeScript)
+- **Framework**: Next.js 16 (App Router, React 19, TypeScript), deployed on Vercel
 - **Styling**: Tailwind CSS v4, shadcn/ui (new-york style), tw-animate-css
-- **Fonts**: DM Sans (body), Instrument Serif (headings), DM Mono (mono)
+- **Fonts**: DM Sans (body via `font-sans`), Instrument Serif (headings via `font-heading`), DM Mono (mono via `font-mono`) -- loaded in `app/layout.tsx` as CSS variables
 - **Animation**: Motion (Framer Motion), custom BlurFade component with scroll-triggered `inView` mode
 - **Map**: Mapbox GL (`mapbox-gl`) for the Globe component
 - **Shaders**: `@paper-design/shaders-react` for ShaderBackground
-- **Auth**: Clerk (`@clerk/nextjs`) -- ClerkProvider wraps root layout, `proxy.ts` middleware
-- **Database**: Neon Postgres via `@neondatabase/serverless`, Drizzle ORM
+- **Auth**: Clerk (`@clerk/nextjs`) -- custom sign-in/sign-up forms (not Clerk pre-built components)
+- **Database**: Neon Postgres via `@neondatabase/serverless` (HTTP adapter), Drizzle ORM
 - **UI primitives**: Radix UI via `radix-ui` package
+- **AI enrichment:** Anthropic API (future — build log processing)
 
 ## Commands
 
 ```
-npm run dev      # Start dev server
+npm run dev      # Start dev server (localhost:3000)
 npm run build    # Production build
-npm run start    # Start production server
 npm run lint     # ESLint
-npx drizzle-kit generate   # Generate migrations from schema
+npx drizzle-kit generate   # Generate migrations from schema changes
 npx drizzle-kit migrate    # Apply migrations to database
 npx drizzle-kit studio     # Open Drizzle Studio (DB browser)
 ```
 
-## Project Structure
+## Architecture
 
-```
-proxy.ts              # Clerk middleware (Next.js 16 proxy convention)
-app/
-  layout.tsx          # Root layout (ClerkProvider, dark mode, font variables)
-  page.tsx            # Single landing page with all sections
-  globals.css
-  (auth)/             # Route group for auth pages (two-column layout)
-    layout.tsx        # Two-column auth layout (logo + content left, dark panel right)
-    sign-in/page.tsx       # Custom sign-in form (useSignIn hook)
-    sign-in/sso-callback/page.tsx  # OAuth redirect callback
-    sign-up/page.tsx       # Custom sign-up form (useSignUp hook, email verification)
-    sign-up/sso-callback/page.tsx  # OAuth redirect callback
-components/
-  header.tsx          # Site header/nav (SignedOut/SignedIn/UserButton from Clerk)
-  countdown-timer.tsx # Countdown to hackathon start
-  globe.tsx           # Mapbox GL globe visualization
-  activity-feed.tsx   # Mock activity feed (uses data/mock-activity.json)
-  faq.tsx             # FAQ accordion
-  blur-fade.tsx       # BlurFade animation wrapper (delay, inView props)
-  shader-background.tsx
-  icons.tsx           # OAuth brand icons (Google, GitHub)
-  ui/                 # shadcn/ui primitives (button, badge, input, label, card, separator)
-data/
-  mock-activity.json  # Static mock data for activity feed
-lib/
-  utils.ts            # cn() classname merge utility
-  db/
-    index.ts          # Drizzle client (Neon HTTP adapter), exports `db`
-    schema.ts         # Drizzle schema definitions, currently: users table
-drizzle/              # Migration files (managed by drizzle-kit)
-drizzle.config.ts     # Drizzle Kit config (reads DATABASE_URL from .env.local)
-```
+### Auth Flow
 
-## Database
+Clerk auth with **custom UI forms** (not pre-built Clerk components). The auth pages use `useSignIn` and `useSignUp` hooks from `@clerk/nextjs` with email/password and OAuth (Google, GitHub).
 
-Neon Postgres with Drizzle ORM. Client created in `lib/db/index.ts` using the Neon HTTP (serverless) adapter.
+- `proxy.ts` -- Clerk middleware using Next.js 16's proxy convention (replaces traditional `middleware.ts`)
+- `app/(auth)/` -- Route group with a two-column layout (form left, dark panel right)
+- `app/(auth)/sign-in/` and `sign-up/` -- Custom forms with SSO callback pages for OAuth redirects
+
+### Profile Creation (Just-in-Time)
+
+No webhook. Profiles are created lazily via `lib/db/ensure-profile.ts` -- call `ensureProfile(clerkId)` whenever you need to guarantee a profile exists. It checks for an existing profile, and if absent, fetches the user's name from Clerk and inserts a new row with `onConflictDoNothing` for race-safety.
+
+### Database
+
+Neon Postgres with Drizzle ORM. Client in `lib/db/index.ts` uses the Neon HTTP (serverless) adapter and imports the full schema for relational queries.
 
 **Schema** (`lib/db/schema.ts`):
-- `users` -- id (serial PK), name (text), email (text, unique), created_at (timestamp)
+- `profiles` -- clerk_id (unique), display_name, bio, social links, experience_level enum
+- `events` -- name, slug (unique), description, dates, status enum (draft/open/active/judging/complete)
+- `eventRegistrations` -- links profile to event with team_preference enum, unique on (event_id, profile_id)
+- `users` -- legacy table (id, name, email)
 
-Type exports: `User` (select), `NewUser` (insert).
+Enums: `experience_level`, `event_status`, `team_preference`
+
+Type exports follow the pattern: `TableName` (select type) and `NewTableName` (insert type).
 
 Config reads `DATABASE_URL` from `.env.local` (via dotenv in `drizzle.config.ts`; Next.js auto-loads it at runtime).
 
+### Page Structure
+
+`app/page.tsx` is a single server component composing all landing page sections. Client-side interactivity is isolated to individual components (countdown timer, globe, activity feed, FAQ accordion). Components use `BlurFade` wrapper for staggered scroll-triggered animations.
+
 ## Environment Variables
 
-- `DATABASE_URL` -- Neon Postgres connection string (in `.env.local`)
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` -- Clerk publishable key
-- `CLERK_SECRET_KEY` -- Clerk secret key
-- `NEXT_PUBLIC_CLERK_SIGN_IN_URL` -- Sign-in page URL (set to `/sign-in`)
-- `NEXT_PUBLIC_CLERK_SIGN_UP_URL` -- Sign-up page URL (set to `/sign-up`)
-- `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` -- Post-login redirect (set to `/`)
-- `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` -- Post-signup redirect (set to `/`)
+Required in `.env.local`:
+- `DATABASE_URL` -- Neon Postgres connection string
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` -- Clerk auth keys
+- `NEXT_PUBLIC_CLERK_SIGN_IN_URL` (`/sign-in`) / `NEXT_PUBLIC_CLERK_SIGN_UP_URL` (`/sign-up`)
+- `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` (`/`) / `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` (`/`)
 
 ## Path Aliases
 
