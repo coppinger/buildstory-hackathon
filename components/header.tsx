@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 
 const navItems = ["what", "why", "where", "who", "faq"];
@@ -35,20 +37,27 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="lg"
-            className="hidden md:inline-flex border-border text-white hover:bg-white/10 hover:text-white"
-          >
-            sign in
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="md:hidden border-border text-white hover:bg-white/10 hover:text-white"
-          >
-            sign in
-          </Button>
+          <SignedOut>
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="hidden md:inline-flex border-border text-white hover:bg-white/10 hover:text-white"
+            >
+              <Link href="/sign-in">sign in</Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="md:hidden border-border text-white hover:bg-white/10 hover:text-white"
+            >
+              <Link href="/sign-in">sign in</Link>
+            </Button>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
 
           {/* Hamburger button */}
           <button
