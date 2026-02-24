@@ -3,6 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import {
@@ -78,7 +79,11 @@ export async function registerForEvent(
 
     revalidatePath(`/event/${event.slug}`);
     return { success: true };
-  } catch {
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "server-action", action: "registerForEvent" },
+      extra: { eventId, teamPreference },
+    });
     return { success: false, error: "Registration failed" };
   }
 }
@@ -119,7 +124,11 @@ export async function createProject(
     });
     if (event) revalidatePath(`/event/${event.slug}`);
     return { success: true };
-  } catch {
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "server-action", action: "createProject" },
+      extra: { eventId, projectName: formData.get("name") },
+    });
     return { success: false, error: "Failed to create project" };
   }
 }
@@ -150,7 +159,11 @@ export async function enterProjectInEvent(
     });
     if (event) revalidatePath(`/event/${event.slug}`);
     return { success: true };
-  } catch {
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "server-action", action: "enterProjectInEvent" },
+      extra: { eventId, projectId },
+    });
     return { success: false, error: "Failed to enter project" };
   }
 }
@@ -184,7 +197,11 @@ export async function removeProjectFromEvent(
     });
     if (event) revalidatePath(`/event/${event.slug}`);
     return { success: true };
-  } catch {
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "server-action", action: "removeProjectFromEvent" },
+      extra: { eventId, projectId },
+    });
     return { success: false, error: "Failed to remove project" };
   }
 }
