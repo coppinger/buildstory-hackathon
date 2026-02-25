@@ -7,16 +7,23 @@ import { FAQ } from "@/components/faq";
 import { Badge } from "@/components/ui/badge"
 import { BlurFade } from "@/components/blur-fade"
 import Link from "next/link";
+import { getHackathonEvent } from "@/lib/admin/queries";
+import { getPublicStats } from "@/lib/queries";
+import { VOLUNTEER_URL, SPONSOR_URL } from "@/lib/constants";
 
-const stats = [
-  "134 people",
-  "49 teams",
-  "68 solo",
-  "27 countries",
-  "19 volunteers",
-];
+export default async function Home() {
+  const event = await getHackathonEvent();
+  const publicStats = event
+    ? await getPublicStats(event.id)
+    : { signups: 0, teamCount: 0, soloCount: 0, countryCount: 0, projectCount: 0 };
 
-export default function Home() {
+  const stats = [
+    `${publicStats.signups} people`,
+    `${publicStats.teamCount} teams`,
+    `${publicStats.soloCount} solo`,
+    `${publicStats.countryCount} countries`,
+    `${publicStats.projectCount} projects`,
+  ];
   return (
     <div className="relative min-h-screen">
       <Header />
@@ -452,12 +459,12 @@ export default function Home() {
             </BlurFade>
 
             <BlurFade inView delay={0.35}>
-              <a
-                href="#"
-                className="mt-8 inline-block border border-[#3d3a36] bg-transparent font-mono text-sm text-[#e8e4de] px-8 py-4 hover:border-neutral-500text-neutral-500 transition-colors"
+              <Link
+                href="/sign-up"
+                className="mt-8 inline-block border border-[#3d3a36] bg-transparent font-mono text-sm text-[#e8e4de] px-8 py-4 hover:border-neutral-500 text-neutral-500 transition-colors"
               >
                 Sign up &rarr;
-              </a>
+              </Link>
             </BlurFade>
           </div>
 
@@ -505,8 +512,8 @@ export default function Home() {
 
               <BlurFade inView delay={0.3}>
                 <a
-                  href="#"
-                  className="mt-8 inline-block border border-[#3d3a36] bg-transparent font-mono text-sm text-[#e8e4de] px-8 py-4 hover:border-neutral-500text-neutral-500 transition-colors"
+                  href={VOLUNTEER_URL}
+                  className="mt-8 inline-block border border-[#3d3a36] bg-transparent font-mono text-sm text-[#e8e4de] px-8 py-4 hover:border-neutral-500 text-neutral-500 transition-colors"
                 >
                   Volunteer &rarr;
                 </a>
@@ -538,7 +545,7 @@ export default function Home() {
 
               <BlurFade inView delay={0.25}>
                 <a
-                  href="#"
+                  href={SPONSOR_URL}
                   className="mt-4 inline-block font-mono text-base text-buildstory-400 underline underline-offset-4"
                 >
                   Become a sponsor &rarr;
@@ -596,8 +603,9 @@ export default function Home() {
                 <Button
                   size="lg"
                   className="bg-buildstory-500 text-black hover:bg-white/90 px-8 h-12 text-sm font-medium ease-in duration-200"
+                  asChild
                 >
-                  I&apos;m in, sign me up
+                  <Link href="/sign-up">I&apos;m in, sign me up</Link>
                 </Button>
               </div>
             </BlurFade>
@@ -612,7 +620,7 @@ export default function Home() {
       </section>
 
       <section className="border-border border-x flex justify-between max-w-8xl mx-auto px-6 py-8 ">
-        <p className="font-mono text-neutral-600">© 2025 Buildstory
+        <p className="font-mono text-neutral-600">© 2026 Buildstory
         </p>
         <p className="font-mono text-neutral-600">Show, don&apos;t tell.</p>
       </section>

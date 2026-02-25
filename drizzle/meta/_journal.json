@@ -29,6 +29,13 @@
       "when": 1771995114168,
       "tag": "0003_bouncy_bedlam",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1772058305242,
+      "tag": "0004_robust_cassandra_nova",
+      "breakpoints": true
     }
   ]
 }
