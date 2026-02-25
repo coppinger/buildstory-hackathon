@@ -76,6 +76,7 @@ npm test             # Run integration tests (Vitest, hits real DB)
 npm run test:watch   # Run tests in watch mode
 npm run db:generate  # Generate migrations from schema changes
 npm run db:migrate   # Run pending migrations against current DATABASE_URL
+npm run db:push      # Push schema changes directly to database (dev/prototyping only)
 npm run db:studio    # Open Drizzle Studio (DB browser)
 ```
 
@@ -155,7 +156,7 @@ Integration tests in `__tests__/integration/` run against the real Neon database
 
 ### CI
 
-GitHub Actions workflow in `.github/workflows/test.yml` runs on every push and PR to `main`. Steps: install deps (`npm ci`), lint (`npm run lint`), test (`npm test`). On merge to `main`, CI also runs Drizzle migrations against the production Neon database before Vercel deploys. Tests hit the real Neon DB via `DATABASE_URL` stored in GitHub repo secrets.
+GitHub Actions workflow in `.github/workflows/test.yml` runs on every push and PR to `main`. Steps: install deps (`npm ci`), lint (`npm run lint`), **run `npm run db:migrate` against test database**, then test (`npm test`). The migration step ensures the test database schema stays in sync with pending migrations before tests run. Tests hit the real Neon DB via `DATABASE_URL` stored in GitHub repo secrets. On merge to `main`, CI also runs Drizzle migrations against the production Neon database before Vercel deploys.
 
 ## Environment Variables
 
