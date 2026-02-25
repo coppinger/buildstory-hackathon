@@ -14,7 +14,7 @@ export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border backdrop-blur-xl">
       <div className="mx-auto flex h-20 max-w-8xl items-center justify-between px-6">
-        <a href="/" className="shrink-0">
+        <Link href="/" className="shrink-0">
           <Image
             src="/buildstory-logo.svg"
             alt="BuildStory"
@@ -22,7 +22,7 @@ export function Header() {
             height={28}
             priority
           />
-        </a>
+        </Link>
 
         <nav className="hidden items-center gap-8 lg:gap-16 md:flex">
           {navItems.map((item) => (

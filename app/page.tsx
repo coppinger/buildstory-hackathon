@@ -614,7 +614,7 @@ export default function Home() {
       <section className="border-border border-x flex justify-between max-w-8xl mx-auto px-6 py-8 ">
         <p className="font-mono text-neutral-600">© 2025 Buildstory
         </p>
-        <p className="font-mono text-neutral-600">Show, don't tell.</p>
+        <p className="font-mono text-neutral-600">Show, don&apos;t tell.</p>
       </section>
     </div>
   );
