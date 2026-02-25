@@ -7,10 +7,11 @@ import {
   profiles,
 } from "@/lib/db/schema";
 import { eq, and, gte, count, desc, sql } from "drizzle-orm";
+import { HACKATHON_SLUG } from "@/lib/constants";
 
 export async function getHackathonEvent() {
   return db.query.events.findFirst({
-    where: eq(events.slug, "hackathon-00"),
+    where: eq(events.slug, HACKATHON_SLUG),
   });
 }
 

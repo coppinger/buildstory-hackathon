@@ -14,7 +14,8 @@ const USERNAME_REGEX = /^[a-z0-9][a-z0-9_-]{1,28}[a-z0-9]$/;
 interface IdentityStepProps {
   displayName: string;
   username: string;
-  onUpdate: (partial: { displayName?: string; username?: string }) => void;
+  country: string;
+  onUpdate: (partial: { displayName?: string; username?: string; country?: string }) => void;
   onUsernameStatusChange: (status: UsernameStatus) => void;
   initialDisplayName: string;
 }
@@ -22,6 +23,7 @@ interface IdentityStepProps {
 export function IdentityStep({
   displayName,
   username,
+  country,
   onUpdate,
   onUsernameStatusChange,
   initialDisplayName,
@@ -139,6 +141,19 @@ export function IdentityStep({
               buildstory.com/@{username}
             </p>
           )}
+        </div>
+
+        <div>
+          <Label htmlFor="country" className="text-neutral-400 text-sm">
+            Country
+          </Label>
+          <Input
+            id="country"
+            value={country}
+            onChange={(e) => onUpdate({ country: e.target.value })}
+            placeholder="Where are you building from?"
+            className="mt-1.5 bg-white/5 border-neutral-700 text-white placeholder:text-neutral-600"
+          />
         </div>
       </div>
     </div>

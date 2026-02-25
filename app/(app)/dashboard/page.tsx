@@ -11,8 +11,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DashboardCountdown } from "@/components/dashboard/dashboard-countdown";
 import { DashboardActivityFeed } from "@/components/dashboard/dashboard-activity-feed";
-
-const HACKATHON_SLUG = "hackathon-00";
+import { getPublicStats } from "@/lib/queries";
+import {
+  HACKATHON_SLUG,
+  DISCORD_INVITE_URL,
+  SPONSOR_CREDITS_URL,
+  DOCS_URL,
+} from "@/lib/constants";
 
 async function getHackathonData() {
   const event = await db.query.events.findFirst({
@@ -21,7 +26,8 @@ async function getHackathonData() {
 
   if (!event) return null;
 
-  return { event };
+  const stats = await getPublicStats(event.id);
+  return { event, stats };
 }
 
 async function isUserRegistered(eventId: string) {
@@ -85,24 +91,24 @@ export default async function DashboardPage() {
 
           <div className="flex gap-8 border-t border-border pt-6 w-full justify-between px-8">
             <div className="flex flex-col justify-center">
-              <p className="text-2xl font-medium text-foreground font-mono text-center tabular-nums">134</p>
+              <p className="text-2xl font-medium text-foreground font-mono text-center tabular-nums">{data?.stats.signups ?? 0}</p>
               <p className="text-sm text-muted-foreground text-center">people</p>
             </div>
             <div className="flex flex-col justify-center">
-              <p className="text-2xl font-medium text-foreground font-mono text-center tabular-nums">49</p>
+              <p className="text-2xl font-medium text-foreground font-mono text-center tabular-nums">{data?.stats.teamCount ?? 0}</p>
               <p className="text-sm text-muted-foreground text-center">teams</p>
             </div>
             <div className="flex flex-col justify-center">
-              <p className="text-2xl font-medium text-foreground font-mono text-center tabular-nums">68</p>
+              <p className="text-2xl font-medium text-foreground font-mono text-center tabular-nums">{data?.stats.soloCount ?? 0}</p>
               <p className="text-sm text-muted-foreground text-center">solo</p>
             </div>
             <div className="flex flex-col justify-center">
-              <p className="text-2xl font-medium text-foreground font-mono text-center tabular-nums">27</p>
+              <p className="text-2xl font-medium text-foreground font-mono text-center tabular-nums">{data?.stats.countryCount ?? 0}</p>
               <p className="text-sm text-muted-foreground text-center">countries</p>
             </div>
             <div className="flex flex-col justify-center">
-              <p className="text-2xl font-medium text-foreground font-mono text-center tabular-nums">19</p>
-              <p className="text-sm text-muted-foreground text-center">volunteers</p>
+              <p className="text-2xl font-medium text-foreground font-mono text-center tabular-nums">{data?.stats.projectCount ?? 0}</p>
+              <p className="text-sm text-muted-foreground text-center">projects</p>
             </div>
           </div>
         </div>
@@ -162,7 +168,7 @@ export default async function DashboardPage() {
           </p>
           <div className="flex flex-col gap-2">
             <a
-              href="#"
+              href={SPONSOR_CREDITS_URL}
               className="text-sm text-foreground hover:text-buildstory-600 transition-colors flex items-center justify-between group"
             >
               <span>Sponsor credits</span>
@@ -171,7 +177,7 @@ export default async function DashboardPage() {
               </span>
             </a>
             <a
-              href="#"
+              href={DOCS_URL}
               className="text-sm text-foreground hover:text-buildstory-600 transition-colors flex items-center justify-between group"
             >
               <span>Documentation</span>
@@ -211,7 +217,7 @@ export default async function DashboardPage() {
                 Find teammates, get help, and share your progress.
               </p>
               <Button variant="outline" size="sm" className="mt-3 bg-[#5F66EB] text-white" asChild>
-                <a href="#" target="_blank" rel="noopener noreferrer">
+                <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer">
                   Join the Discord
                 </a>
               </Button>

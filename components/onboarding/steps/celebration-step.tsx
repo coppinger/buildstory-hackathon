@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { Confetti } from "@/components/ui/confetti";
 import { DashboardCountdown } from "@/components/dashboard/dashboard-countdown";
+import { DISCORD_INVITE_URL } from "@/lib/constants";
 
 type CelebrationVariant = "no_project" | "joining_team" | "with_project";
 
@@ -150,7 +151,7 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
           className="bg-[#5F66EB] text-white border-[#5F66EB]"
           asChild
         >
-          <a href="#" target="_blank" rel="noopener noreferrer">
+          <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer">
             Join the Discord →
           </a>
         </Button>
