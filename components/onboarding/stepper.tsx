@@ -25,18 +25,12 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
         return (
           <div key={i} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center">
-              <div
-                className={cn(
-                  "flex items-center justify-center w-10 h-10 rounded-full transition-all",
-                  (isCompleted || isActive) && "bg-amber-400",
-                  !isCompleted && !isActive && "bg-neutral-800"
-                )}
-              >
+              <div className="flex items-center justify-center w-10 h-10">
                 {isCompleted ? (
-                  <Icon name="check" size="4.5" className="text-neutral-950 material-icon-bold" />
+                  <Icon name="check" size="5" className="text-amber-400 material-icon-bold" />
                 ) : (
                   <span className={cn(
-                    isActive ? "text-neutral-950" : "text-neutral-500"
+                    isActive ? "text-amber-400" : "text-neutral-500"
                   )}>
                     {step.icon}
                   </span>

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 
 interface WizardCardProps {
+  label?: string;
   title: string;
   description?: string;
   children: React.ReactNode;
@@ -23,6 +24,7 @@ interface WizardCardProps {
 }
 
 export function WizardCard({
+  label,
   title,
   description,
   children,
@@ -34,8 +36,13 @@ export function WizardCard({
   onSecondary,
 }: WizardCardProps) {
   return (
-    <Card className="w-full max-w-md bg-transparent shadow-none border-none">
+    <Card className="w-full max-w-lg mx-auto bg-transparent shadow-none border-none">
       <CardHeader className="text-center">
+        {label && (
+          <p className="text-sm uppercase tracking-[0.2em] text-amber-400">
+            {label}
+          </p>
+        )}
         <CardTitle className="font-heading text-4xl text-white">
           {title}
         </CardTitle>
@@ -52,7 +59,7 @@ export function WizardCard({
           <Button
             onClick={onPrimary}
             disabled={primaryDisabled || primaryLoading}
-            className="bg-buildstory-500 text-black hover:bg-buildstory-400 h-11 font-medium w-full text-base"
+            className="bg-foreground text-background hover:bg-foreground/90 h-12 font-medium w-full text-sm"
           >
             {primaryLoading && <Icon name="progress_activity" className="animate-spin" size="4" />}
             {primaryLabel}
@@ -60,9 +67,9 @@ export function WizardCard({
 
           {secondaryLabel && onSecondary && (
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={onSecondary}
-              className="h-11 w-full text-base text-neutral-400 hover:text-white"
+              className="h-11 w-full text-sm"
             >
               {secondaryLabel}
             </Button>

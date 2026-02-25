@@ -78,13 +78,13 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
 
       {/* Header */}
       <div className="text-center space-y-3">
-        <p className="text-5xl">🚀</p>
-        <h1 className="font-heading text-3xl sm:text-4xl text-white">
+        {/* <Icon name="rocket_launch" size="8" className="text-amber-500 mx-auto" /> */}
+        <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl text-white">
           {title}
         </h1>
 
         {variant === "joining_team" && (
-          <p className="text-lg text-neutral-400">
+          <p className="text-base text-neutral-400">
             Your team lead can add you as a collaborator from the project page.
           </p>
         )}
@@ -116,16 +116,16 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
 
       {/* Countdown card */}
       <div className="border border-neutral-800 p-6 space-y-4">
-        <p className="text-base uppercase tracking-[0.2em] text-neutral-500">
+        <p className="text-sm uppercase tracking-[0.2em] text-neutral-500">
           Hackathon starts in
         </p>
         <DashboardCountdown />
-        <p className="text-lg text-neutral-400">
+        <p className="text-base text-neutral-400">
           We&apos;re kicking things off with a live 30-minute session to welcome
           everyone, walk through the week, and get you building. Don&apos;t miss
           it.
         </p>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline"  asChild>
           <a
             href={buildCalendarUrl()}
             target="_blank"
@@ -139,14 +139,14 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
 
       {/* Discord card */}
       <div className="border border-neutral-800 p-6 space-y-3">
-        <p className="text-lg font-medium text-white">Join the community</p>
-        <p className="text-lg text-neutral-400">
+        <p className="text-base font-medium text-white">Join the community</p>
+        <p className="text-base text-neutral-400">
           The Discord is where it all happens — find teammates, get unstuck,
           share progress, and hang out with other builders all week.
         </p>
         <Button
           variant="outline"
-          size="sm"
+          
           className="bg-[#5F66EB] text-white border-[#5F66EB]"
           asChild
         >
@@ -158,16 +158,16 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
 
       {/* Share card */}
       <div className="border border-neutral-800 p-6 space-y-3">
-        <p className="text-lg font-medium text-white">Tell the world</p>
-        <p className="text-base text-neutral-500 font-mono bg-neutral-900 px-3 py-2 break-words">
+        <p className="text-base font-medium text-white">Tell the world</p>
+        <p className="text-sm text-neutral-500 font-mono bg-neutral-900 px-3 py-2 break-words">
           {shareText}
         </p>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleCopy}>
+          <Button variant="outline"  onClick={handleCopy}>
             <Icon name={copied ? "check" : "content_copy"} size="3.5" />
             {copied ? "Copied!" : "Copy link"}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleShareX}>
+          <Button variant="outline"  onClick={handleShareX}>
             Share on X
           </Button>
         </div>
@@ -177,7 +177,7 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
       <div className="space-y-2 pb-8">
         <Button
           asChild
-          className="w-full h-12 text-base font-medium bg-foreground text-background hover:bg-foreground/90"
+          className="w-full h-12 text-sm font-medium bg-foreground text-background hover:bg-foreground/90"
         >
           <Link href="/dashboard">Go to dashboard →</Link>
         </Button>

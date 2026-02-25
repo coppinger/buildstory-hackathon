@@ -23,13 +23,13 @@ export function LivePreviewBadge({
       <div className="min-w-0 flex-1">
         <motion.p
           layout
-          className="truncate text-lg font-medium text-white"
+          className="truncate text-base font-medium text-white"
         >
           {displayName || "Your Name"}
         </motion.p>
         <motion.p
           layout
-          className="truncate text-base text-neutral-500"
+          className="truncate text-sm text-neutral-500"
         >
           @{username || "username"}
         </motion.p>

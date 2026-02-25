@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import type { ReactNode } from "react";
 
 interface StepTransitionProps {
-  stepKey: number;
+  stepKey: string | number;
   children: ReactNode;
 }
 

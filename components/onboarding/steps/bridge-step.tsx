@@ -93,7 +93,7 @@ export function BridgeStep({ onChoose, onJoinTeam }: BridgeStepProps) {
         <h1 className="font-heading text-3xl sm:text-4xl text-white">
           You&apos;re in!
         </h1>
-        <p className="text-lg text-neutral-400">
+        <p className="text-base text-neutral-400">
           One more thing — do you know what you&apos;re going to build?
         </p>
       </div>
@@ -115,8 +115,8 @@ export function BridgeStep({ onChoose, onJoinTeam }: BridgeStepProps) {
                 <Icon name={option.icon} size="5" className="text-neutral-400" />
               </div>
               <div>
-                <p className="text-lg font-medium text-white">{option.title}</p>
-                <p className="text-base text-neutral-500">{option.description}</p>
+                <p className="text-base font-medium text-white">{option.title}</p>
+                <p className="text-sm text-neutral-500">{option.description}</p>
               </div>
             </button>
 
@@ -145,7 +145,7 @@ export function BridgeStep({ onChoose, onJoinTeam }: BridgeStepProps) {
                     selected={selectedProject}
                     onClear={() => setSelectedProject(null)}
                   />
-                  <p className="text-base text-neutral-500">
+                  <p className="text-sm text-neutral-500">
                     Search by either field — we&apos;ll match you up.
                   </p>
                   <Button
