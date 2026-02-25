@@ -1,4 +1,5 @@
 @import "mapbox-gl/dist/mapbox-gl.css";
+@import "material-symbols/sharp.css";
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -188,4 +189,23 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.material-symbols-sharp {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  line-height: 1;
+  width: 1em;
+  height: 1em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.material-icon-bold {
+  font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 24;
 }

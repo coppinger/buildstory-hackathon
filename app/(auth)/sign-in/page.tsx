@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSignIn } from "@clerk/nextjs";
-import { Loader2 } from "lucide-react";
+import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -128,7 +128,7 @@ export default function SignInPage() {
             disabled={oauthLoading !== null}
           >
             {oauthLoading === "oauth_google" ? (
-              <Loader2 className="animate-spin" />
+              <Icon name="progress_activity" className="animate-spin" size="4" />
             ) : (
               <GoogleIcon className="size-5" />
             )}
@@ -141,7 +141,7 @@ export default function SignInPage() {
             disabled={oauthLoading !== null}
           >
             {oauthLoading === "oauth_github" ? (
-              <Loader2 className="animate-spin" />
+              <Icon name="progress_activity" className="animate-spin" size="4" />
             ) : (
               <GitHubIcon className="size-5" />
             )}
@@ -197,7 +197,7 @@ export default function SignInPage() {
             disabled={loading}
             className="bg-buildstory-500 text-black hover:bg-buildstory-400 h-11 font-medium w-full text-base"
           >
-            {loading && <Loader2 className="animate-spin" />}
+            {loading && <Icon name="progress_activity" className="animate-spin" size="4" />}
             Sign in
           </Button>
         </form>

@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, ExternalLink, Github, X, Check } from "lucide-react";
+import { Icon } from "@/components/ui/icon";
+import { GitHubIcon } from "@/components/icons";
 import {
   registerForEvent,
   createProject,
@@ -84,7 +85,7 @@ function RegisterCard({ event }: { event: Event }) {
         disabled={!selected || isPending}
         className="mt-6 bg-buildstory-500 text-black hover:bg-white/90 px-8 h-12 text-sm font-medium ease-in duration-200"
       >
-        {isPending && <Loader2 className="animate-spin" />}
+        {isPending && <Icon name="progress_activity" className="animate-spin" size="4" />}
         Register
       </Button>
       <ErrorMessage message={error} />
@@ -147,7 +148,7 @@ function EnteredProjects({
                   rel="noopener noreferrer"
                   className="text-neutral-500 hover:text-white transition-colors"
                 >
-                  <Github className="size-4" />
+                  <GitHubIcon className="size-4" />
                 </a>
               )}
               {project.liveUrl && (
@@ -157,7 +158,7 @@ function EnteredProjects({
                   rel="noopener noreferrer"
                   className="text-neutral-500 hover:text-white transition-colors"
                 >
-                  <ExternalLink className="size-4" />
+                  <Icon name="open_in_new" size="4" />
                 </a>
               )}
               <button
@@ -167,9 +168,9 @@ function EnteredProjects({
                 title="Remove from event"
               >
                 {isPending && removingId === project.id ? (
-                  <Loader2 className="size-4 animate-spin" />
+                  <Icon name="progress_activity" className="animate-spin" size="4" />
                 ) : (
-                  <X className="size-4" />
+                  <Icon name="close" size="4" />
                 )}
               </button>
             </div>
@@ -237,9 +238,9 @@ function SelectProject({
               title="Enter in event"
             >
               {isPending && enteringId === project.id ? (
-                <Loader2 className="size-4 animate-spin" />
+                <Icon name="progress_activity" className="animate-spin" size="4" />
               ) : (
-                <Check className="size-4" />
+                <Icon name="check" size="4" />
               )}
             </button>
           </div>
@@ -276,7 +277,7 @@ function CreateProjectForm({ event }: { event: Event }) {
         className="w-full border border-dashed border-border hover:border-white/20 p-6 md:p-8 text-center transition-colors cursor-pointer group"
       >
         <div className="flex items-center justify-center gap-2 text-neutral-500 group-hover:text-white/70 transition-colors">
-          <Plus className="size-5" />
+          <Icon name="add" size="5" />
           <span className="font-medium">Create a new project</span>
         </div>
       </button>
@@ -337,7 +338,7 @@ function CreateProjectForm({ event }: { event: Event }) {
             disabled={isPending}
             className="bg-buildstory-500 text-black hover:bg-white/90 px-6 h-10 text-sm font-medium ease-in duration-200"
           >
-            {isPending && <Loader2 className="animate-spin" />}
+            {isPending && <Icon name="progress_activity" className="animate-spin" size="4" />}
             Create & enter
           </Button>
           <Button

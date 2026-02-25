@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -54,7 +54,7 @@ export function WizardCard({
             disabled={primaryDisabled || primaryLoading}
             className="bg-buildstory-500 text-black hover:bg-buildstory-400 h-11 font-medium w-full text-base"
           >
-            {primaryLoading && <Loader2 className="animate-spin" />}
+            {primaryLoading && <Icon name="progress_activity" className="animate-spin" size="4" />}
             {primaryLabel}
           </Button>
 

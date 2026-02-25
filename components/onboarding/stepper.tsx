@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Check } from "lucide-react";
+import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 
 interface StepConfig {
@@ -33,10 +33,9 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
                 )}
               >
                 {isCompleted ? (
-                  <Check className="size-3.5 text-neutral-950" strokeWidth={3} />
+                  <Icon name="check" size="3.5" className="text-neutral-950 material-icon-bold" />
                 ) : (
                   <span className={cn(
-                    "[&>svg]:size-4",
                     isActive ? "text-neutral-950" : "text-neutral-500"
                   )}>
                     {step.icon}

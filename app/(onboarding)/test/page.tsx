@@ -1,6 +1,6 @@
 "use client";
 
-import { Hand, Wrench, PartyPopper } from "lucide-react";
+import { Icon } from "@/components/ui/icon";
 import { useWizard } from "@/components/onboarding/use-wizard";
 import { Stepper } from "@/components/onboarding/stepper";
 import { WizardCard } from "@/components/onboarding/wizard-card";
@@ -8,19 +8,19 @@ import { WizardCard } from "@/components/onboarding/wizard-card";
 const STEPS = [
   {
     title: "Welcome",
-    icon: <Hand />,
+    icon: <Icon name="waving_hand" size="4" />,
     description: "Let's get your profile set up",
     content: <p className="text-neutral-300 text-center">Step 1 content goes here.</p>,
   },
   {
     title: "Your Skills",
-    icon: <Wrench />,
+    icon: <Icon name="build" size="4" />,
     description: "Tell us what you build with",
     content: <p className="text-neutral-300 text-center">Step 2 content goes here.</p>,
   },
   {
     title: "All Set",
-    icon: <PartyPopper />,
+    icon: <Icon name="celebration" size="4" />,
     description: "You're ready to start building",
     content: <p className="text-neutral-300 text-center">Step 3 content goes here.</p>,
   },
