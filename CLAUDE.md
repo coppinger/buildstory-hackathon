@@ -101,7 +101,7 @@ No webhook. Profiles are created lazily via `lib/db/ensure-profile.ts` -- call `
 Neon Postgres with Drizzle ORM. Client in `lib/db/index.ts` uses the Neon HTTP (serverless) adapter and imports the full schema for relational queries.
 
 **Schema** (`lib/db/schema.ts`):
-- `profiles` -- clerk_id (unique), username (unique, nullable), display_name, bio, social links, experience_level enum
+- `profiles` -- clerk_id (unique), username (unique, nullable), display_name, bio, social links, country, experience_level enum
 - `events` -- name, slug (unique), description, dates, status enum (draft/open/active/judging/complete)
 - `eventRegistrations` -- links profile to event with team_preference enum, unique on (event_id, profile_id)
 - `projects` -- profile_id (FK), name, slug (unique, nullable), description, starting_point enum, goal_text, github_url, live_url
@@ -114,11 +114,19 @@ Type exports follow the pattern: `TableName` (select type) and `NewTableName` (i
 
 Config reads `DATABASE_URL` from `.env.local` (via dotenv in `drizzle.config.ts`; Next.js auto-loads it at runtime). Neon uses branch-based isolation: `dev` branch for local/preview, `main` branch for production.
 
+### Constants & Queries
+
+`lib/constants.ts` centralizes shared values: `HACKATHON_SLUG`, `DISCORD_INVITE_URL`, and placeholder URLs (`VOLUNTEER_URL`, `SPONSOR_URL`, `SPONSOR_CREDITS_URL`, `DOCS_URL`). Import from here instead of hardcoding slugs or URLs.
+
+Two query modules:
+- `lib/admin/queries.ts` -- admin dashboard queries (growth stats, activity feed)
+- `lib/queries.ts` -- public-facing queries scoped to the hackathon event: `getHackathonProjects`, `getProjectBySlug`, `getHackathonProfiles`, `getProfileByUsername`, `getPublicStats`. Detail queries enforce visibility rules (projects must be linked to an event, profiles must be registered for the hackathon).
+
 ### Page Structure
 
-`app/page.tsx` is a single server component composing all landing page sections. Client-side interactivity is isolated to individual components (countdown timer, globe, activity feed, FAQ accordion). Components use `BlurFade` wrapper for staggered scroll-triggered animations.
+`app/page.tsx` is an async server component composing all landing page sections. It fetches real DB stats via `getPublicStats` and uses constants for external links. Client-side interactivity is isolated to individual components (countdown timer, globe, activity feed, FAQ accordion). Components use `BlurFade` wrapper for staggered scroll-triggered animations.
 
-`app/(app)/` -- Authenticated app shell with `AppTopbar` + `AppSidebar` layout (see `components/app-topbar.tsx`, `components/app-sidebar.tsx`). Contains dashboard, projects, profiles, teams, and forum pages. The dashboard (`app/(app)/dashboard/page.tsx`) is a server component that queries hackathon data and registration status, with client components in `components/dashboard/` (countdown timer, activity feed).
+`app/(app)/` -- Authenticated app shell with `AppTopbar` + `AppSidebar` layout (see `components/app-topbar.tsx`, `components/app-sidebar.tsx`). Sidebar nav: Dashboard, Hackathon, Projects, Profiles. The dashboard (`app/(app)/dashboard/page.tsx`) is a server component that queries hackathon data, registration status, and real stats via `getPublicStats`, with client components in `components/dashboard/` (countdown timer, activity feed). Dynamic detail routes: `app/(app)/projects/[slug]/page.tsx` and `app/(app)/profiles/[username]/page.tsx`.
 
 `app/(onboarding)/` -- Minimal-chrome layout (logo + centered content, no sidebar) for guided flows. Currently contains the hackathon registration flow at `/hackathon`.
 
