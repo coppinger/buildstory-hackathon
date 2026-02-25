@@ -6,6 +6,7 @@ import { ActivityFeed } from "@/components/activity-feed";
 import { FAQ } from "@/components/faq";
 import { Badge } from "@/components/ui/badge"
 import { BlurFade } from "@/components/blur-fade"
+import Link from "next/link";
 
 const stats = [
   "134 people",
@@ -61,12 +62,14 @@ export default function Home() {
             >
               <a href="#why">tell me more ↓</a>
             </Button>
+          <Link href="/sign-up">
             <Button
               size="lg"
               className="bg-buildstory-500 text-black hover:bg-white/90 px-8 h-12 text-sm font-medium ease-in duration-200"
             >
               I&apos;m in, sign me up
             </Button>
+          </Link>
           </div>
         </BlurFade>
 
