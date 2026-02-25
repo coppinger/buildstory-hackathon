@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { eq, and, ilike, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
+import { NeonDbError } from "@neondatabase/serverless";
 import { db } from "@/lib/db";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import {
@@ -41,6 +42,17 @@ function validateUrl(url: string | null): string | null {
   } catch {
     return null;
   }
+}
+
+function isUniqueViolation(error: unknown, constraintName: string): boolean {
+  // Drizzle ORM wraps DB errors in DrizzleQueryError with the original on .cause
+  const cause =
+    error instanceof Error && error.cause instanceof NeonDbError
+      ? error.cause
+      : error instanceof NeonDbError
+        ? error
+        : null;
+  return cause?.code === "23505" && cause?.constraint === constraintName;
 }
 
 const USERNAME_REGEX = /^[a-z0-9][a-z0-9_-]{1,28}[a-z0-9]$/;
@@ -127,10 +139,7 @@ export async function completeRegistration(data: {
     return { success: true };
   } catch (error) {
     // Handle unique constraint violation on username
-    if (
-      error instanceof Error &&
-      error.message.includes("profiles_username_unique")
-    ) {
+    if (isUniqueViolation(error, "profiles_username_unique")) {
       return { success: false, error: "Username is already taken" };
     }
     Sentry.captureException(error, {
@@ -193,10 +202,7 @@ export async function createOnboardingProject(data: {
     revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.includes("projects_slug_unique")
-    ) {
+    if (isUniqueViolation(error, "projects_slug_unique")) {
       return { success: false, error: "Project URL is already taken" };
     }
     Sentry.captureException(error, {
