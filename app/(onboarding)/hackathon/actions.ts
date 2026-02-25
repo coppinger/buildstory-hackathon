@@ -13,6 +13,8 @@ import {
   projects,
   eventProjects,
 } from "@/lib/db/schema";
+import { notifySignup, notifyProject } from "@/lib/discord";
+import { checkSignupMilestone, checkProjectMilestone } from "@/lib/milestones";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -118,6 +120,9 @@ export async function completeRegistration(data: {
       })
       .onConflictDoNothing();
 
+    notifySignup(data.displayName.trim());
+    checkSignupMilestone(data.eventId);
+
     revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
@@ -177,6 +182,13 @@ export async function createOnboardingProject(data: {
       .insert(eventProjects)
       .values({ eventId: data.eventId, projectId: project.id })
       .onConflictDoNothing();
+
+    const profile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, profileId),
+      columns: { displayName: true },
+    });
+    notifyProject(profile?.displayName ?? "Someone", data.name.trim());
+    checkProjectMilestone(data.eventId);
 
     revalidatePath("/dashboard");
     return { success: true };

@@ -11,7 +11,10 @@ import {
   eventRegistrations,
   projects,
   eventProjects,
+  profiles,
 } from "@/lib/db/schema";
+import { notifySignup, notifyProject } from "@/lib/discord";
+import { checkSignupMilestone, checkProjectMilestone } from "@/lib/milestones";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -77,6 +80,13 @@ export async function registerForEvent(
       .values({ eventId, profileId, teamPreference })
       .onConflictDoNothing();
 
+    const profile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, profileId),
+      columns: { displayName: true },
+    });
+    notifySignup(profile?.displayName ?? "Someone");
+    checkSignupMilestone(eventId);
+
     revalidatePath(`/event/${event.slug}`);
     return { success: true };
   } catch (error) {
@@ -118,6 +128,13 @@ export async function createProject(
       .insert(eventProjects)
       .values({ eventId, projectId: project.id })
       .onConflictDoNothing();
+
+    const profile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, profileId),
+      columns: { displayName: true },
+    });
+    notifyProject(profile?.displayName ?? "Someone", name.trim());
+    checkProjectMilestone(eventId);
 
     const event = await db.query.events.findFirst({
       where: eq(events.id, eventId),

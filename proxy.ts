@@ -2,6 +2,7 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { ensureProfile } from "@/lib/db/ensure-profile";
+import { isAdmin } from "@/lib/admin";
 
 const PROFILE_COOKIE = "bs_profile";
 
@@ -31,6 +32,13 @@ export const proxy = clerkMiddleware(async (auth, request) => {
       });
       // Don't block the request — profile will be retried on next page load
       // since the cookie was not set
+    }
+  }
+
+  // Admin route protection
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    if (!userId || !isAdmin(userId)) {
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 });
