@@ -205,14 +205,14 @@ export default async function DashboardPage() {
             />
             <div className="flex-1">
               <h3 className="font-semibold text-foreground">
-                Join the Discord
+                Buildstory Discord
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Find teammates, get help, and share your progress.
               </p>
-              <Button variant="outline" size="sm" className="mt-3" asChild>
+              <Button variant="outline" size="sm" className="mt-3 bg-[#5F66EB] text-white" asChild>
                 <a href="#" target="_blank" rel="noopener noreferrer">
-                  Join Discord
+                  Join the Discord
                 </a>
               </Button>
             </div>

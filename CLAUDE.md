@@ -81,6 +81,8 @@ Config reads `DATABASE_URL` from `.env.local` (via dotenv in `drizzle.config.ts`
 
 `app/page.tsx` is a single server component composing all landing page sections. Client-side interactivity is isolated to individual components (countdown timer, globe, activity feed, FAQ accordion). Components use `BlurFade` wrapper for staggered scroll-triggered animations.
 
+`app/(app)/` -- Authenticated app shell with `AppTopbar` + `AppSidebar` layout (see `components/app-topbar.tsx`, `components/app-sidebar.tsx`). Contains dashboard, hackathon, projects, profiles, teams, and forum pages. The dashboard (`app/(app)/dashboard/page.tsx`) is a server component that queries hackathon data and registration status, with client components in `components/dashboard/` (countdown timer, activity feed).
+
 ### Error Handling
 
 Sentry is configured for server (`sentry.server.config.ts`), edge (`sentry.edge.config.ts`), and client (`instrumentation-client.ts`) runtimes. Server actions catch errors and report via `Sentry.captureException` with `tags: { component: "server-action", action }` and relevant `extra` context before returning `{ success: false, error }`.
