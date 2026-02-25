@@ -68,27 +68,25 @@ export function DashboardCountdown() {
 
   return (
     <div className="flex flex-col gap-4">
-      {state.phase !== "ended" && (
-        <div className="flex items-center gap-3 sm:gap-4">
-          {segments.map((seg, i) => (
-            <div key={seg.label} className="flex items-center gap-3 sm:gap-4">
-              <div className="flex flex-col items-center">
-                <span className="font-mono text-4xl sm:text-5xl tabular-nums tracking-tight text-foreground">
-                  {pad(seg.value)}
-                </span>
-                <span className="text-[11px] uppercase tracking-widest text-muted-foreground/60 mt-1">
-                  {seg.label}
-                </span>
-              </div>
-              {i < segments.length - 1 && (
-                <span className="text-2xl sm:text-3xl text-muted-foreground/30 font-light -mt-4">
-                  :
-                </span>
-              )}
+      <div className="flex items-center gap-3 sm:gap-4">
+        {segments.map((seg, i) => (
+          <div key={seg.label} className="flex items-center gap-3 sm:gap-4">
+            <div className="flex flex-col items-center">
+              <span className="font-mono text-4xl sm:text-5xl tabular-nums tracking-tight text-foreground">
+                {pad(seg.value)}
+              </span>
+              <span className="text-[11px] uppercase tracking-widest text-muted-foreground/60 mt-1">
+                {seg.label}
+              </span>
             </div>
-          ))}
-        </div>
-      )}
+            {i < segments.length - 1 && (
+              <span className="text-2xl sm:text-3xl text-muted-foreground/30 font-light -mt-4">
+                :
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
       {/* <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground/60">
         {label}
       </p> */}

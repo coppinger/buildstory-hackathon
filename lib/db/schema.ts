@@ -43,11 +43,14 @@ export const teamPreferenceEnum = pgEnum("team_preference", [
   "looking_for_team",
 ]);
 
+export const startingPointEnum = pgEnum("starting_point", ["new", "existing"]);
+
 // --- Profiles ---
 
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
   clerkId: text("clerk_id").unique().notNull(),
+  username: text("username").unique(),
   displayName: text("display_name").notNull(),
   bio: text("bio"),
   websiteUrl: text("website_url"),
@@ -114,7 +117,10 @@ export const projects = pgTable("projects", {
     .notNull()
     .references(() => profiles.id),
   name: text("name").notNull(),
+  slug: text("slug").unique(),
   description: text("description"),
+  startingPoint: startingPointEnum("starting_point"),
+  goalText: text("goal_text"),
   githubUrl: text("github_url"),
   liveUrl: text("live_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

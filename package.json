@@ -15,6 +15,8 @@
     "@neondatabase/serverless": "^1.0.2",
     "@paper-design/shaders-react": "^0.0.71",
     "@sentry/nextjs": "^10.39.0",
+    "@types/canvas-confetti": "^1.9.0",
+    "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.1",
