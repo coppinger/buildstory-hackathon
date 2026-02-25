@@ -17,6 +17,9 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run lint
+      - run: npm run db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - run: npm test
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

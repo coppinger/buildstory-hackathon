@@ -38,17 +38,46 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 - **CI**: GitHub Actions (`.github/workflows/test.yml`) -- lint + tests on push/PR to main
 - **AI enrichment:** Anthropic API (future — build log processing)
 
+## Development Workflow
+
+**Never push directly to `main`.** The `main` branch is protected and requires a pull request.
+
+### Environment Setup
+
+| Scope | Database | Auth |
+|---|---|---|
+| Local (`.env.local`) | Neon `dev` branch | Clerk test keys (`pk_test_`, `sk_test_`) |
+| Vercel Preview | Neon `dev` branch | Clerk test keys |
+| Vercel Production | Neon `main` branch | Clerk live keys (`pk_live_`, `sk_live_`) |
+
+### Flow
+
+1. Create a feature branch (`git checkout -b feat/thing`)
+2. Work locally against the dev environment
+3. Run `npm run db:generate` if schema changed, then `npm run db:migrate` against dev
+4. Push the feature branch and open a PR into `main`
+5. CI runs tests; Vercel creates a preview deployment
+6. Verify in the preview environment
+7. Merge the PR — CI runs tests again, then runs Drizzle migrations against production Neon, then Vercel deploys to production
+
+### Rules
+
+- All schema changes go through migration files (`db:generate` → `db:migrate`), never `db:push` in production
+- Test migrations against the dev branch before merging
+- Production migrations are automated via CI on merge to `main`
+
 ## Commands
 
 ```
-npm run dev      # Start dev server (localhost:3000)
-npm run build    # Production build
-npm run lint     # ESLint
-npm test         # Run integration tests (Vitest, hits real DB)
-npm run test:watch  # Run tests in watch mode
-npx drizzle-kit generate   # Generate migrations from schema changes
-npx drizzle-kit migrate    # Apply migrations to database
-npx drizzle-kit studio     # Open Drizzle Studio (DB browser)
+npm run dev          # Start dev server (localhost:3000)
+npm run build        # Production build
+npm run lint         # ESLint
+npm test             # Run integration tests (Vitest, hits real DB)
+npm run test:watch   # Run tests in watch mode
+npm run db:generate  # Generate migrations from schema changes
+npm run db:migrate   # Run pending migrations against current DATABASE_URL
+npm run db:push      # Push schema changes directly to database (dev/prototyping only)
+npm run db:studio    # Open Drizzle Studio (DB browser)
 ```
 
 ## Architecture
@@ -83,7 +112,7 @@ Enums: `experience_level`, `event_status`, `team_preference`, `starting_point`
 
 Type exports follow the pattern: `TableName` (select type) and `NewTableName` (insert type).
 
-Config reads `DATABASE_URL` from `.env.local` (via dotenv in `drizzle.config.ts`; Next.js auto-loads it at runtime).
+Config reads `DATABASE_URL` from `.env.local` (via dotenv in `drizzle.config.ts`; Next.js auto-loads it at runtime). Neon uses branch-based isolation: `dev` branch for local/preview, `main` branch for production.
 
 ### Page Structure
 
@@ -127,13 +156,13 @@ Integration tests in `__tests__/integration/` run against the real Neon database
 
 ### CI
 
-GitHub Actions workflow in `.github/workflows/test.yml` runs on every push and PR to `main`. Steps: install deps (`npm ci`), lint (`npm run lint`), test (`npm test`). Tests hit the real Neon DB via `DATABASE_URL` stored in GitHub repo secrets.
+GitHub Actions workflow in `.github/workflows/test.yml` runs on every push and PR to `main`. Steps: install deps (`npm ci`), lint (`npm run lint`), **run `npm run db:migrate` against test database**, then test (`npm test`). The migration step ensures the test database schema stays in sync with pending migrations before tests run. Tests hit the real Neon DB via `DATABASE_URL` stored in GitHub repo secrets. On merge to `main`, CI also runs Drizzle migrations against the production Neon database before Vercel deploys.
 
 ## Environment Variables
 
-Required in `.env.local`:
-- `DATABASE_URL` -- Neon Postgres connection string
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` -- Clerk auth keys
+Required in `.env.local` (local dev uses Neon `dev` branch + Clerk test keys):
+- `DATABASE_URL` -- Neon Postgres connection string (dev branch locally, main branch in production)
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` -- Clerk auth keys (`pk_test_`/`sk_test_` locally, `pk_live_`/`sk_live_` in production)
 - `NEXT_PUBLIC_CLERK_SIGN_IN_URL` (`/sign-in`) / `NEXT_PUBLIC_CLERK_SIGN_UP_URL` (`/sign-up`)
 - `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` (`/dashboard`) / `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` (`/hackathon`)
 - `ADMIN_USER_IDS` -- comma-separated Clerk user IDs granted admin access
