@@ -132,106 +132,101 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      {/* Bottom section: Activity Feed + sidebar cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-        {/* Left: Activity Feed */}
-        <Card className="w-full relative overflow-hidden flex flex-col">
+      {/* Bottom section: remaining cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Live Streams */}
+        <Card className="w-full">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
+            Live Streams
+          </p>
+          <div className="flex items-center gap-3 border border-border p-3">
+            <span className="relative flex h-2.5 w-2.5 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                Sarah Chen
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                Building an AI Recipe Remixer
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Resources */}
+        <Card className="w-full">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
+            Resources
+          </p>
+          <div className="flex flex-col gap-2">
+            <a
+              href="#"
+              className="text-sm text-foreground hover:text-buildstory-600 transition-colors flex items-center justify-between group"
+            >
+              <span>Sponsor credits</span>
+              <span className="text-muted-foreground group-hover:text-buildstory-600 transition-colors">
+                →
+              </span>
+            </a>
+            <a
+              href="#"
+              className="text-sm text-foreground hover:text-buildstory-600 transition-colors flex items-center justify-between group"
+            >
+              <span>Documentation</span>
+              <span className="text-muted-foreground group-hover:text-buildstory-600 transition-colors">
+                →
+              </span>
+            </a>
+            <a
+              href="https://doitlive.club"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-foreground hover:text-buildstory-600 transition-colors flex items-center justify-between group"
+            >
+              <span>Streaming guide</span>
+              <span className="text-muted-foreground group-hover:text-buildstory-600 transition-colors">
+                →
+              </span>
+            </a>
+          </div>
+        </Card>
+      </div>
+      </div>
+      <aside className="max-w-xs w-full flex flex-col gap-6">
+        {/* Discord */}
+        <Card className="w-full">
+          <div className="flex items-start gap-4">
+            <img
+              src="/discord.svg"
+              alt=""
+              className="w-5 h-5 mt-0.5 brightness-0 invert"
+            />
+            <div className="flex-1">
+              <h3 className="font-semibold text-foreground">
+                Join the Discord
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Find teammates, get help, and share your progress.
+              </p>
+              <Button variant="outline" size="sm" className="mt-3" asChild>
+                <a href="#" target="_blank" rel="noopener noreferrer">
+                  Join Discord
+                </a>
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        {/* Activity Feed */}
+        <Card className="w-full relative overflow-hidden flex flex-col flex-1 max-h-96">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
             Activity
           </p>
           <DashboardActivityFeed />
         </Card>
-
-        {/* Right: Stacked cards */}
-        <div className="flex flex-col gap-6">
-          {/* Discord */}
-          <Card className="w-full">
-            <div className="flex items-start gap-4">
-              <img
-                src="/discord.svg"
-                alt=""
-                className="w-5 h-5 mt-0.5 brightness-0 invert"
-              />
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground">
-                  Join the Discord
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Find teammates, get help, and share your progress.
-                </p>
-                <Button variant="outline" size="sm" className="mt-3" asChild>
-                  <a href="#" target="_blank" rel="noopener noreferrer">
-                    Join Discord
-                  </a>
-                </Button>
-              </div>
-            </div>
-          </Card>
-
-          {/* Live Streams */}
-          <Card className="w-full">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
-              Live Streams
-            </p>
-            <div className="flex items-center gap-3 border border-border p-3">
-              <span className="relative flex h-2.5 w-2.5 shrink-0">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
-                  Sarah Chen
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  Building an AI Recipe Remixer
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Resources */}
-          <Card className="w-full">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
-              Resources
-            </p>
-            <div className="flex flex-col gap-2">
-              <a
-                href="#"
-                className="text-sm text-foreground hover:text-buildstory-600 transition-colors flex items-center justify-between group"
-              >
-                <span>Sponsor credits</span>
-                <span className="text-muted-foreground group-hover:text-buildstory-600 transition-colors">
-                  →
-                </span>
-              </a>
-              <a
-                href="#"
-                className="text-sm text-foreground hover:text-buildstory-600 transition-colors flex items-center justify-between group"
-              >
-                <span>Documentation</span>
-                <span className="text-muted-foreground group-hover:text-buildstory-600 transition-colors">
-                  →
-                </span>
-              </a>
-              <a
-                href="https://doitlive.club"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-foreground hover:text-buildstory-600 transition-colors flex items-center justify-between group"
-              >
-                <span>Streaming guide</span>
-                <span className="text-muted-foreground group-hover:text-buildstory-600 transition-colors">
-                  →
-                </span>
-              </a>
-            </div>
-          </Card>
-        </div>
-      </div>
-      </div>
-      <div className="max-w-xs w-full">
-        <Card><p>test</p></Card>
-      </div>
+      </aside>
     </div>
   );
 }

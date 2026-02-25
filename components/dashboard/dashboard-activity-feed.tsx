@@ -63,8 +63,10 @@ export function DashboardActivityFeed() {
 
   return (
     <div className="relative flex-1 overflow-hidden -mx-8 -mb-8">
-      {/* Bottom fade */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-16 bg-gradient-to-t from-white to-transparent" />
+      {/* Top fade */}
+        <div className="pointer-events-none absolute inset-x-px -top-10 z-10 h-16 bg-gradient-to-b from-neutral-950 to-transparent" />
+        {/* Bottom fade */}
+        <div className="pointer-events-none absolute inset-x-px bottom-0 z-10 h-16 bg-gradient-to-t from-neutral-950 to-transparent" />
       <div className="h-full overflow-hidden px-8">
         <div className="flex flex-col gap-0.5">
           <AnimatePresence initial={false}>
