@@ -29,7 +29,7 @@ export function Header() {
             <a
               key={item}
               href={`#${item.toLowerCase()}`}
-              className="rounded-md px-3 py-1.5 text-base text-neutral-500 transition-colors hover:text-white font-mono"
+              className="rounded-md px-3 py-1.5 text-sm text-neutral-500 transition-colors hover:text-white font-mono"
             >
               {item}
             </a>

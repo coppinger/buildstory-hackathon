@@ -94,9 +94,9 @@ export function PredictiveSearch({
   if (selected) {
     return (
       <div className={className}>
-        <Label className="text-neutral-400 text-xs">{label}</Label>
-        <div className="mt-1.5 flex items-center gap-2 rounded-md border border-neutral-700 bg-neutral-900/50 px-3 py-2">
-          <span className="flex-1 text-sm text-white truncate">
+        <Label className="text-neutral-400 text-base">{label}</Label>
+        <div className="mt-1.5 flex items-center gap-2 border border-neutral-700 bg-neutral-900/50 px-3 py-2">
+          <span className="flex-1 text-lg text-white truncate">
             {selected.label}
           </span>
           <button
@@ -113,7 +113,7 @@ export function PredictiveSearch({
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>
-      <Label className="text-neutral-400 text-xs">{label}</Label>
+      <Label className="text-neutral-400 text-base">{label}</Label>
       <div className="relative mt-1.5">
         <Input
           ref={inputRef}
@@ -139,7 +139,7 @@ export function PredictiveSearch({
       </div>
 
       {isOpen && results.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border border-neutral-700 bg-neutral-900 shadow-lg">
+        <div className="absolute z-50 mt-1 w-full border border-neutral-700 bg-neutral-900 shadow-lg">
           {results.map((result, i) => (
             <button
               key={result.id}
@@ -150,7 +150,7 @@ export function PredictiveSearch({
                 setQuery("");
               }}
               className={cn(
-                "w-full px-3 py-2 text-left text-sm transition-colors cursor-pointer",
+                "w-full px-3 py-2 text-left text-lg transition-colors cursor-pointer",
                 i === highlightIndex
                   ? "bg-neutral-800 text-white"
                   : "text-neutral-300 hover:bg-neutral-800/50"
@@ -158,7 +158,7 @@ export function PredictiveSearch({
             >
               <span className="block truncate">{result.label}</span>
               {result.sublabel && (
-                <span className="block truncate text-xs text-neutral-500">
+                <span className="block truncate text-base text-neutral-500">
                   {result.sublabel}
                 </span>
               )}

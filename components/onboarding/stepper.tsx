@@ -17,7 +17,7 @@ interface StepperProps {
 
 export function Stepper({ steps, currentStep, className }: StepperProps) {
   return (
-    <div className={cn("flex items-center w-full max-w-lg mx-auto", className)}>
+    <div className={cn("flex items-center w-full max-w-md mx-auto", className)}>
       {steps.map((step, i) => {
         const isCompleted = i < currentStep;
         const isActive = i === currentStep;
@@ -27,13 +27,13 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
             <div className="flex flex-col items-center">
               <div
                 className={cn(
-                  "flex items-center justify-center w-8 h-8 rounded-full transition-all",
+                  "flex items-center justify-center w-10 h-10 rounded-full transition-all",
                   (isCompleted || isActive) && "bg-amber-400",
                   !isCompleted && !isActive && "bg-neutral-800"
                 )}
               >
                 {isCompleted ? (
-                  <Icon name="check" size="3.5" className="text-neutral-950 material-icon-bold" />
+                  <Icon name="check" size="4.5" className="text-neutral-950 material-icon-bold" />
                 ) : (
                   <span className={cn(
                     isActive ? "text-neutral-950" : "text-neutral-500"
@@ -44,7 +44,7 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
               </div>
               <span
                 className={cn(
-                  "mt-2.5 text-xs tracking-wide whitespace-nowrap",
+                  "mt-2.5 text-xs whitespace-nowrap",
                   isCompleted && "text-amber-400",
                   isActive && "text-amber-400",
                   !isCompleted && !isActive && "text-neutral-600"

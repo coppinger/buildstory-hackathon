@@ -19,7 +19,7 @@ export default function OnboardingLayout({
         </Link>
       </div>
 
-      <div className="flex flex-1 w-full items-start justify-center px-6 pt-8">
+      <div className="flex flex-1 w-full items-start justify-center px-6 pt-8 pb-24 md:pt-24">
         {children}
       </div>
     </div>

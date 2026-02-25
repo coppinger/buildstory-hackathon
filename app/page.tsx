@@ -25,7 +25,7 @@ export default function Home() {
         {/* Label */}
         <BlurFade delay={0.1}>
           <span className="text-xs uppercase tracking-[0.2em] text-white/40">
-            open source AI-first hackathon
+            an open source, AI-first hackathon
           </span>
         </BlurFade>
 
@@ -59,7 +59,7 @@ export default function Home() {
               asChild
               className="border-white/20 text-white bg-transparent hover:bg-white/5 hover:text-white px-8 h-12 text-sm font-medium"
             >
-              <a href="#what">tell me more ↓</a>
+              <a href="#why">tell me more ↓</a>
             </Button>
             <Button
               size="lg"
@@ -82,7 +82,7 @@ export default function Home() {
       </section>
 
       {/* Why */}
-      <section className="relative z-10 px-6 border-b border-border bg-neutral-950">
+      <section id="why" className="relative z-10 px-6 border-b border-border bg-neutral-950">
         <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-6 md:px-12 lg:px-24">
           {/* Left — copy */}
           <div className="py-16 md:py-40">

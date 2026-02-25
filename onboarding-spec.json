@@ -1,0 +1,365 @@
+{
+  "meta": {
+    "name": "Hackathon 00 Onboarding Flow",
+    "description": "Multi-step registration and project creation flow for Buildstory's first community hackathon. Designed for progressive disclosure — each input group reveals only after the previous group is completed (on blur/commit, not on first keystroke). The flow is a single-page experience with animated transitions between steps.",
+    "event": {
+      "name": "Hackathon 00",
+      "dates": "March 1–8, 2026",
+      "kickoff": "2026-03-01T12:00:00Z"
+    }
+  },
+
+  "auth": {
+    "provider": "Clerk",
+    "method": "Email + password only (no OAuth at signup)",
+    "note": "No display name or username is captured during Clerk signup. The onboarding flow collects identity info post-auth."
+  },
+
+  "steps": [
+    {
+      "id": "register",
+      "title": "Let's get you set up.",
+      "subtitle": "A few things before you join.",
+      "label": "Hackathon 00",
+      "progressive_disclosure": "Each section fades in only after the previous section's inputs are fully completed. 'Completed' means the user has finished entering into the fields (blur or commit), not on first keystroke.",
+
+      "sections": [
+        {
+          "id": "identity",
+          "icon": "👤",
+          "title": "Your identity",
+          "description": "How you'll appear to other participants.",
+          "visible_by_default": true,
+
+          "preview_badge": {
+            "description": "A live-updating user badge component rendered above the identity inputs. As the user fills in display name and username, the badge updates in real time. Includes a 'Founding Member' pill badge that is always visible from the start to create excitement about early adopter status.",
+            "states": {
+              "empty": "Shows placeholder avatar, 'Your Name' text, @username text, and the Founding Member badge",
+              "partial": "Updates in real time as fields are filled — e.g. display name appears as typed",
+              "complete": "Fully populated badge that represents how they'll appear to others"
+            }
+          },
+
+          "fields": [
+            {
+              "name": "display_name",
+              "label": "Display name",
+              "placeholder": "What should we call you?",
+              "required": true
+            },
+            {
+              "name": "username",
+              "label": "Username",
+              "placeholder": "username",
+              "required": true,
+              "prefix": "@",
+              "format": "lowercase, alphanumeric, hyphens, underscores only",
+              "live_preview": "buildstory.com/@{username}",
+              "validation": "availability check (debounced)"
+            }
+          ]
+        },
+        {
+          "id": "experience",
+          "icon": "⚡",
+          "title": "Experience building with AI",
+          "description": "This helps us tailor resources and match you with the right people. Everyone's welcome regardless of level.",
+          "visible_after": "identity",
+
+          "input_type": "single_select_radio",
+          "options": [
+            { "value": "beginner", "label": "Just getting started" },
+            { "value": "intermediate", "label": "Built a few things" },
+            { "value": "advanced", "label": "Ship with AI constantly" }
+          ]
+        },
+        {
+          "id": "team_preference",
+          "icon": "🤝",
+          "title": "How do you want to build?",
+          "description": "Go solo or team up. You can always change this later from your dashboard.",
+          "visible_after": "experience",
+
+          "input_type": "single_select_radio",
+          "options": [
+            { "value": "solo", "label": "Solo" },
+            { "value": "team", "label": "I have a team" },
+            {
+              "value": "open",
+              "label": "I have a team, open to more people",
+              "sub": "You'll be listed in the participant directory."
+            },
+            {
+              "value": "looking",
+              "label": "Looking for teammates",
+              "sub": "You'll be listed in the participant directory."
+            }
+          ]
+        },
+        {
+          "id": "context_and_cta",
+          "visible_after": "team_preference",
+          "context_box": "You'll get a dashboard to track your progress. The event kicks off March 1.",
+          "cta": {
+            "label": "Join the hackathon →",
+            "action": "proceed_to_bridge"
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "bridge",
+      "emoji": "🎉",
+      "title": "You're in!",
+      "subtitle": "One more thing — do you know what you're going to build?",
+      "no_back_button": true,
+      "note": "Registration is committed at this point. No going back.",
+
+      "options": [
+        {
+          "id": "add_project",
+          "icon": "🛠",
+          "title": "Yes, let's add it",
+          "description": "Set up your project now",
+          "action": "proceed_to_project"
+        },
+        {
+          "id": "skip",
+          "icon": "💭",
+          "title": "Not yet",
+          "description": "I'll figure it out later",
+          "action": "proceed_to_celebration",
+          "celebration_variant": "no_project"
+        },
+        {
+          "id": "join_team",
+          "icon": "👥",
+          "title": "I'm joining an existing team",
+          "description": "Someone else is leading the project",
+          "action": "expand_inline",
+
+          "expanded_content": {
+            "fields": [
+              {
+                "name": "team_lead",
+                "label": "Team lead",
+                "placeholder": "Search by username...",
+                "optional": true,
+                "input_type": "predictive_search",
+                "search_source": "registered users"
+              },
+              {
+                "name": "project",
+                "label": "Project",
+                "placeholder": "Search by project name...",
+                "optional": true,
+                "input_type": "predictive_search",
+                "search_source": "existing projects"
+              }
+            ],
+            "helper_text": "Search by either field — we'll match you up.",
+            "cta": {
+              "label": "Continue →",
+              "enabled_when": "at least one field has a selection",
+              "action": "proceed_to_celebration",
+              "celebration_variant": "joining_team"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "project",
+      "title": "Tell us about your project.",
+      "subtitle": "Don't overthink it — you can update everything later.",
+      "back_button": "returns to bridge step",
+      "progressive_disclosure": "Same pattern as registration — sections reveal after previous section is completed on blur/commit.",
+
+      "sections": [
+        {
+          "id": "basics",
+          "icon": "📦",
+          "title": "The basics",
+          "description": "Give your project a name and tell people what it does.",
+          "visible_by_default": true,
+
+          "fields": [
+            {
+              "name": "project_name",
+              "label": "Project name",
+              "placeholder": "My cool AI thing",
+              "required": true,
+              "slug_generation": {
+                "auto_generated": true,
+                "preview": "buildstory.com/project/{slug}",
+                "editable_via": "A 'Customize URL' toggle that reveals an inline edit field"
+              }
+            },
+            {
+              "name": "description",
+              "label": "Description",
+              "placeholder": "What does it do? One or two sentences.",
+              "required": true,
+              "input_type": "textarea",
+              "visible_after": "project_name"
+            }
+          ]
+        },
+        {
+          "id": "starting_point",
+          "icon": "🏗",
+          "title": "Starting point",
+          "description": "Are you starting fresh or adding to something you've already got?",
+          "visible_after": "basics",
+
+          "input_type": "single_select_radio",
+          "options": [
+            {
+              "value": "new",
+              "label": "New project",
+              "sub": "You're starting with a blank canvas."
+            },
+            {
+              "value": "existing",
+              "label": "Existing project",
+              "sub": "You'll ship a feature or improvement on an existing project."
+            }
+          ]
+        },
+        {
+          "id": "goal",
+          "icon": "🎯",
+          "title": "Your goal",
+          "description": "What does 'done' look like at the end of the week?",
+          "visible_after": "starting_point",
+
+          "fields": [
+            {
+              "name": "goal_text",
+              "label": "Goal for the week",
+              "placeholder": "What do you want to ship by the end?",
+              "optional": true
+            },
+            {
+              "name": "repo_url",
+              "label": "Repo URL",
+              "placeholder": "https://github.com/...",
+              "optional": true,
+              "monospace": true
+            }
+          ]
+        }
+      ],
+
+      "cta": {
+        "label": "Create project →",
+        "enabled_when": "project_name, description, and starting_point are all completed",
+        "action": "proceed_to_celebration",
+        "celebration_variant": "with_project"
+      }
+    },
+
+    {
+      "id": "celebration",
+      "no_back_button": true,
+      "note": "Terminal screen. Only forward to dashboard. Confetti animation fires on entry.",
+
+      "variants": {
+        "no_project": {
+          "emoji": "🚀",
+          "title": "You're registered for Hackathon 00!",
+          "pills": ["experience_level", "team_preference"]
+        },
+        "joining_team": {
+          "emoji": "🚀",
+          "title": "You're registered for Hackathon 00!",
+          "message": "Your team lead can add you as a collaborator from the project page.",
+          "pills": ["experience_level", "team_preference"]
+        },
+        "with_project": {
+          "emoji": "🚀",
+          "title": "You're registered and your project is locked in!",
+          "pills": ["project_name", "goal_text", "experience_level", "team_preference"]
+        }
+      },
+
+      "cards": [
+        {
+          "id": "countdown_and_calendar",
+          "title": "Hackathon starts in",
+          "content": {
+            "countdown": {
+              "target": "2026-03-01T12:00:00Z",
+              "format": "DDd HHh MMm SSs",
+              "live": true
+            },
+            "description": "We're kicking things off with a live 30-minute session to welcome everyone, walk through the week, and get you building. Don't miss it.",
+            "action": {
+              "label": "Add to calendar",
+              "icon": "calendar",
+              "type": "google_calendar_link",
+              "event": {
+                "title": "Buildstory Hackathon 00 Kickoff",
+                "start": "2026-03-01T12:00:00Z",
+                "end": "2026-03-01T12:30:00Z",
+                "description": "Hackathon 00 kicks off! 7 days to build something real with AI.\n\nhttps://buildstory.com/event/hackathon-00"
+              }
+            }
+          }
+        },
+        {
+          "id": "discord",
+          "title": "Join the community",
+          "description": "The Discord is where it all happens — find teammates, get unstuck, share progress, and hang out with other builders all week.",
+          "action": {
+            "label": "Join the Discord →",
+            "type": "external_link",
+            "url": "placeholder — actual Discord invite URL"
+          }
+        },
+        {
+          "id": "share",
+          "title": "Tell the world",
+          "share_text": {
+            "no_project": "I just signed up for @buildstory's first hackathon — 7 days to build something real with AI. buildstory.com/event/hackathon-00",
+            "with_project": "7 days to {goal_text} — I'm building {project_name} at @buildstory's first hackathon. buildstory.com/project/{slug}"
+          },
+          "actions": [
+            { "label": "Copy link", "type": "copy_to_clipboard" },
+            { "label": "Share on X", "type": "twitter_intent" }
+          ]
+        }
+      ],
+
+      "footer_actions": {
+        "primary": {
+          "label": "Go to dashboard →",
+          "action": "navigate_to_dashboard"
+        },
+        "secondary": {
+          "label": "Edit your profile →",
+          "action": "navigate_to_profile_edit",
+          "note": "This is where bio, GitHub handle, Twitter handle are collected — deferred from earlier in the flow to reduce friction."
+        }
+      }
+    }
+  ],
+
+  "resume_logic": {
+    "description": "If a user abandons mid-flow and returns later, check state and resume appropriately.",
+    "rules": [
+      "If no event registration exists → start at register step",
+      "If event registration exists → redirect to dashboard"
+    ]
+  },
+
+  "interaction_patterns": {
+    "progressive_disclosure": "Sections within a step fade in only after the previous section's inputs are completed. 'Completed' means the user has committed to the field (on blur or selection), not on first keystroke. This prevents premature reveals while the user is still typing.",
+    "step_transitions": "Animated fade + slide-up transition between steps.",
+    "optional_fields": "Marked with an outline 'Optional' badge next to the label.",
+    "required_fields": "Marked with an orange asterisk next to the label.",
+    "section_headers": "Each input group has an icon, title, and description to provide context before the user interacts with the inputs."
+  }
+}

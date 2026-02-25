@@ -37,15 +37,15 @@ export function SectionRadioGroup({
           type="button"
           onClick={() => onChange(option.value)}
           className={cn(
-            "border p-4 text-left transition-colors cursor-pointer rounded-md",
+            "border p-4 text-left transition-colors cursor-pointer",
             value === option.value
               ? "border-amber-400 bg-amber-400/5"
               : "border-neutral-800 hover:border-neutral-600"
           )}
         >
-          <p className="text-sm font-medium text-white">{option.label}</p>
+          <p className="text-lg font-medium text-white">{option.label}</p>
           {option.description && (
-            <p className="mt-1 text-xs text-neutral-500">
+            <p className="mt-1 text-base text-neutral-500">
               {option.description}
             </p>
           )}

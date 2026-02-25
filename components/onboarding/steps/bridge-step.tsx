@@ -93,7 +93,7 @@ export function BridgeStep({ onChoose, onJoinTeam }: BridgeStepProps) {
         <h1 className="font-heading text-3xl sm:text-4xl text-white">
           You&apos;re in!
         </h1>
-        <p className="text-neutral-400">
+        <p className="text-lg text-neutral-400">
           One more thing — do you know what you&apos;re going to build?
         </p>
       </div>
@@ -105,7 +105,7 @@ export function BridgeStep({ onChoose, onJoinTeam }: BridgeStepProps) {
               type="button"
               onClick={() => handleOptionClick(option.id)}
               className={cn(
-                "w-full border p-4 text-left transition-colors cursor-pointer rounded-md flex items-center gap-4",
+                "w-full border p-4 text-left transition-colors cursor-pointer flex items-center gap-4",
                 expanded === option.id
                   ? "border-amber-400 bg-amber-400/5"
                   : "border-neutral-800 hover:border-neutral-600"
@@ -115,8 +115,8 @@ export function BridgeStep({ onChoose, onJoinTeam }: BridgeStepProps) {
                 <Icon name={option.icon} size="5" className="text-neutral-400" />
               </div>
               <div>
-                <p className="text-sm font-medium text-white">{option.title}</p>
-                <p className="text-xs text-neutral-500">{option.description}</p>
+                <p className="text-lg font-medium text-white">{option.title}</p>
+                <p className="text-base text-neutral-500">{option.description}</p>
               </div>
             </button>
 
@@ -128,7 +128,7 @@ export function BridgeStep({ onChoose, onJoinTeam }: BridgeStepProps) {
                 transition={{ duration: 0.3 }}
                 className="overflow-hidden"
               >
-                <div className="border border-t-0 border-neutral-800 rounded-b-md px-4 py-5 space-y-4">
+                <div className="border border-t-0 border-neutral-800 px-4 py-5 space-y-4">
                   <PredictiveSearch
                     label="Team lead"
                     placeholder="Search by username..."
@@ -145,13 +145,13 @@ export function BridgeStep({ onChoose, onJoinTeam }: BridgeStepProps) {
                     selected={selectedProject}
                     onClear={() => setSelectedProject(null)}
                   />
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-base text-neutral-500">
                     Search by either field — we&apos;ll match you up.
                   </p>
                   <Button
                     onClick={handleJoinContinue}
                     disabled={!canContinueJoin}
-                    className="w-full h-11 bg-amber-400 text-neutral-950 hover:bg-amber-300 font-medium"
+                    className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 font-medium"
                   >
                     Continue →
                   </Button>

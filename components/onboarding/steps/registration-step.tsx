@@ -107,6 +107,17 @@ export function RegistrationStep({
     }
   }, [revealedSection, state.displayName, usernameStatus]);
 
+  // Auto-reveal experience section when username becomes available
+  useEffect(() => {
+    if (
+      revealedSection < 1 &&
+      state.displayName.trim().length > 0 &&
+      usernameStatus === "available"
+    ) {
+      setRevealedSection(1);
+    }
+  }, [usernameStatus, state.displayName, revealedSection]);
+
   // Reveal team pref when experience is selected
   useEffect(() => {
     if (revealedSection < 2 && state.experienceLevel) {
@@ -167,22 +178,24 @@ export function RegistrationStep({
     <div className="w-full max-w-lg mx-auto space-y-8">
       {/* Header */}
       <div className="text-center space-y-2">
-        <p className="text-xs uppercase tracking-[0.2em] text-amber-400">
+        <p className="text-base uppercase tracking-[0.2em] text-amber-400">
           Hackathon 00
         </p>
         <h1 className="font-heading text-3xl sm:text-4xl text-white">
           Let&apos;s get you set up.
         </h1>
-        <p className="text-neutral-400">A few things before you join.</p>
+        <p className="text-lg text-neutral-400">A few things before you join.</p>
       </div>
 
       {/* Identity section */}
       <div className="space-y-5">
-        <div className="flex items-center gap-2 text-neutral-400">
-          <Icon name="person" size="4" />
+        <div className="flex items-center gap-3 text-neutral-400">
+          <div className="flex items-center justify-center size-10 border border-border">
+            <Icon name="person" size="5" />
+          </div>
           <div>
-            <p className="text-sm font-medium text-white">Your identity</p>
-            <p className="text-xs text-neutral-500">
+            <p className="text-lg font-medium text-white">Your identity</p>
+            <p className="text-base text-neutral-500">
               How you&apos;ll appear to other participants.
             </p>
           </div>
@@ -195,7 +208,7 @@ export function RegistrationStep({
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="displayName" className="text-neutral-400 text-xs">
+            <Label htmlFor="displayName" className="text-neutral-400 text-base">
               Display name{" "}
               <span className="text-amber-400">*</span>
             </Label>
@@ -210,12 +223,12 @@ export function RegistrationStep({
           </div>
 
           <div>
-            <Label htmlFor="username" className="text-neutral-400 text-xs">
+            <Label htmlFor="username" className="text-neutral-400 text-base">
               Username{" "}
               <span className="text-amber-400">*</span>
             </Label>
             <div className="relative mt-1.5">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-lg">
                 @
               </span>
               <Input
@@ -237,17 +250,17 @@ export function RegistrationStep({
               )}
             </div>
             {usernameStatus === "invalid" && state.username.length > 0 && (
-              <p className="mt-1 text-xs text-amber-400">
+              <p className="mt-1 text-base text-amber-400">
                 3–30 characters: letters, numbers, hyphens, underscores
               </p>
             )}
             {usernameStatus === "taken" && (
-              <p className="mt-1 text-xs text-red-400">
+              <p className="mt-1 text-base text-red-400">
                 This username is taken
               </p>
             )}
             {usernameStatus === "available" && (
-              <p className="mt-1 text-xs text-neutral-500">
+              <p className="mt-1 text-base text-neutral-500">
                 buildstory.com/@{state.username}
               </p>
             )}
@@ -259,13 +272,15 @@ export function RegistrationStep({
       {revealedSection >= 1 && (
         <BlurFade delay={0.1} duration={0.5} yOffset={12}>
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-neutral-400">
-              <Icon name="bolt" size="4" />
+            <div className="flex items-center gap-3 text-neutral-400">
+              <div className="flex items-center justify-center size-10 border border-border">
+                <Icon name="bolt" size="5" />
+              </div>
               <div>
-                <p className="text-sm font-medium text-white">
+                <p className="text-lg font-medium text-white">
                   Experience building with AI
                 </p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-base text-neutral-500">
                   This helps us tailor resources and match you with the right
                   people.
                 </p>
@@ -288,13 +303,15 @@ export function RegistrationStep({
       {revealedSection >= 2 && (
         <BlurFade delay={0.1} duration={0.5} yOffset={12}>
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-neutral-400">
-              <Icon name="group" size="4" />
+            <div className="flex items-center gap-3 text-neutral-400">
+              <div className="flex items-center justify-center size-10 border border-border">
+                <Icon name="group" size="5" />
+              </div>
               <div>
-                <p className="text-sm font-medium text-white">
+                <p className="text-lg font-medium text-white">
                   How do you want to build?
                 </p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-base text-neutral-500">
                   Go solo or team up. You can always change this later.
                 </p>
               </div>
@@ -316,8 +333,8 @@ export function RegistrationStep({
       {revealedSection >= 3 && (
         <BlurFade delay={0.1} duration={0.5} yOffset={12}>
           <div className="space-y-4">
-            <div className="rounded-md border border-neutral-800 bg-neutral-900/50 px-4 py-3">
-              <p className="text-sm text-neutral-400">
+            <div className="border border-neutral-800 bg-neutral-900/50 px-4 py-3">
+              <p className="text-lg text-neutral-400">
                 You&apos;ll get a dashboard to track your progress. The event
                 kicks off March 1.
               </p>
@@ -334,7 +351,7 @@ export function RegistrationStep({
               }
               className={cn(
                 "w-full h-12 text-base font-medium",
-                "bg-amber-400 text-neutral-950 hover:bg-amber-300"
+                "bg-foreground text-background hover:bg-foreground/90"
               )}
             >
               {isPending && (
@@ -347,7 +364,7 @@ export function RegistrationStep({
               Join the hackathon →
             </Button>
             {error && (
-              <p className="text-sm text-red-400 font-mono text-center">
+              <p className="text-base text-red-400 font-mono text-center">
                 {error}
               </p>
             )}

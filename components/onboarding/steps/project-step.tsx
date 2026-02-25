@@ -149,18 +149,20 @@ export function ProjectStep({
         <h1 className="font-heading text-3xl sm:text-4xl text-white">
           Tell us about your project.
         </h1>
-        <p className="text-neutral-400">
+        <p className="text-lg text-neutral-400">
           Don&apos;t overthink it — you can update everything later.
         </p>
       </div>
 
       {/* Basics section */}
       <div className="space-y-5">
-        <div className="flex items-center gap-2 text-neutral-400">
-          <Icon name="inventory_2" size="4" />
+        <div className="flex items-center gap-3 text-neutral-400">
+          <div className="flex items-center justify-center size-10 border border-border">
+            <Icon name="inventory_2" size="5" />
+          </div>
           <div>
-            <p className="text-sm font-medium text-white">The basics</p>
-            <p className="text-xs text-neutral-500">
+            <p className="text-lg font-medium text-white">The basics</p>
+            <p className="text-base text-neutral-500">
               Give your project a name and tell people what it does.
             </p>
           </div>
@@ -168,7 +170,7 @@ export function ProjectStep({
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="projectName" className="text-neutral-400 text-xs">
+            <Label htmlFor="projectName" className="text-neutral-400 text-base">
               Project name <span className="text-amber-400">*</span>
             </Label>
             <Input
@@ -180,26 +182,26 @@ export function ProjectStep({
             />
             {state.projectSlug && (
               <div className="mt-1.5 flex items-center gap-2">
-                <p className="text-xs text-neutral-500">
+                <p className="text-base text-neutral-500">
                   buildstory.com/project/{state.projectSlug}
                 </p>
                 {!customSlug && (
                   <button
                     type="button"
                     onClick={() => setCustomSlug(true)}
-                    className="text-xs text-amber-400 hover:text-amber-300 cursor-pointer"
+                    className="text-base text-amber-400 hover:text-amber-300 cursor-pointer"
                   >
                     Customize URL
                   </button>
                 )}
                 {slugStatus === "taken" && (
-                  <span className="text-xs text-red-400">URL taken</span>
+                  <span className="text-base text-red-400">URL taken</span>
                 )}
               </div>
             )}
             {customSlug && (
               <div className="mt-2">
-                <Label htmlFor="projectSlug" className="text-neutral-400 text-xs">
+                <Label htmlFor="projectSlug" className="text-neutral-400 text-base">
                   Custom URL
                 </Label>
                 <div className="relative mt-1">
@@ -231,7 +233,7 @@ export function ProjectStep({
           </div>
 
           <div>
-            <Label htmlFor="projectDesc" className="text-neutral-400 text-xs">
+            <Label htmlFor="projectDesc" className="text-neutral-400 text-base">
               Description <span className="text-amber-400">*</span>
             </Label>
             <Textarea
@@ -251,11 +253,13 @@ export function ProjectStep({
       {revealedSection >= 1 && (
         <BlurFade delay={0.1} duration={0.5} yOffset={12}>
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-neutral-400">
-              <Icon name="construction" size="4" />
+            <div className="flex items-center gap-3 text-neutral-400">
+              <div className="flex items-center justify-center size-10 border border-border">
+                <Icon name="construction" size="5" />
+              </div>
               <div>
-                <p className="text-sm font-medium text-white">Starting point</p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-lg font-medium text-white">Starting point</p>
+                <p className="text-base text-neutral-500">
                   Are you starting fresh or adding to something you&apos;ve
                   already got?
                 </p>
@@ -278,11 +282,13 @@ export function ProjectStep({
       {revealedSection >= 2 && (
         <BlurFade delay={0.1} duration={0.5} yOffset={12}>
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-neutral-400">
-              <Icon name="flag" size="4" />
+            <div className="flex items-center gap-3 text-neutral-400">
+              <div className="flex items-center justify-center size-10 border border-border">
+                <Icon name="flag" size="5" />
+              </div>
               <div>
-                <p className="text-sm font-medium text-white">Your goal</p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-lg font-medium text-white">Your goal</p>
+                <p className="text-base text-neutral-500">
                   What does &quot;done&quot; look like at the end of the week?
                 </p>
               </div>
@@ -290,7 +296,7 @@ export function ProjectStep({
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="goalText" className="text-neutral-400 text-xs">
+                <Label htmlFor="goalText" className="text-neutral-400 text-base">
                   Goal for the week{" "}
                   <Badge variant="outline" className="ml-1 text-[10px] py-0">
                     Optional
@@ -306,7 +312,7 @@ export function ProjectStep({
               </div>
 
               <div>
-                <Label htmlFor="repoUrl" className="text-neutral-400 text-xs">
+                <Label htmlFor="repoUrl" className="text-neutral-400 text-base">
                   Repo URL{" "}
                   <Badge variant="outline" className="ml-1 text-[10px] py-0">
                     Optional
@@ -317,7 +323,7 @@ export function ProjectStep({
                   value={state.projectRepoUrl}
                   onChange={(e) => update({ projectRepoUrl: e.target.value })}
                   placeholder="https://github.com/..."
-                  className="mt-1.5 bg-white/5 border-neutral-700 text-white placeholder:text-neutral-600 font-mono text-xs"
+                  className="mt-1.5 bg-white/5 border-neutral-700 text-white placeholder:text-neutral-600 font-mono text-sm"
                 />
               </div>
             </div>
@@ -332,7 +338,7 @@ export function ProjectStep({
           disabled={!devMode && (isPending || !canSubmit)}
           className={cn(
             "w-full h-12 text-base font-medium",
-            "bg-amber-400 text-neutral-950 hover:bg-amber-300"
+            "bg-foreground text-background hover:bg-foreground/90"
           )}
         >
           {isPending && (
@@ -341,14 +347,14 @@ export function ProjectStep({
           Create project →
         </Button>
         <Button
-          variant="ghost"
+          variant="outline"
           onClick={onBack}
-          className="w-full h-11 text-neutral-400 hover:text-white"
+          className="w-full h-11"
         >
           ← Back
         </Button>
         {error && (
-          <p className="text-sm text-red-400 font-mono text-center">{error}</p>
+          <p className="text-base text-red-400 font-mono text-center">{error}</p>
         )}
       </div>
     </div>

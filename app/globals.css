@@ -65,7 +65,7 @@
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 0rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -138,11 +138,11 @@
   --text-xs--line-height: 1.4;
   --text-xs--letter-spacing: 0.02em;
 
-  --text-sm: 0.75rem;
+  --text-sm: 0.875rem;
   --text-sm--line-height: 1.5;
   --text-sm--letter-spacing: 0.01em;
 
-  --text-base: 1rem;
+  --text-base: 1;
   --text-base--line-height: 1.6;
 
   --text-lg: 1.25rem;

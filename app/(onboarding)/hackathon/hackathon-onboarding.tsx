@@ -47,9 +47,9 @@ const initialState: OnboardingState = {
 };
 
 const stepperSteps = [
-  { label: "Register", icon: <Icon name="person" size="3.5" /> },
-  { label: "Build", icon: <Icon name="build" size="3.5" /> },
-  { label: "Done", icon: <Icon name="check" size="3.5" /> },
+  { label: "Register", icon: <Icon name="person" size="4.5" /> },
+  { label: "Build", icon: <Icon name="build" size="4.5" /> },
+  { label: "Done", icon: <Icon name="check" size="4.5" /> },
 ];
 
 const DEV_MOCK_STATE: Partial<OnboardingState> = {
@@ -185,7 +185,7 @@ export function HackathonOnboarding({
       <Stepper
         steps={stepperSteps}
         currentStep={stepperIndex}
-        className="mb-10"
+        className="mb-10 md:mb-24"
       />
 
       <StepTransition stepKey={wizard.currentStep}>

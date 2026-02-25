@@ -84,7 +84,7 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
         </h1>
 
         {variant === "joining_team" && (
-          <p className="text-sm text-neutral-400">
+          <p className="text-lg text-neutral-400">
             Your team lead can add you as a collaborator from the project page.
           </p>
         )}
@@ -115,12 +115,12 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
       </div>
 
       {/* Countdown card */}
-      <div className="rounded-md border border-neutral-800 p-6 space-y-4">
-        <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">
+      <div className="border border-neutral-800 p-6 space-y-4">
+        <p className="text-base uppercase tracking-[0.2em] text-neutral-500">
           Hackathon starts in
         </p>
         <DashboardCountdown />
-        <p className="text-sm text-neutral-400">
+        <p className="text-lg text-neutral-400">
           We&apos;re kicking things off with a live 30-minute session to welcome
           everyone, walk through the week, and get you building. Don&apos;t miss
           it.
@@ -138,9 +138,9 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
       </div>
 
       {/* Discord card */}
-      <div className="rounded-md border border-neutral-800 p-6 space-y-3">
-        <p className="text-sm font-medium text-white">Join the community</p>
-        <p className="text-sm text-neutral-400">
+      <div className="border border-neutral-800 p-6 space-y-3">
+        <p className="text-lg font-medium text-white">Join the community</p>
+        <p className="text-lg text-neutral-400">
           The Discord is where it all happens — find teammates, get unstuck,
           share progress, and hang out with other builders all week.
         </p>
@@ -157,9 +157,9 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
       </div>
 
       {/* Share card */}
-      <div className="rounded-md border border-neutral-800 p-6 space-y-3">
-        <p className="text-sm font-medium text-white">Tell the world</p>
-        <p className="text-sm text-neutral-500 font-mono bg-neutral-900 rounded px-3 py-2 break-words">
+      <div className="border border-neutral-800 p-6 space-y-3">
+        <p className="text-lg font-medium text-white">Tell the world</p>
+        <p className="text-base text-neutral-500 font-mono bg-neutral-900 px-3 py-2 break-words">
           {shareText}
         </p>
         <div className="flex gap-2">
@@ -177,14 +177,14 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
       <div className="space-y-2 pb-8">
         <Button
           asChild
-          className="w-full h-12 text-base font-medium bg-amber-400 text-neutral-950 hover:bg-amber-300"
+          className="w-full h-12 text-base font-medium bg-foreground text-background hover:bg-foreground/90"
         >
           <Link href="/dashboard">Go to dashboard →</Link>
         </Button>
         <Button
-          variant="ghost"
+          variant="outline"
           asChild
-          className="w-full h-11 text-neutral-400 hover:text-white"
+          className="w-full h-11"
         >
           <Link href="/profile/edit">Edit your profile →</Link>
         </Button>
