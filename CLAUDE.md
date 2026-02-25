@@ -57,9 +57,10 @@ npx drizzle-kit studio     # Open Drizzle Studio (DB browser)
 
 Clerk auth with **custom UI forms** (not pre-built Clerk components). The auth pages use `useSignIn` and `useSignUp` hooks from `@clerk/nextjs` with email/password and OAuth (Google, GitHub).
 
-- `proxy.ts` -- Clerk middleware using Next.js 16's proxy convention (replaces traditional `middleware.ts`); also enforces admin route protection (redirects non-admin users from `/admin/*`)
+- `proxy.ts` -- Clerk middleware using Next.js 16's proxy convention (replaces traditional `middleware.ts`); redirects signed-in users from `/` to `/dashboard`; also enforces admin route protection (redirects non-admin users from `/admin/*`)
 - `app/(auth)/` -- Route group with a two-column layout (form left, dark panel right)
-- `app/(auth)/sign-in/` and `sign-up/` -- Custom forms with SSO callback pages for OAuth redirects
+- `app/(auth)/sign-in/` -- Posts to `/dashboard` after sign-in (email or OAuth)
+- `app/(auth)/sign-up/` -- Posts to `/hackathon` after sign-up (email or OAuth)
 - Admin access: `lib/admin.ts` exports `isAdmin(clerkUserId)` which checks the `ADMIN_USER_IDS` env var (comma-separated Clerk IDs). Guarded at both middleware and layout levels (defense-in-depth).
 
 ### Profile Creation (Just-in-Time)
@@ -134,7 +135,7 @@ Required in `.env.local`:
 - `DATABASE_URL` -- Neon Postgres connection string
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` -- Clerk auth keys
 - `NEXT_PUBLIC_CLERK_SIGN_IN_URL` (`/sign-in`) / `NEXT_PUBLIC_CLERK_SIGN_UP_URL` (`/sign-up`)
-- `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` (`/`) / `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` (`/`)
+- `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` (`/dashboard`) / `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` (`/hackathon`)
 - `ADMIN_USER_IDS` -- comma-separated Clerk user IDs granted admin access
 - `DISCORD_WEBHOOK_SIGNUPS` -- Discord webhook URL for signup/project notification pings (optional, no-ops if unset)
 - `DISCORD_WEBHOOK_MILESTONES` -- Discord webhook URL for milestone alerts (optional, no-ops if unset)
