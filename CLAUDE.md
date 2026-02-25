@@ -31,6 +31,8 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 - **Database**: Neon Postgres via `@neondatabase/serverless` (HTTP adapter), Drizzle ORM
 - **Icons**: Google Material Symbols (`material-symbols`, sharp filled style) via `components/ui/icon.tsx` `<Icon>` wrapper -- brand icons (GitHub, Google) are custom SVGs in `components/icons.tsx`
 - **UI primitives**: Radix UI via `radix-ui` package
+- **Charts**: Recharts (`recharts`) via shadcn chart component (`components/ui/chart.tsx`)
+- **Notifications**: Discord webhooks (`lib/discord.ts`) -- fire-and-forget signup/project pings and milestone alerts
 - **Monitoring**: Sentry (`@sentry/nextjs`) -- error tracking on server, edge, and client; server actions use `Sentry.captureException` with component/action tags
 - **Testing**: Vitest (integration tests against real Neon DB)
 - **CI**: GitHub Actions (`.github/workflows/test.yml`) -- lint + tests on push/PR to main
@@ -55,9 +57,10 @@ npx drizzle-kit studio     # Open Drizzle Studio (DB browser)
 
 Clerk auth with **custom UI forms** (not pre-built Clerk components). The auth pages use `useSignIn` and `useSignUp` hooks from `@clerk/nextjs` with email/password and OAuth (Google, GitHub).
 
-- `proxy.ts` -- Clerk middleware using Next.js 16's proxy convention (replaces traditional `middleware.ts`)
+- `proxy.ts` -- Clerk middleware using Next.js 16's proxy convention (replaces traditional `middleware.ts`); also enforces admin route protection (redirects non-admin users from `/admin/*`)
 - `app/(auth)/` -- Route group with a two-column layout (form left, dark panel right)
 - `app/(auth)/sign-in/` and `sign-up/` -- Custom forms with SSO callback pages for OAuth redirects
+- Admin access: `lib/admin.ts` exports `isAdmin(clerkUserId)` which checks the `ADMIN_USER_IDS` env var (comma-separated Clerk IDs). Guarded at both middleware and layout levels (defense-in-depth).
 
 ### Profile Creation (Just-in-Time)
 
@@ -89,19 +92,33 @@ Config reads `DATABASE_URL` from `.env.local` (via dotenv in `drizzle.config.ts`
 
 `app/(onboarding)/` -- Minimal-chrome layout (logo + centered content, no sidebar) for guided flows. Currently contains the hackathon registration flow at `/hackathon`.
 
+`app/admin/` -- Admin-only area (Clerk auth + `isAdmin` guard in both middleware and layout). Contains the growth dashboard at `/admin/dashboard` with stat cards, signups-over-time chart (Recharts), and live activity feed. Polling API at `app/api/admin/stats/route.ts` refreshes data every 30s. DB queries in `lib/admin/queries.ts`.
+
 ### Hackathon Onboarding Flow
 
-Multi-step registration at `/hackathon` (`app/(onboarding)/hackathon/`). Four steps: registration (identity + experience + team preference), bridge (add project / skip / join team), project creation (name, slug, description, starting point, goal), and celebration (confetti, countdown, share).
+Multi-step registration at `/hackathon` (`app/(onboarding)/hackathon/`). Eight isolated steps identified by string `StepId`: `identity`, `experience`, `team_preference`, `bridge`, `project_basics`, `starting_point`, `project_goal`, `celebration`. Steps map to three high-level stepper phases (Register, Build, Done).
 
 - Server page checks auth, ensures profile, detects existing registration
-- Client component (`hackathon-onboarding.tsx`) manages step state
+- Orchestrator (`hackathon-onboarding.tsx`) owns all state (`OnboardingState`), navigation, and server action calls -- individual step components are pure presentation receiving props/callbacks
+- Each step is a separate component in `components/onboarding/steps/` (e.g., `identity-step.tsx`, `experience-step.tsx`, `project-basics-step.tsx`). Old monolithic `registration-step.tsx` and `project-step.tsx` were removed.
+- `WizardCard` wraps most steps with a consistent card layout (label, title, description, primary/secondary buttons)
 - 6 server actions in `actions.ts`: `checkUsernameAvailability`, `completeRegistration`, `createOnboardingProject`, `searchUsers`, `searchProjects`, `checkProjectSlugAvailability`
-- Reusable onboarding components in `components/onboarding/` (predictive search, section radio group, live preview badge, step transitions)
-- **Dev mode**: `?dev=true` query param (dev only) enables a floating toolbar that skips DB writes for frontend iteration
+- Reusable onboarding components in `components/onboarding/` (predictive search, section radio group with optional icon support, live preview badge, step transitions)
+- **Dev mode**: `?dev=true` query param (dev only) enables a floating toolbar that jumps to any step and fills mock data, skipping DB writes for frontend iteration
+
+### Discord Notifications
+
+Fire-and-forget Discord webhook pings on key events. All calls are non-blocking (errors caught and reported to Sentry, never break the user flow).
+
+- `lib/discord.ts` -- `sendDiscordWebhook(url, payload)`, plus `notifySignup` and `notifyProject` helpers
+- `lib/milestones.ts` -- `checkSignupMilestone` / `checkProjectMilestone` fire a ping to a separate milestones webhook when totals hit thresholds (10, 25, 50, 75, 100, 150, 200, 250, 500, 1000)
+- Called from `completeRegistration` and `createOnboardingProject` in `app/(onboarding)/hackathon/actions.ts`, and from `registerForEvent` / `createProject` in `app/event/[slug]/actions.ts`
 
 ### Error Handling
 
 Sentry is configured for server (`sentry.server.config.ts`), edge (`sentry.edge.config.ts`), and client (`instrumentation-client.ts`) runtimes. Server actions catch errors and report via `Sentry.captureException` with `tags: { component: "server-action", action }` and relevant `extra` context before returning `{ success: false, error }`.
+
+For database constraint violations, use the pattern in `app/(onboarding)/hackathon/actions.ts`: import `NeonDbError` from `@neondatabase/serverless`, create an `isUniqueViolation(error, constraintName)` helper that checks `error.code === "23505"` and constraint name (handling Drizzle's `.cause` wrapping), and call it instead of string-matching on error messages.
 
 ### Testing
 
@@ -118,6 +135,9 @@ Required in `.env.local`:
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` -- Clerk auth keys
 - `NEXT_PUBLIC_CLERK_SIGN_IN_URL` (`/sign-in`) / `NEXT_PUBLIC_CLERK_SIGN_UP_URL` (`/sign-up`)
 - `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` (`/`) / `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` (`/`)
+- `ADMIN_USER_IDS` -- comma-separated Clerk user IDs granted admin access
+- `DISCORD_WEBHOOK_SIGNUPS` -- Discord webhook URL for signup/project notification pings (optional, no-ops if unset)
+- `DISCORD_WEBHOOK_MILESTONES` -- Discord webhook URL for milestone alerts (optional, no-ops if unset)
 
 ## Path Aliases
 

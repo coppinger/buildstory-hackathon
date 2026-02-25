@@ -75,7 +75,7 @@ export default function SignUpPage() {
       await signUp.authenticateWithRedirect({
         strategy,
         redirectUrl: "/sign-up/sso-callback",
-        redirectUrlComplete: "/",
+        redirectUrlComplete: "/hackathon",
       });
     } catch (err: unknown) {
       const clerkErr = err as { errors?: { message: string }[] };
@@ -126,7 +126,7 @@ export default function SignUpPage() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.push("/");
+        router.push("/hackathon");
       }
     } catch (err: unknown) {
       const clerkErr = err as { errors?: { message: string }[] };

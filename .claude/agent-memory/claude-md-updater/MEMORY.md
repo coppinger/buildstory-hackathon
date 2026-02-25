@@ -1,37 +1,26 @@
-# CLAUDE.md Update Memory - Buildstory Hackathon
+# CLAUDE.md Updater - Agent Memory
 
-## Project Overview
-Single-page Next.js 16 marketing site with Clerk auth integration and Neon Postgres backend.
+## Project: Buildstory (buildstory-hackathon)
 
-## Key Structure Patterns
-- Uses route groups `(auth)` for organizing auth-related pages
-- Clerk integration: ClerkProvider in root layout, proxy.ts middleware, appearance config in lib/
-- Database: Neon HTTP adapter via Drizzle ORM in `lib/db/`
-- Component organization: reusable components in `components/`, shadcn/ui in `components/ui/`
+### CLAUDE.md Structure
+- Sections: Intro, Current Focus, Principles, Tech Stack, Commands, Architecture (Auth Flow, Profile Creation, Database, Page Structure, Hackathon Onboarding Flow, Discord Notifications, Error Handling, Testing, CI), Environment Variables, Path Aliases
+- Style: Terse, high-signal bullet points. File paths are exact. Patterns described once, not per-file.
+- Testing section describes the *pattern* (what gets mocked, how cleanup works) rather than listing individual test files.
+- Error Handling section documents both Sentry patterns and DB constraint handling patterns.
 
-## What Triggers CLAUDE.md Updates
-✓ New routes (especially route groups like `(auth)`)
-✓ New major files: new pages, new lib utilities, new schema
-✓ New environment variables
-✓ Changes to existing documented files (e.g., header.tsx getting Clerk components)
-✓ Changes to auth flow or middleware
+### Update Patterns Observed
+- New architectural sections (Discord Notifications, Admin dashboard) get their own subsections under Architecture.
+- New error handling patterns (isUniqueViolation) get documented as reusable guidance.
+- Individual test files do NOT get listed -- the testing pattern description covers them.
+- Minor additions to existing patterns (e.g., a new mock in tests) don't warrant updates if they follow the established pattern.
+- Visual/styling changes (logo swaps, CSS) never warrant CLAUDE.md updates.
 
-✗ Minor internal refactors without architectural changes
-✗ Styling-only updates
-✗ Copy/content changes
+### Key Decisions Log
+- 2026-02-25: No update needed for commit `9ef9042` (38 integration tests for onboarding actions). Testing section already describes the exact pattern. Error Handling already documents `isUniqueViolation` from commit `84143bc`. Both reflected in uncommitted CLAUDE.md changes from a prior session.
+- 2026-02-25: Added `isUniqueViolation` pattern to Error Handling section (commit `84143bc`). Important because it prevents future devs from using fragile string-matching on error messages.
+- Earlier: Auth pages, admin dashboard, Discord notifications, onboarding refactor all warranted CLAUDE.md section additions.
 
-## Recent Update (Auth Pages)
-Added sign-in/sign-up pages with two-column layout:
-- `app/(auth)/layout.tsx` - route group layout
-- `app/(auth)/sign-in` & `app/(auth)/sign-up` - Clerk pages
-- `lib/clerk-appearance.ts` - shared theme config
-- Updated `components/header.tsx` to use Clerk components
-- Added 4 new environment variables for Clerk URL routing
-
-Updated sections:
-1. Project Structure - added (auth) route group and its contents
-2. Project Structure - added clerk-appearance.ts to lib/
-3. Environment Variables - added NEXT_PUBLIC_CLERK_SIGN_IN_URL, SIGN_UP_URL, AFTER_SIGN_IN_URL, AFTER_SIGN_UP_URL
-4. Project Structure header.tsx note - updated to mention Clerk components
-
-Maintained existing style: terse comments, organized by directory, focused on high-level purpose.
+### Test Files (for reference)
+- `__tests__/integration/ensure-profile.test.ts` -- tests ensureProfile DB helper
+- `__tests__/integration/event-actions.test.ts` -- tests event server actions
+- `__tests__/integration/onboarding-actions.test.ts` -- tests all 6 onboarding server actions (38 tests)

@@ -73,7 +73,7 @@ export default function SignInPage() {
       await signIn.authenticateWithRedirect({
         strategy,
         redirectUrl: "/sign-in/sso-callback",
-        redirectUrlComplete: "/",
+        redirectUrlComplete: "/dashboard",
       });
     } catch (err: unknown) {
       const clerkErr = err as { errors?: { message: string }[] };
@@ -97,7 +97,7 @@ export default function SignInPage() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.push("/");
+        router.push("/dashboard");
       }
     } catch (err: unknown) {
       const clerkErr = err as { errors?: { message: string }[] };

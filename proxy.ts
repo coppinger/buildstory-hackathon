@@ -9,6 +9,11 @@ const PROFILE_COOKIE = "bs_profile";
 export const proxy = clerkMiddleware(async (auth, request) => {
   const { userId } = await auth();
 
+  // Signed-in users visiting the landing page → dashboard
+  if (userId && request.nextUrl.pathname === "/") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
   const cookie = request.cookies.get(PROFILE_COOKIE);
   const cookieMatchesUser = cookie?.value.startsWith(`${userId}:`);
 
