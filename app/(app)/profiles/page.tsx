@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { getHackathonProfiles } from "@/lib/queries";
+import { getCountryByCode, formatLocation } from "@/lib/countries";
+import { getRegionName } from "@/lib/regions";
 
 const experienceLabels: Record<string, string> = {
   getting_started: "Getting started",
@@ -69,7 +71,8 @@ export default async function ProfilesPage() {
                   )}
                   {profile.country && (
                     <Badge variant="outline" className="text-xs">
-                      {profile.country}
+                      {getCountryByCode(profile.country)?.flag}{" "}
+                      {formatLocation(profile.country, profile.region, profile.region ? getRegionName(profile.region) : undefined)}
                     </Badge>
                   )}
                 </div>
