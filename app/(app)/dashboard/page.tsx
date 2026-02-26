@@ -145,20 +145,31 @@ export default async function DashboardPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
             Live Streams
           </p>
-          <div className="flex items-center gap-3 border border-border p-3">
+          <a
+            href="https://twitch.tv/thecoppinger"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 border border-[#9146FF]/60 bg-[#9146FF]/5 p-3 hover:bg-[#9146FF]/10 transition-colors group"
+          >
             <span className="relative flex h-2.5 w-2.5 shrink-0">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#9146FF] opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#9146FF]" />
             </span>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
-                Sarah Chen
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground truncate group-hover:text-[#9146FF] transition-colors">
+                thecoppinger
               </p>
               <p className="text-xs text-muted-foreground truncate">
-                Building an AI Recipe Remixer
+                Building this app, right now!
               </p>
             </div>
-          </div>
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#9146FF] shrink-0" fill="currentColor">
+              <path d="M11.64 5.93h1.43v4.28h-1.43m3.93-4.28H17v4.28h-1.43M7 2L3.43 5.57v12.86h4.28V22l3.58-3.57h2.85L20.57 12V2m-1.43 9.29l-2.85 2.85h-2.86l-2.5 2.5v-2.5H7.71V3.43h11.43Z" />
+            </svg>
+            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 text-muted-foreground group-hover:text-[#9146FF] transition-colors shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 12L12 4M12 4H5M12 4v7" />
+            </svg>
+          </a>
         </Card>
 
         {/* Resources */}
