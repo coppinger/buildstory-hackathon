@@ -36,14 +36,24 @@ jobs:
     needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
-      - name: Migrate production database
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: "npm"
       - run: npm ci
-      - run: npm run db:migrate
+
+      - name: Check production database secret exists
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::PRODUCTION_DATABASE_URL secret is not set"
+            exit 1
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
+      - name: Migrate production database
+        run: npm run db:migrate
         env:
           DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
 
