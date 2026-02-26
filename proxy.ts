@@ -41,7 +41,10 @@ export const proxy = clerkMiddleware(async (auth, request) => {
   }
 
   // Admin route protection
-  if (request.nextUrl.pathname.startsWith("/admin")) {
+  if (
+    request.nextUrl.pathname.startsWith("/admin") ||
+    request.nextUrl.pathname.startsWith("/studio")
+  ) {
     if (!userId || !isAdmin(userId)) {
       return NextResponse.redirect(new URL("/", request.url));
     }

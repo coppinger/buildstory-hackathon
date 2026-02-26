@@ -5,12 +5,15 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { hostname: "img.clerk.com" },
+      { hostname: "cdn.sanity.io" },
     ],
   },
   experimental: {
     // Propagate tracing headers for pageload performance monitoring
     clientTraceMetadata: ["sentry-trace", "baggage"],
   },
+  // Sanity Studio ships ESM-only packages
+  transpilePackages: ["sanity", "next-sanity", "@sanity/vision"],
 };
 
 export default withSentryConfig(nextConfig, {
@@ -27,4 +30,7 @@ export default withSentryConfig(nextConfig, {
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
   },
+
+  // Exclude Sanity Studio from Sentry's server-side wrapping
+  excludeServerRoutes: ["/studio", "/studio/(.*)"],
 });

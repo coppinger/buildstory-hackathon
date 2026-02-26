@@ -10,12 +10,18 @@ import Link from "next/link";
 import { getHackathonEvent } from "@/lib/admin/queries";
 import { getPublicStats } from "@/lib/queries";
 import { VOLUNTEER_URL, SPONSOR_URL } from "@/lib/constants";
+import { getSponsors, getVolunteerRoles } from "@/lib/sanity/queries";
+import { urlFor } from "@/lib/sanity/image";
 
 export default async function Home() {
   const event = await getHackathonEvent();
-  const publicStats = event
-    ? await getPublicStats(event.id)
-    : { signups: 0, teamCount: 0, soloCount: 0, countryCount: 0, projectCount: 0 };
+  const [publicStats, sponsors, volunteerRoles] = await Promise.all([
+    event
+      ? getPublicStats(event.id)
+      : Promise.resolve({ signups: 0, teamCount: 0, soloCount: 0, countryCount: 0, projectCount: 0 }),
+    getSponsors(),
+    getVolunteerRoles(),
+  ]);
 
   const stats = [
     `${publicStats.signups} people`,
@@ -487,26 +493,15 @@ export default async function Home() {
 
               <BlurFade inView delay={0.2}>
                 <div className="mt-8">
-                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-t border-border py-6">
-                    <span className="text-lg font-medium text-[#e8e4de]">Mentors</span>
-                    <span className="text-base text-neutral-500">Help participants get unstuck</span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-t border-border py-6">
-                    <span className="text-lg font-medium text-[#e8e4de]">Co-facilitators</span>
-                    <span className="text-base text-neutral-500">Help run the event day-to-day</span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-t border-border py-6">
-                    <span className="text-lg font-medium text-[#e8e4de]">Moderators</span>
-                    <span className="text-base text-neutral-500">Keep Discord healthy</span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-t border-border py-6">
-                    <span className="text-lg font-medium text-[#e8e4de]">Panel</span>
-                    <span className="text-base text-neutral-500">Review &amp; recognise standout projects</span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-t border-b border-border py-4">
-                    <span className="text-lg font-medium text-[#e8e4de]">Interviewees</span>
-                    <span className="text-base text-neutral-500">Share your process with the community</span>
-                  </div>
+                  {volunteerRoles.map((role, i) => (
+                    <div
+                      key={role._id}
+                      className={`flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-t ${i === volunteerRoles.length - 1 ? "border-b" : ""} border-border py-6`}
+                    >
+                      <span className="text-lg font-medium text-[#e8e4de]">{role.title}</span>
+                      <span className="text-base text-neutral-500">{role.description}</span>
+                    </div>
+                  ))}
                 </div>
               </BlurFade>
 
@@ -530,10 +525,25 @@ export default async function Home() {
 
               <BlurFade inView delay={0.1}>
                 <div className="mt-6 grid grid-cols-2 gap-3">
-                  <div className="border border-border h-20 border-dashed" />
-                  <div className="border border-border h-20 border-dashed" />
-                  <div className="border border-border h-20 border-dashed" />
-                  <div className="border border-border h-20 border-dashed" />
+                  {sponsors.length > 0
+                    ? sponsors.map((sponsor) => (
+                        <a
+                          key={sponsor._id}
+                          href={sponsor.websiteUrl || "#"}
+                          target={sponsor.websiteUrl ? "_blank" : undefined}
+                          rel={sponsor.websiteUrl ? "noopener noreferrer" : undefined}
+                          className="border border-border h-20 flex items-center justify-center p-4 hover:border-neutral-500 transition-colors"
+                        >
+                          <img
+                            src={urlFor(sponsor.logo).width(160).height(60).fit("max").url()}
+                            alt={sponsor.name}
+                            className="max-h-12 w-auto object-contain invert opacity-70"
+                          />
+                        </a>
+                      ))
+                    : Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="border border-border h-20 border-dashed" />
+                      ))}
                 </div>
               </BlurFade>
 
