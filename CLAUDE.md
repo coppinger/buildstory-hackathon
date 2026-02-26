@@ -103,7 +103,7 @@ No webhook. Profiles are created lazily via `lib/db/ensure-profile.ts` -- call `
 Neon Postgres with Drizzle ORM. Client in `lib/db/index.ts` uses the Neon HTTP (serverless) adapter and imports the full schema for relational queries.
 
 **Schema** (`lib/db/schema.ts`):
-- `profiles` -- clerk_id (unique), username (unique, nullable), display_name, bio, social links, country, experience_level enum
+- `profiles` -- clerk_id (unique), username (unique, nullable), display_name, bio, social links, country (uppercase ISO 3166-1 alpha-2 code), region (ISO 3166-2 subdivision code, nullable), experience_level enum
 - `events` -- name, slug (unique), description, dates, status enum (draft/open/active/judging/complete)
 - `eventRegistrations` -- links profile to event with team_preference enum, unique on (event_id, profile_id)
 - `projects` -- profile_id (FK), name, slug (unique, nullable), description, starting_point enum, goal_text, github_url, live_url
@@ -119,6 +119,8 @@ Config reads `DATABASE_URL` from `.env.local` (via dotenv in `drizzle.config.ts`
 ### Constants & Queries
 
 `lib/constants.ts` centralizes shared values: `HACKATHON_SLUG`, `DISCORD_INVITE_URL`, and placeholder URLs (`VOLUNTEER_URL`, `SPONSOR_URL`, `SPONSOR_CREDITS_URL`, `DOCS_URL`). Import from here instead of hardcoding slugs or URLs.
+
+`lib/countries.ts` and `lib/regions.ts` are static ISO 3166 lookup tables (countries with alpha-2 codes and flag emoji; regions/subdivisions keyed by country code). Used by the onboarding comboboxes and profile display pages. Profile display resolves stored ISO codes to human-readable names via `getCountryName()` / `getRegionName()` helpers.
 
 Two query modules:
 - `lib/admin/queries.ts` -- admin dashboard queries (growth stats, activity feed)
@@ -143,7 +145,7 @@ Multi-step registration at `/hackathon` (`app/(onboarding)/hackathon/`). Eight i
 - Each step is a separate component in `components/onboarding/steps/` (e.g., `identity-step.tsx`, `experience-step.tsx`, `project-basics-step.tsx`). Old monolithic `registration-step.tsx` and `project-step.tsx` were removed.
 - `WizardCard` wraps most steps with a consistent card layout (label, title, description, primary/secondary buttons)
 - 6 server actions in `actions.ts`: `checkUsernameAvailability`, `completeRegistration`, `createOnboardingProject`, `searchUsers`, `searchProjects`, `checkProjectSlugAvailability`
-- Reusable onboarding components in `components/onboarding/` (predictive search, section radio group with optional icon support, live preview badge, step transitions)
+- Reusable onboarding components in `components/onboarding/` (predictive search, section radio group with optional icon support, live preview badge, step transitions, country/region comboboxes with virtualized lists via `@tanstack/react-virtual`)
 - **Dev mode**: `?dev=true` query param (dev only) enables a floating toolbar that jumps to any step and fills mock data, skipping DB writes for frontend iteration
 
 ### Discord Notifications
@@ -166,11 +168,13 @@ Integration tests in `__tests__/integration/` run against the real Neon database
 
 ### CI
 
-Three GitHub Actions workflows in `.github/workflows/`:
+Five GitHub Actions workflows in `.github/workflows/`:
 
 - **`lint.yml`** -- runs on PRs to `main`. Lints only (fast feedback).
 - **`test.yml`** -- runs on PRs to `main`. Runs `db:migrate` against the dev/test Neon DB, then `npm test`. The migration step ensures the test database schema stays in sync with pending migrations before tests run. Tests hit the real Neon DB via `DATABASE_URL` stored in GitHub repo secrets.
 - **`deploy.yml`** -- runs on push to `main` (i.e., after PR merge). Runs lint + test in parallel, then a `deploy` job (gated on both passing) that migrates the **production** Neon DB (`PRODUCTION_DATABASE_URL`) and triggers a Vercel deploy hook (`VERCEL_DEPLOY_HOOK`). `vercel.json` disables Vercel's automatic git-triggered deploy on `main` so the build only starts after production migrations complete. Preview deployments on PR branches are unaffected.
+- **`claude.yml`** -- Claude Code PR assistant. Triggers when `@claude` is mentioned in issue/PR comments, review comments, or issue bodies. Uses `anthropics/claude-code-action@v1`.
+- **`claude-code-review.yml`** -- automated Claude Code review on every PR (opened, synchronized, reopened). Runs the `code-review` plugin via `anthropics/claude-code-action@v1`.
 
 ## Environment Variables
 
