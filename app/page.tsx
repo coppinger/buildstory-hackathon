@@ -228,7 +228,7 @@ export default async function Home() {
 
             <BlurFade inView delay={0.1}>
               <h2 className="mt-12 font-heading italic text-3xl md:text-5xl text-[#e8e4de]">
-                February 23 &rarr; March 1
+                March 1 &rarr; March 7
               </h2>
             </BlurFade>
 
