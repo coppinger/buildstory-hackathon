@@ -162,7 +162,7 @@ For database constraint violations, use the pattern in `app/(onboarding)/hackath
 
 ### Testing
 
-Integration tests in `__tests__/integration/` run against the real Neon database via Vitest. Tests mock Clerk auth (`vi.mock("@clerk/nextjs/server")`), `next/cache`, and Sentry, then exercise server actions and DB helpers directly. Each test file manages its own cleanup in `afterAll`. Config in `vitest.config.ts`.
+Integration tests in `__tests__/integration/` run against the real Neon database via Vitest. Tests mock Clerk auth (`vi.mock("@clerk/nextjs/server")`), `next/cache`, Sentry, Discord webhooks (`@/lib/discord`), and milestone checkers (`@/lib/milestones`) to prevent side effects and external calls during test runs. This allows tests to exercise server actions and DB helpers directly against a real test DB without triggering notifications. Each test file manages its own cleanup in `afterAll`. Config in `vitest.config.ts`.
 
 ### CI
 
