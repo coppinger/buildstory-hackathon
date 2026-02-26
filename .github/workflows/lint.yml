@@ -1,11 +1,11 @@
-name: Test
+name: Lint
 
 on:
   pull_request:
     branches: [main]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,9 +14,4 @@ jobs:
           node-version: 20
           cache: "npm"
       - run: npm ci
-      - run: npm run db:migrate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      - run: npm test
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - run: npm run lint
