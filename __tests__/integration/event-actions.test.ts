@@ -67,7 +67,6 @@ function buildProjectFormData(
 
 let testClerk: string;
 let testEventId: string;
-let testEventSlug: string;
 let testProfileId: string;
 
 // Track all created IDs for cleanup
@@ -114,7 +113,6 @@ beforeAll(async () => {
   // Create a default open event
   const event = await createTestEvent();
   testEventId = event.id;
-  testEventSlug = event.slug;
 });
 
 beforeEach(() => {

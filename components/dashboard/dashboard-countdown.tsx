@@ -53,13 +53,6 @@ export function DashboardCountdown() {
     { value: state.seconds, label: "sec" },
   ];
 
-  const label =
-    state.phase === "before"
-      ? "Starts in"
-      : state.phase === "live"
-        ? "Ends in"
-        : "Event ended";
-
   if (state.phase === "ended") {
     return (
       <p className="text-sm text-muted-foreground">Event has ended</p>
