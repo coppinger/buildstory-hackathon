@@ -35,7 +35,7 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 - **Notifications**: Discord webhooks (`lib/discord.ts`) -- fire-and-forget signup/project pings and milestone alerts
 - **Monitoring**: Sentry (`@sentry/nextjs`) -- error tracking on server, edge, and client; server actions use `Sentry.captureException` with component/action tags
 - **Testing**: Vitest (integration tests against real Neon DB)
-- **CI**: GitHub Actions (`.github/workflows/test.yml`) -- lint + tests on push/PR to main
+- **CI**: GitHub Actions -- three workflows: `lint.yml` (PR), `test.yml` (PR), `deploy.yml` (push to main)
 - **AI enrichment:** Anthropic API (future — build log processing)
 
 ## Development Workflow
@@ -56,9 +56,9 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 2. Work locally against the dev environment
 3. Run `npm run db:generate` if schema changed, then `npm run db:migrate` against dev
 4. Push the feature branch and open a PR into `main`
-5. CI runs tests; Vercel creates a preview deployment
+5. CI runs lint and tests on the PR; Vercel creates a preview deployment
 6. Verify in the preview environment
-7. Merge the PR — CI runs tests again, then runs Drizzle migrations against production Neon, then Vercel deploys to production
+7. Merge the PR — `deploy.yml` runs lint + tests, migrates production Neon DB, then triggers a Vercel deploy hook (Vercel auto-deploy on `main` is disabled via `vercel.json`, so the build only starts after migrations complete)
 
 ### Rules
 
@@ -164,7 +164,11 @@ Integration tests in `__tests__/integration/` run against the real Neon database
 
 ### CI
 
-GitHub Actions workflow in `.github/workflows/test.yml` runs on every push and PR to `main`. Steps: install deps (`npm ci`), lint (`npm run lint`), **run `npm run db:migrate` against test database**, then test (`npm test`). The migration step ensures the test database schema stays in sync with pending migrations before tests run. Tests hit the real Neon DB via `DATABASE_URL` stored in GitHub repo secrets. On merge to `main`, CI also runs Drizzle migrations against the production Neon database before Vercel deploys.
+Three GitHub Actions workflows in `.github/workflows/`:
+
+- **`lint.yml`** -- runs on PRs to `main`. Lints only (fast feedback).
+- **`test.yml`** -- runs on PRs to `main`. Runs `db:migrate` against the dev/test Neon DB, then `npm test`. The migration step ensures the test database schema stays in sync with pending migrations before tests run. Tests hit the real Neon DB via `DATABASE_URL` stored in GitHub repo secrets.
+- **`deploy.yml`** -- runs on push to `main` (i.e., after PR merge). Runs lint + test in parallel, then a `deploy` job (gated on both passing) that migrates the **production** Neon DB (`PRODUCTION_DATABASE_URL`) and triggers a Vercel deploy hook (`VERCEL_DEPLOY_HOOK`). `vercel.json` disables Vercel's automatic git-triggered deploy on `main` so the build only starts after production migrations complete. Preview deployments on PR branches are unaffected.
 
 ## Environment Variables
 
@@ -176,6 +180,10 @@ Required in `.env.local` (local dev uses Neon `dev` branch + Clerk test keys):
 - `ADMIN_USER_IDS` -- comma-separated Clerk user IDs granted admin access
 - `DISCORD_WEBHOOK_SIGNUPS` -- Discord webhook URL for signup/project notification pings (optional, no-ops if unset)
 - `DISCORD_WEBHOOK_MILESTONES` -- Discord webhook URL for milestone alerts (optional, no-ops if unset)
+
+CI-only secrets (GitHub Actions, not in `.env.local`):
+- `PRODUCTION_DATABASE_URL` -- Neon production connection string (used by `deploy.yml` to migrate prod DB on merge to main)
+- `VERCEL_DEPLOY_HOOK` -- Vercel deploy hook URL (used by `deploy.yml` to trigger production build after migrations)
 
 ## Path Aliases
 
