@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { getProjectBySlug } from "@/lib/queries";
+import { ensureProfile } from "@/lib/db/ensure-profile";
+import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
 
 const startingPointLabels: Record<string, string> = {
   new: "Starting from scratch",
@@ -24,14 +28,43 @@ export default async function ProjectDetailPage({
 
   if (!project) notFound();
 
+  // Check ownership
+  let isOwner = false;
+  const { userId } = await auth();
+  if (userId) {
+    const profile = await ensureProfile(userId);
+    if (profile && profile.id === project.profile.id) {
+      isOwner = true;
+    }
+  }
+
   return (
     <div className="p-8 lg:p-12 w-full max-w-3xl">
-      <Link
-        href="/projects"
-        className="text-sm text-muted-foreground hover:text-foreground transition-colors font-mono"
-      >
-        ← Back to projects
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/projects"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors font-mono"
+        >
+          &larr; Back to projects
+        </Link>
+
+        {isOwner && (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/projects/${slug}/edit`}>Edit</Link>
+            </Button>
+            <DeleteProjectDialog
+              projectId={project.id}
+              projectName={project.name}
+              trigger={
+                <Button variant="destructive" size="sm">
+                  Delete
+                </Button>
+              }
+            />
+          </div>
+        )}
+      </div>
 
       <h1 className="mt-6 font-heading text-4xl text-foreground">
         {project.name}
@@ -73,7 +106,7 @@ export default async function ProjectDetailPage({
             rel="noopener noreferrer"
             className="text-sm font-mono text-foreground hover:text-buildstory-500 transition-colors"
           >
-            GitHub →
+            GitHub &rarr;
           </a>
         )}
         {project.liveUrl && (
@@ -83,7 +116,7 @@ export default async function ProjectDetailPage({
             rel="noopener noreferrer"
             className="text-sm font-mono text-foreground hover:text-buildstory-500 transition-colors"
           >
-            Live site →
+            Live site &rarr;
           </a>
         )}
       </div>

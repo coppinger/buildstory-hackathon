@@ -45,6 +45,13 @@ export const teamPreferenceEnum = pgEnum("team_preference", [
 
 export const startingPointEnum = pgEnum("starting_point", ["new", "existing"]);
 
+export const commitmentLevelEnum = pgEnum("commitment_level", [
+  "all_in",
+  "daily",
+  "nights_weekends",
+  "not_sure",
+]);
+
 // --- Profiles ---
 
 export const profiles = pgTable("profiles", {
@@ -103,6 +110,7 @@ export const eventRegistrations = pgTable(
       .notNull()
       .references(() => profiles.id),
     teamPreference: teamPreferenceEnum("team_preference").notNull(),
+    commitmentLevel: commitmentLevelEnum("commitment_level"),
     registeredAt: timestamp("registered_at").defaultNow().notNull(),
   },
   (t) => [unique().on(t.eventId, t.profileId)]

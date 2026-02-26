@@ -19,6 +19,7 @@ interface SearchResult {
 interface BridgeStepProps {
   onChoose: (choice: BridgeChoice) => void;
   onJoinTeam: (teamLeadId: string | null, projectId: string | null) => void;
+  onBack?: () => void;
 }
 
 const options = [
@@ -42,7 +43,7 @@ const options = [
   },
 ];
 
-export function BridgeStep({ onChoose, onJoinTeam }: BridgeStepProps) {
+export function BridgeStep({ onChoose, onJoinTeam, onBack }: BridgeStepProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [selectedLead, setSelectedLead] = useState<SearchResult | null>(null);
   const [selectedProject, setSelectedProject] = useState<SearchResult | null>(null);
@@ -161,6 +162,16 @@ export function BridgeStep({ onChoose, onJoinTeam }: BridgeStepProps) {
           </div>
         ))}
       </div>
+
+      {onBack && (
+        <Button
+          variant="outline"
+          onClick={onBack}
+          className="w-full h-11 text-sm"
+        >
+          Back
+        </Button>
+      )}
     </div>
   );
 }

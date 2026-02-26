@@ -1,0 +1,2 @@
+CREATE TYPE "public"."commitment_level" AS ENUM('all_in', 'daily', 'nights_weekends', 'not_sure');--> statement-breakpoint
+ALTER TABLE "event_registrations" ADD COLUMN "commitment_level" "commitment_level";
