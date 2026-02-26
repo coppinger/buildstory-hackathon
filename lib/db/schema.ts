@@ -59,6 +59,7 @@ export const profiles = pgTable("profiles", {
   twitchUrl: text("twitch_url"),
   streamUrl: text("stream_url"),
   country: text("country"),
+  region: text("region"),
   experienceLevel: experienceLevelEnum("experience_level"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")

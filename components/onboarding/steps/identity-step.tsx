@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Icon } from "@/components/ui/icon";
 import { LivePreviewBadge } from "@/components/onboarding/live-preview-badge";
+import { CountryCombobox } from "@/components/onboarding/country-combobox";
+import { RegionCombobox } from "@/components/onboarding/region-combobox";
 import { checkUsernameAvailability } from "@/app/(onboarding)/hackathon/actions";
 
 type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid";
@@ -14,8 +16,9 @@ const USERNAME_REGEX = /^[a-z0-9][a-z0-9_-]{1,28}[a-z0-9]$/;
 interface IdentityStepProps {
   displayName: string;
   username: string;
-  country: string;
-  onUpdate: (partial: { displayName?: string; username?: string; country?: string }) => void;
+  countryCode: string;
+  region: string;
+  onUpdate: (partial: { displayName?: string; username?: string; countryCode?: string; region?: string }) => void;
   onUsernameStatusChange: (status: UsernameStatus) => void;
   initialDisplayName: string;
 }
@@ -23,7 +26,8 @@ interface IdentityStepProps {
 export function IdentityStep({
   displayName,
   username,
-  country,
+  countryCode,
+  region,
   onUpdate,
   onUsernameStatusChange,
   initialDisplayName,
@@ -128,7 +132,7 @@ export function IdentityStep({
           </div>
           {usernameStatus === "invalid" && username.length > 0 && (
             <p className="mt-1 text-sm text-amber-400">
-              3–30 characters: letters, numbers, hyphens, underscores
+              3-30 characters: letters, numbers, hyphens, underscores
             </p>
           )}
           {usernameStatus === "taken" && (
@@ -143,18 +147,21 @@ export function IdentityStep({
           )}
         </div>
 
-        <div>
-          <Label htmlFor="country" className="text-neutral-400 text-sm">
-            Country
-          </Label>
-          <Input
-            id="country"
-            value={country}
-            onChange={(e) => onUpdate({ country: e.target.value })}
-            placeholder="Where are you building from?"
-            className="mt-1.5 bg-white/5 border-neutral-700 text-white placeholder:text-neutral-600"
+        <CountryCombobox
+          value={countryCode}
+          onChange={(code) => {
+            onUpdate({ countryCode: code });
+            if (!code) onUpdate({ countryCode: code, region: "" });
+          }}
+        />
+
+        {countryCode && (
+          <RegionCombobox
+            countryCode={countryCode}
+            value={region}
+            onChange={(code) => onUpdate({ region: code })}
           />
-        </div>
+        )}
       </div>
     </div>
   );

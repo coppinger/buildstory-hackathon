@@ -33,7 +33,8 @@ type OnboardingState = {
   // Registration
   displayName: string;
   username: string;
-  country: string;
+  countryCode: string;
+  region: string;
   experienceLevel:
     | "getting_started"
     | "built_a_few"
@@ -61,7 +62,8 @@ type OnboardingState = {
 const initialState: OnboardingState = {
   displayName: "",
   username: "",
-  country: "",
+  countryCode: "",
+  region: "",
   experienceLevel: null,
   teamPreference: null,
   bridgeChoice: null,
@@ -84,7 +86,8 @@ const stepperSteps = [
 const DEV_MOCK_STATE: Partial<OnboardingState> = {
   displayName: "Jane Builder",
   username: "janebuilder",
-  country: "Ireland",
+  countryCode: "IE",
+  region: "IE-D",
   experienceLevel: "built_a_few",
   teamPreference: "solo",
   projectName: "AI Recipe Remixer",
@@ -201,7 +204,8 @@ export function HackathonOnboarding({
       const result = await completeRegistration({
         displayName: state.displayName.trim(),
         username: state.username.trim().toLowerCase(),
-        country: state.country.trim() || null,
+        country: state.countryCode || null,
+        region: state.region.trim() || null,
         experienceLevel: state.experienceLevel!,
         teamPreference: state.teamPreference!,
         eventId,
@@ -414,7 +418,8 @@ export function HackathonOnboarding({
             <IdentityStep
               displayName={state.displayName}
               username={state.username}
-              country={state.country}
+              countryCode={state.countryCode}
+              region={state.region}
               onUpdate={update}
               onUsernameStatusChange={setUsernameStatus}
               initialDisplayName={initialDisplayName}

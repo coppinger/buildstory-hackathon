@@ -90,6 +90,7 @@ export async function completeRegistration(data: {
   displayName: string;
   username: string;
   country: string | null;
+  region: string | null;
   experienceLevel: "getting_started" | "built_a_few" | "ships_constantly";
   teamPreference: "solo" | "has_team" | "has_team_open" | "looking_for_team";
   eventId: string;
@@ -119,7 +120,8 @@ export async function completeRegistration(data: {
       .set({
         displayName: data.displayName.trim(),
         username: trimmedUsername,
-        country: data.country?.trim() || null,
+        country: data.country?.toUpperCase() || null,
+        region: data.region?.trim() || null,
         experienceLevel: data.experienceLevel,
       })
       .where(eq(profiles.id, profileId));

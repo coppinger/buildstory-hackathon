@@ -144,7 +144,7 @@ export async function getPublicStats(eventId: string) {
       db
         .select({
           count:
-            sql<number>`COUNT(DISTINCT LOWER(${profiles.country}))`.as(
+            sql<number>`COUNT(DISTINCT ${profiles.country})`.as(
               "count"
             ),
         })

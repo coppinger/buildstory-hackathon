@@ -152,6 +152,8 @@ describe("completeRegistration", () => {
     overrides: Partial<{
       displayName: string;
       username: string;
+      country: string | null;
+      region: string | null;
       experienceLevel: "getting_started" | "built_a_few" | "ships_constantly";
       teamPreference: "solo" | "has_team" | "has_team_open" | "looking_for_team";
       eventId: string;
@@ -160,6 +162,8 @@ describe("completeRegistration", () => {
     return {
       displayName: overrides.displayName ?? "Test Builder",
       username: overrides.username ?? `${TEST_PREFIX}user${crypto.randomUUID().slice(0, 8)}`,
+      country: overrides.country ?? null,
+      region: overrides.region ?? null,
       experienceLevel: overrides.experienceLevel ?? "built_a_few",
       teamPreference: overrides.teamPreference ?? "solo",
       eventId: overrides.eventId ?? testEventId,

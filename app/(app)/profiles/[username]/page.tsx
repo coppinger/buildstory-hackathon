@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { getProfileByUsername } from "@/lib/queries";
+import { getCountryByCode, formatLocation } from "@/lib/countries";
+import { getRegionName } from "@/lib/regions";
 
 const experienceLabels: Record<string, string> = {
   getting_started: "Getting started",
@@ -56,7 +58,10 @@ export default async function ProfileDetailPage({
           </Badge>
         )}
         {profile.country && (
-          <Badge variant="outline">{profile.country}</Badge>
+          <Badge variant="outline">
+            {getCountryByCode(profile.country)?.flag}{" "}
+            {formatLocation(profile.country, profile.region, profile.region ? getRegionName(profile.region) : undefined)}
+          </Badge>
         )}
       </div>
 
