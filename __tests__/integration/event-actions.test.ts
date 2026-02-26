@@ -37,6 +37,16 @@ vi.mock("@sentry/nextjs", () => ({
   captureException: (...args: unknown[]) => mockCaptureException(...args),
 }));
 
+vi.mock("@/lib/discord", () => ({
+  notifySignup: vi.fn(),
+  notifyProject: vi.fn(),
+}));
+
+vi.mock("@/lib/milestones", () => ({
+  checkSignupMilestone: vi.fn(),
+  checkProjectMilestone: vi.fn(),
+}));
+
 // Import actions AFTER mocks are set up
 import {
   registerForEvent,
