@@ -21,8 +21,38 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hackathon",
-  description: "Build the future",
+  title: {
+    default: "Buildstory",
+    template: "%s | Buildstory",
+  },
+  description:
+    "The community platform for AI builders. Show what you've built, earn credibility, and connect with builders who ship.",
+  metadataBase: new URL("https://buildstory.com"),
+  icons: {
+    icon: "/favicon.jpg",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Buildstory",
+    title: "Buildstory — Show, don't tell.",
+    description:
+      "The community platform for AI builders. Show what you've built, earn credibility, and connect with builders who ship.",
+    images: [
+      {
+        url: "/cover.png",
+        width: 1200,
+        height: 630,
+        alt: "Buildstory — Show, don't tell.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Buildstory — Show, don't tell.",
+    description:
+      "The community platform for AI builders. Show what you've built, earn credibility, and connect with builders who ship.",
+    images: ["/cover.png"],
+  },
 };
 
 export default function RootLayout({
