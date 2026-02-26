@@ -1,13 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Instrument_Serif, DM_Mono } from "next/font/google";
-import {
-  ClerkProvider,
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 const dmSans = DM_Sans({

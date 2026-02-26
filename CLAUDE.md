@@ -35,6 +35,7 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 - **Notifications**: Discord webhooks (`lib/discord.ts`) -- fire-and-forget signup/project pings and milestone alerts
 - **Monitoring**: Sentry (`@sentry/nextjs`) -- error tracking on server, edge, and client; server actions use `Sentry.captureException` with component/action tags
 - **Testing**: Vitest (integration tests against real Neon DB)
+- **Pre-commit**: Husky + lint-staged -- runs ESLint on staged `.ts/.tsx/.js/.jsx` files before each commit (`.husky/pre-commit`). Config in `eslint.config.mjs` enforces: `no-console` (warn, allows `warn`/`error`), `prefer-const` (flag unreassigned `let`), `eqeqeq` with `== null` exception, `@next/next/no-img-element` off (local SVGs only)
 - **CI**: GitHub Actions -- three workflows: `lint.yml` (PR), `test.yml` (PR), `deploy.yml` (push to main)
 - **AI enrichment:** Anthropic API (future — build log processing)
 
@@ -65,6 +66,7 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 - All schema changes go through migration files (`db:generate` → `db:migrate`), never `db:push` in production
 - Test migrations against the dev branch before merging
 - Production migrations are automated via CI on merge to `main`
+- Pre-commit hook runs ESLint on staged files via husky + lint-staged; fix lint errors before committing (run `npm run lint` to check, or `npx lint-staged` to lint only staged files)
 
 ## Commands
 

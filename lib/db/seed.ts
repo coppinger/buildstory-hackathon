@@ -24,6 +24,7 @@ async function seed() {
     })
     .onConflictDoNothing({ target: events.slug });
 
+  // eslint-disable-next-line no-console
   console.log("Seeded Hackathon 00 event");
 }
 
