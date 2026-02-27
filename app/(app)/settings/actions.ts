@@ -50,6 +50,7 @@ export async function updateProfile(data: {
   country: string | null;
   region: string | null;
   experienceLevel: "getting_started" | "built_a_few" | "ships_constantly" | null;
+  allowInvites?: boolean;
 }): Promise<ActionResult> {
   try {
     const { userId } = await auth();
@@ -126,6 +127,7 @@ export async function updateProfile(data: {
         country: data.country?.toUpperCase() || null,
         region: data.region?.trim() || null,
         experienceLevel: data.experienceLevel,
+        ...(data.allowInvites !== undefined && { allowInvites: data.allowInvites }),
       })
       .where(eq(profiles.id, profile.id));
 

@@ -75,6 +75,11 @@ export default async function ProjectsPage() {
                   ) : (
                     project.profile.displayName
                   )}
+                  {project.members.length > 0 && (
+                    <span className="text-muted-foreground">
+                      {" "}+ {project.members.length} other{project.members.length !== 1 ? "s" : ""}
+                    </span>
+                  )}
                 </span>
 
                 <div className="flex items-center gap-3">

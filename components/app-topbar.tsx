@@ -1,6 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { currentUser } from "@clerk/nextjs/server";
+import { ensureProfile } from "@/lib/db/ensure-profile";
+import {
+  getPendingInviteCount,
+  getPendingInvitesForUser,
+} from "@/lib/queries";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 export async function AppTopbar() {
   const user = await currentUser();
@@ -24,6 +30,7 @@ export async function AppTopbar() {
         <div className="flex justify-end w-full items-center px-8">
           {user ? (
             <div className="flex items-center gap-3">
+              <InviteBell userId={user.id} />
               <Image
                 src={user.imageUrl}
                 alt={user.firstName ?? "Avatar"}
@@ -52,4 +59,16 @@ export async function AppTopbar() {
       </div>
     </header>
   );
+}
+
+async function InviteBell({ userId }: { userId: string }) {
+  const profile = await ensureProfile(userId);
+  if (!profile) return null;
+
+  const [inviteCount, invites] = await Promise.all([
+    getPendingInviteCount(profile.id),
+    getPendingInvitesForUser(profile.id),
+  ]);
+
+  return <NotificationBell invites={invites} count={inviteCount} />;
 }

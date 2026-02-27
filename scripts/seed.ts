@@ -5,7 +5,15 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import * as schema from "../lib/db/schema";
 
-const { profiles, events, eventRegistrations, projects, eventProjects } = schema;
+const {
+  profiles,
+  events,
+  eventRegistrations,
+  projects,
+  eventProjects,
+  projectMembers,
+  teamInvites,
+} = schema;
 
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle({ client: sql, schema });
@@ -614,6 +622,7 @@ async function seed() {
 
   // 4. Upsert projects + event links
   let projectCount = 0;
+  const projectRows: (typeof schema.projects.$inferSelect)[] = [];
   for (const sp of SEED_PROJECTS) {
     const profile = profileRows[sp.ownerIndex];
     if (!profile) continue;
@@ -638,11 +647,92 @@ async function seed() {
         .insert(eventProjects)
         .values({ eventId: eventRow.id, projectId: proj.id })
         .onConflictDoNothing();
+      projectRows.push(proj);
       projectCount++;
+    } else {
+      // Already exists — find it
+      const existing = await db.query.projects.findFirst({
+        where: (p, { eq }) => eq(p.slug, sp.slug),
+      });
+      if (existing) projectRows.push(existing);
     }
   }
 
   console.warn(`Projects: ${projectCount} seeded`);
+
+  // 5. Seed team members (add some members to the first few projects)
+  // Project 0 ("AI Code Reviewer" by alice) gets bob and carla as members
+  // Project 2 ("API Health Monitor" by dan) gets eve and frank
+  // Project 4 ("Model Playground" by grace) gets hank
+  const teamMappings = [
+    { projectIndex: 0, memberIndices: [1, 2] },
+    { projectIndex: 2, memberIndices: [4, 5] },
+    { projectIndex: 4, memberIndices: [7] },
+  ];
+
+  let memberCount = 0;
+  for (const tm of teamMappings) {
+    const project = projectRows[tm.projectIndex];
+    if (!project) continue;
+
+    for (const mi of tm.memberIndices) {
+      const member = profileRows[mi];
+      if (!member) continue;
+
+      const [row] = await db
+        .insert(projectMembers)
+        .values({
+          projectId: project.id,
+          profileId: member.id,
+        })
+        .onConflictDoNothing()
+        .returning();
+
+      if (row) memberCount++;
+    }
+  }
+
+  console.warn(`Team members: ${memberCount} seeded`);
+
+  // 6. Seed pending invites (so notification bell has data)
+  // Dan invites alice to "API Health Monitor" (direct)
+  // Grace generates a link invite for "Model Playground"
+  let inviteCount = 0;
+  const danProfile = profileRows[3];
+  const aliceProfile = profileRows[0];
+  const graceProfile = profileRows[6];
+  const apiProject = projectRows[2];
+  const playgroundProject = projectRows[4];
+
+  if (danProfile && aliceProfile && apiProject) {
+    const [inv] = await db
+      .insert(teamInvites)
+      .values({
+        projectId: apiProject.id,
+        senderId: danProfile.id,
+        recipientId: aliceProfile.id,
+        type: "direct",
+      })
+      .onConflictDoNothing()
+      .returning();
+    if (inv) inviteCount++;
+  }
+
+  if (graceProfile && playgroundProject) {
+    const [inv] = await db
+      .insert(teamInvites)
+      .values({
+        projectId: playgroundProject.id,
+        senderId: graceProfile.id,
+        type: "link",
+        token: "seed-invite-token-001",
+      })
+      .onConflictDoNothing()
+      .returning();
+    if (inv) inviteCount++;
+  }
+
+  console.warn(`Team invites: ${inviteCount} seeded`);
   console.warn("Done!");
 }
 
