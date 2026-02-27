@@ -5,6 +5,8 @@ import {
   eventRegistrations,
   profiles,
   projects,
+  teamInvites,
+  projectMembers,
 } from "@/lib/db/schema";
 import {
   eq,
@@ -44,6 +46,13 @@ export async function getHackathonProjects() {
       project: {
         with: {
           profile: true,
+          members: {
+            with: {
+              profile: {
+                columns: { id: true, displayName: true, username: true },
+              },
+            },
+          },
         },
       },
     },
@@ -62,6 +71,9 @@ export async function getProjectBySlug(slug: string) {
       profile: true,
       eventProjects: {
         with: { event: true },
+      },
+      members: {
+        with: { profile: true },
       },
     },
   });
@@ -202,4 +214,97 @@ export async function getPublicStats(eventId: string) {
     ]);
 
   return { signups, projectCount, soloCount, teamCount, countryCount };
+}
+
+// --- Team & Invite Queries ---
+
+export async function getPendingInviteCount(profileId: string) {
+  const [result] = await db
+    .select({ count: count() })
+    .from(teamInvites)
+    .where(
+      and(
+        eq(teamInvites.recipientId, profileId),
+        eq(teamInvites.type, "direct"),
+        eq(teamInvites.status, "pending")
+      )
+    );
+  return result.count;
+}
+
+export async function getPendingInvitesForUser(profileId: string) {
+  return db.query.teamInvites.findMany({
+    where: and(
+      eq(teamInvites.recipientId, profileId),
+      eq(teamInvites.type, "direct"),
+      eq(teamInvites.status, "pending")
+    ),
+    with: {
+      project: {
+        columns: { id: true, name: true, slug: true },
+      },
+      sender: {
+        columns: { displayName: true, username: true },
+      },
+    },
+    orderBy: [desc(teamInvites.createdAt)],
+  });
+}
+
+export async function getProjectMembers(projectId: string) {
+  const members = await db.query.projectMembers.findMany({
+    where: eq(projectMembers.projectId, projectId),
+    with: { profile: true },
+  });
+  return members.filter((m) => isProfileVisible(m.profile));
+}
+
+export async function getProjectPendingInvites(projectId: string) {
+  return db.query.teamInvites.findMany({
+    where: and(
+      eq(teamInvites.projectId, projectId),
+      eq(teamInvites.status, "pending")
+    ),
+    with: {
+      recipient: {
+        columns: { id: true, displayName: true, username: true },
+      },
+    },
+    orderBy: [desc(teamInvites.createdAt)],
+  });
+}
+
+export async function getInviteByToken(token: string) {
+  return db.query.teamInvites.findFirst({
+    where: and(
+      eq(teamInvites.token, token),
+      eq(teamInvites.type, "link"),
+      eq(teamInvites.status, "pending")
+    ),
+    with: {
+      project: {
+        with: {
+          profile: {
+            columns: { id: true, displayName: true, username: true },
+          },
+        },
+      },
+      sender: {
+        columns: { displayName: true, username: true },
+      },
+    },
+  });
+}
+
+export async function getSenderPendingInviteCount(profileId: string) {
+  const [result] = await db
+    .select({ count: count() })
+    .from(teamInvites)
+    .where(
+      and(
+        eq(teamInvites.senderId, profileId),
+        eq(teamInvites.status, "pending")
+      )
+    );
+  return result.count;
 }
