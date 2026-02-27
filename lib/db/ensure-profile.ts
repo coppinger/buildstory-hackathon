@@ -1,9 +1,10 @@
+import { cache } from "react";
 import { eq } from "drizzle-orm";
 import { clerkClient } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
 
-export async function ensureProfile(clerkId: string) {
+export const ensureProfile = cache(async (clerkId: string) => {
   const existing = await db.query.profiles.findFirst({
     where: eq(profiles.clerkId, clerkId),
   });
@@ -25,4 +26,4 @@ export async function ensureProfile(clerkId: string) {
   return created ?? (await db.query.profiles.findFirst({
     where: eq(profiles.clerkId, clerkId),
   }));
-}
+});

@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  index,
   pgEnum,
   pgTable,
   serial,
@@ -188,20 +189,28 @@ export type NewEventProject = typeof eventProjects.$inferInsert;
 
 // --- Team Invites ---
 
-export const teamInvites = pgTable("team_invites", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  projectId: uuid("project_id")
-    .notNull()
-    .references(() => projects.id),
-  senderId: uuid("sender_id")
-    .notNull()
-    .references(() => profiles.id),
-  recipientId: uuid("recipient_id").references(() => profiles.id),
-  type: inviteTypeEnum("type").notNull(),
-  status: inviteStatusEnum("status").default("pending").notNull(),
-  token: text("token").unique(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const teamInvites = pgTable(
+  "team_invites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    senderId: uuid("sender_id")
+      .notNull()
+      .references(() => profiles.id),
+    recipientId: uuid("recipient_id").references(() => profiles.id),
+    type: inviteTypeEnum("type").notNull(),
+    status: inviteStatusEnum("status").default("pending").notNull(),
+    token: text("token").unique(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_team_invites_recipient_status").on(t.recipientId, t.type, t.status),
+    index("idx_team_invites_sender_status").on(t.senderId, t.status),
+    index("idx_team_invites_project_status").on(t.projectId, t.status),
+  ]
+);
 
 export type TeamInvite = typeof teamInvites.$inferSelect;
 export type NewTeamInvite = typeof teamInvites.$inferInsert;
