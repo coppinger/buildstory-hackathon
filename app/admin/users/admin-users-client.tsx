@@ -18,7 +18,6 @@ interface SerializedUser {
   clerkId: string;
   username: string | null;
   displayName: string;
-  email: string;
   country: string | null;
   role: "user" | "moderator" | "admin";
   bannedAt: string | null;
@@ -103,8 +102,7 @@ export function AdminUsersClient({
       list = list.filter(
         (u) =>
           u.displayName.toLowerCase().includes(q) ||
-          u.username?.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q)
+          u.username?.toLowerCase().includes(q)
       );
     }
 
@@ -188,7 +186,7 @@ export function AdminUsersClient({
             className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
           />
           <Input
-            placeholder="Search by name, username, or email..."
+            placeholder="Search by name or username..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
@@ -243,17 +241,6 @@ export function AdminUsersClient({
                       </p>
                     )}
                   </div>
-                </div>
-
-                {/* Email */}
-                <div className="lg:w-56 min-w-0">
-                  {user.email ? (
-                    <ObfuscatedField value={user.email} type="email" />
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      No email
-                    </span>
-                  )}
                 </div>
 
                 {/* Clerk ID */}

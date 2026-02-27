@@ -90,10 +90,6 @@ export default async function AdminUserDetailPage({
               <ObfuscatedField value={user.displayName} type="text" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground mb-1">Email</p>
-              <ObfuscatedField value={user.email} type="email" />
-            </div>
-            <div>
               <p className="text-xs text-muted-foreground mb-1">Clerk ID</p>
               <ObfuscatedField value={user.clerkId} type="id" />
             </div>

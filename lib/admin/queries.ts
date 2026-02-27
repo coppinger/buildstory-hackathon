@@ -9,7 +9,6 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, gte, count, desc, sql, isNotNull } from "drizzle-orm";
 import { HACKATHON_SLUG } from "@/lib/constants";
-import { clerkClient } from "@clerk/nextjs/server";
 
 export async function getHackathonEvent() {
   return db.query.events.findFirst({
@@ -130,7 +129,6 @@ export interface AdminUser {
   clerkId: string;
   username: string | null;
   displayName: string;
-  email: string;
   country: string | null;
   role: "user" | "moderator" | "admin";
   bannedAt: Date | null;
@@ -156,33 +154,7 @@ export async function getAdminUserList(): Promise<AdminUser[]> {
     .from(profiles)
     .orderBy(desc(profiles.createdAt));
 
-  // Batch-fetch emails from Clerk (gracefully handles rate limits)
-  const clerkIds = allProfiles.map((p) => p.clerkId);
-  const clerkEmails = new Map<string, string>();
-
-  try {
-    const clerk = await clerkClient();
-    for (let i = 0; i < clerkIds.length; i += 100) {
-      const batch = clerkIds.slice(i, i + 100);
-      const response = await clerk.users.getUserList({
-        userId: batch,
-        limit: 100,
-      });
-      for (const u of response.data) {
-        clerkEmails.set(
-          u.id,
-          u.emailAddresses[0]?.emailAddress ?? ""
-        );
-      }
-    }
-  } catch {
-    // Clerk rate limit or API error — page still works without emails
-  }
-
-  return allProfiles.map((p) => ({
-    ...p,
-    email: clerkEmails.get(p.clerkId) ?? "",
-  }));
+  return allProfiles;
 }
 
 export async function getAdminUserDetail(profileId: string) {
@@ -204,16 +176,6 @@ export async function getAdminUserDetail(profileId: string) {
 
   if (!profile) return null;
 
-  // Fetch email from Clerk (gracefully handles rate limits)
-  let email = "";
-  try {
-    const clerk = await clerkClient();
-    const clerkUser = await clerk.users.getUser(profile.clerkId);
-    email = clerkUser.emailAddresses[0]?.emailAddress ?? "";
-  } catch {
-    // Clerk rate limit or API error — page still works without email
-  }
-
   // Fetch who banned/hid if applicable
   let bannedByName: string | null = null;
   if (profile.bannedBy) {
@@ -233,7 +195,7 @@ export async function getAdminUserDetail(profileId: string) {
     hiddenByName = hider?.displayName ?? null;
   }
 
-  return { ...profile, email, bannedByName, hiddenByName };
+  return { ...profile, bannedByName, hiddenByName };
 }
 
 // --- Audit Log Queries ---
