@@ -50,6 +50,13 @@
       "when": 1772090360253,
       "tag": "0006_clean_hellfire_club",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1772166396901,
+      "tag": "0007_classy_carmella_unuscione",
+      "breakpoints": true
     }
   ]
 }

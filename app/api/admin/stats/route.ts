@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { isAdmin } from "@/lib/admin";
+import { canAccessAdmin } from "@/lib/admin";
 import {
   getDashboardStats,
   getSignupsOverTime,
@@ -9,7 +9,7 @@ import {
 
 export async function GET(request: NextRequest) {
   const { userId } = await auth();
-  if (!userId || !isAdmin(userId)) {
+  if (!userId || !(await canAccessAdmin(userId))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

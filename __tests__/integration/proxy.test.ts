@@ -19,11 +19,17 @@ vi.mock("@clerk/nextjs/server", () => ({
 }));
 
 vi.mock("@/lib/db/ensure-profile", () => ({
-  ensureProfile: vi.fn().mockResolvedValue({ id: "profile-123" }),
+  ensureProfile: vi.fn().mockResolvedValue({
+    id: "profile-123",
+    bannedAt: null,
+    hiddenAt: null,
+  }),
 }));
 
 vi.mock("@/lib/admin", () => ({
-  isAdmin: vi.fn((id: string) => id === "admin-user"),
+  isAdmin: vi.fn((id: string) => Promise.resolve(id === "admin-user")),
+  isSuperAdmin: vi.fn((id: string) => id === "admin-user"),
+  canAccessAdmin: vi.fn((id: string) => Promise.resolve(id === "admin-user")),
 }));
 
 vi.mock("@sentry/nextjs", () => ({
@@ -129,6 +135,8 @@ describe("proxy middleware", () => {
         linkedinUrl: null,
         websiteUrl: null,
         experienceLevel: null,
+        bannedAt: null,
+        hiddenAt: null,
         createdAt: new Date(),
       });
 

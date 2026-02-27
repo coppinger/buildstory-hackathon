@@ -2,7 +2,7 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { ensureProfile } from "@/lib/db/ensure-profile";
-import { isAdmin } from "@/lib/admin";
+import { isAdmin, canAccessAdmin } from "@/lib/admin";
 
 const PROFILE_COOKIE = "bs_profile";
 
@@ -21,6 +21,11 @@ export const proxy = clerkMiddleware(async (auth, request) => {
     try {
       const profile = await ensureProfile(userId);
       if (profile) {
+        // Banned users get redirected
+        if (profile.bannedAt) {
+          return NextResponse.redirect(new URL("/banned", request.url));
+        }
+
         const response = NextResponse.next();
         response.cookies.set(PROFILE_COOKIE, `${userId}:${profile.id}`, {
           httpOnly: true,
@@ -45,7 +50,14 @@ export const proxy = clerkMiddleware(async (auth, request) => {
     request.nextUrl.pathname.startsWith("/admin") ||
     request.nextUrl.pathname.startsWith("/studio")
   ) {
-    if (!userId || !isAdmin(userId)) {
+    if (!userId) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+    // Studio: admin only. Admin panel: admin + moderator.
+    const hasAccess = request.nextUrl.pathname.startsWith("/studio")
+      ? await isAdmin(userId)
+      : await canAccessAdmin(userId);
+    if (!hasAccess) {
       return NextResponse.redirect(new URL("/", request.url));
     }
   }

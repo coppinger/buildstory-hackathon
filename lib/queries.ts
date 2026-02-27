@@ -6,7 +6,16 @@ import {
   profiles,
   projects,
 } from "@/lib/db/schema";
-import { eq, and, count, sql, desc, inArray, isNotNull } from "drizzle-orm";
+import {
+  eq,
+  and,
+  count,
+  sql,
+  desc,
+  inArray,
+  isNotNull,
+  isNull,
+} from "drizzle-orm";
 import { HACKATHON_SLUG } from "@/lib/constants";
 
 async function getHackathonEventId(): Promise<string | null> {
@@ -15,6 +24,14 @@ async function getHackathonEventId(): Promise<string | null> {
     columns: { id: true },
   });
   return event?.id ?? null;
+}
+
+/** Profile is visible when not banned and not hidden */
+function isProfileVisible(profile: {
+  bannedAt: Date | null;
+  hiddenAt: Date | null;
+}) {
+  return profile.bannedAt === null && profile.hiddenAt === null;
 }
 
 export async function getHackathonProjects() {
@@ -33,7 +50,9 @@ export async function getHackathonProjects() {
     orderBy: [desc(eventProjects.submittedAt)],
   });
 
-  return entries.map((ep) => ep.project);
+  return entries
+    .filter((ep) => isProfileVisible(ep.project.profile))
+    .map((ep) => ep.project);
 }
 
 export async function getProjectBySlug(slug: string) {
@@ -49,6 +68,10 @@ export async function getProjectBySlug(slug: string) {
 
   // Only return projects that are linked to at least one event
   if (!project || project.eventProjects.length === 0) return null;
+
+  // Hide projects from banned/hidden users
+  if (!isProfileVisible(project.profile)) return null;
+
   return project;
 }
 
@@ -64,10 +87,12 @@ export async function getHackathonProfiles() {
     orderBy: [desc(eventRegistrations.registeredAt)],
   });
 
-  return registrations.map((r) => ({
-    profile: r.profile,
-    teamPreference: r.teamPreference,
-  }));
+  return registrations
+    .filter((r) => isProfileVisible(r.profile))
+    .map((r) => ({
+      profile: r.profile,
+      teamPreference: r.teamPreference,
+    }));
 }
 
 export async function getProfileByUsername(username: string) {
@@ -89,6 +114,9 @@ export async function getProfileByUsername(username: string) {
 
   if (!profile) return null;
 
+  // Hide banned/hidden profiles
+  if (!isProfileVisible(profile)) return null;
+
   // Only return the profile if they are registered for the hackathon
   if (eventId) {
     const isRegistered = profile.eventRegistrations.some(
@@ -106,54 +134,68 @@ export async function getProfileByUsername(username: string) {
 }
 
 export async function getPublicStats(eventId: string) {
+  // All counts exclude banned/hidden profiles
+  const notBannedOrHidden = and(
+    isNull(profiles.bannedAt),
+    isNull(profiles.hiddenAt)
+  );
+
   const [signups, projectCount, soloCount, teamCount, countryCount] =
     await Promise.all([
       db
         .select({ count: count() })
         .from(eventRegistrations)
-        .where(eq(eventRegistrations.eventId, eventId))
+        .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
+        .where(
+          and(eq(eventRegistrations.eventId, eventId), notBannedOrHidden)
+        )
         .then(([r]) => r.count),
       db
         .select({ count: count() })
         .from(eventProjects)
-        .where(eq(eventProjects.eventId, eventId))
+        .innerJoin(projects, eq(eventProjects.projectId, projects.id))
+        .innerJoin(profiles, eq(projects.profileId, profiles.id))
+        .where(and(eq(eventProjects.eventId, eventId), notBannedOrHidden))
         .then(([r]) => r.count),
       db
         .select({ count: count() })
         .from(eventRegistrations)
+        .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
         .where(
           and(
             eq(eventRegistrations.eventId, eventId),
-            eq(eventRegistrations.teamPreference, "solo")
+            eq(eventRegistrations.teamPreference, "solo"),
+            notBannedOrHidden
           )
         )
         .then(([r]) => r.count),
       db
         .select({ count: count() })
         .from(eventRegistrations)
+        .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
         .where(
           and(
             eq(eventRegistrations.eventId, eventId),
             inArray(eventRegistrations.teamPreference, [
               "has_team",
               "has_team_open",
-            ])
+            ]),
+            notBannedOrHidden
           )
         )
         .then(([r]) => r.count),
       db
         .select({
           count:
-            sql<number>`COUNT(DISTINCT ${profiles.country})`.as(
-              "count"
-            ),
+            sql<number>`COUNT(DISTINCT ${profiles.country})`.as("count"),
         })
         .from(eventRegistrations)
         .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
         .where(
           and(
             eq(eventRegistrations.eventId, eventId),
-            isNotNull(profiles.country)
+            isNotNull(profiles.country),
+            notBannedOrHidden
           )
         )
         .then(([r]) => r.count),
