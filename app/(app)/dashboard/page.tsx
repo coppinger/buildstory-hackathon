@@ -4,13 +4,16 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import {
   events,
+  eventProjects,
   eventRegistrations,
   profiles,
+  projects,
 } from "@/lib/db/schema";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DashboardCountdown } from "@/components/dashboard/dashboard-countdown";
 import { DashboardActivityFeed } from "@/components/dashboard/dashboard-activity-feed";
+import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card";
 import { getPublicStats } from "@/lib/queries";
 import {
   HACKATHON_SLUG,
@@ -30,14 +33,14 @@ async function getHackathonData() {
   return { event, stats };
 }
 
-async function isUserRegistered(eventId: string) {
+async function getUserDashboardData(eventId: string) {
   const { userId } = await auth();
-  if (!userId) return false;
+  if (!userId) return { isRegistered: false, project: null };
 
   const profile = await db.query.profiles.findFirst({
     where: eq(profiles.clerkId, userId),
   });
-  if (!profile) return false;
+  if (!profile) return { isRegistered: false, project: null };
 
   const reg = await db.query.eventRegistrations.findFirst({
     where: and(
@@ -45,8 +48,23 @@ async function isUserRegistered(eventId: string) {
       eq(eventRegistrations.profileId, profile.id)
     ),
   });
+  if (!reg) return { isRegistered: false, project: null };
 
-  return !!reg;
+  // Get the user's project linked to this hackathon
+  const userProject = await db.query.projects.findFirst({
+    where: eq(projects.profileId, profile.id),
+    with: {
+      eventProjects: {
+        where: eq(eventProjects.eventId, eventId),
+      },
+    },
+  });
+
+  const hackathonProject = userProject?.eventProjects.length
+    ? userProject
+    : null;
+
+  return { isRegistered: true, project: hackathonProject };
 }
 
 export default async function DashboardPage() {
@@ -63,7 +81,9 @@ export default async function DashboardPage() {
           "A one-week, fully remote AI building event. Build something real, share your process, and connect with builders worldwide.",
       };
 
-  const isRegistered = data ? await isUserRegistered(data.event.id) : false;
+  const { isRegistered, project } = data
+    ? await getUserDashboardData(data.event.id)
+    : { isRegistered: false, project: null };
 
   return (
     <div className="dark p-8 lg:p-12 w-full space-y-6 flex gap-12">
@@ -137,6 +157,9 @@ export default async function DashboardPage() {
           </div>
         </Card>
       )}
+
+      {/* Your Project — shown only if registered */}
+      {isRegistered && <DashboardProjectCard project={project} />}
 
       {/* Bottom section: remaining cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
