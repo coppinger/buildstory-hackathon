@@ -1,17 +1,16 @@
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { isAdmin } from "@/lib/admin";
 import { Icon } from "@/components/ui/icon";
+import { getAdminSession } from "@/lib/admin/get-admin-session";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = await auth();
-  if (!userId || !isAdmin(userId)) redirect("/");
+  const session = await getAdminSession();
+  if (!session) redirect("/");
 
   return (
     <div className="dark min-h-screen bg-background text-foreground">
@@ -37,6 +36,28 @@ export default async function AdminLayout({
             >
               Dashboard
             </Link>
+            <Link
+              href="/admin/users"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Users
+            </Link>
+            {session.role === "admin" && (
+              <>
+                <Link
+                  href="/admin/roles"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Roles
+                </Link>
+                <Link
+                  href="/admin/audit"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Audit Log
+                </Link>
+              </>
+            )}
             <Link
               href="/dashboard"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"

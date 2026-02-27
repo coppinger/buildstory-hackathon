@@ -21,16 +21,34 @@
 - When a single workflow splits into multiple, all three sections (Tech Stack, Flow, CI) need updates.
 - New config files (e.g., vercel.json) that change deploy behavior are worth mentioning in the CI section.
 - CI-only secrets (not in .env.local) warranted a separate sub-group in Environment Variables.
+- Schema changes (new tables, columns, enums): always update Database section.
+- Function signature changes (sync->async): document when it affects callers (e.g., isAdmin becoming async affects middleware and layout code).
+- Access control changes: update both Auth Flow and Page Structure sections.
+- Public query filtering changes: update Queries section since it affects data contracts.
 
 ### Key Decisions Log
-- 2026-02-26 (evening): Discord and milestones mocking in event-actions tests (commit `42ce4a1`). Updated Testing section to explicitly list Discord and milestones in the mocks list. Rationale: onboarding-actions already mocked these, making it a consistent pattern across test files, and documentation needed to reflect this pattern change. The mocks prevent real webhook notifications during test runs.
-- 2026-02-26: ESLint rule additions (no-console, prefer-const, eqeqeq, no-img-element off). Updated Tech Stack's Pre-commit bullet to document the 4 key rules with their implications. Unused variable removals across 3 files did NOT warrant CLAUDE.md updates (follow existing patterns, not architecture changes).
-- 2026-02-26: CI workflow split (test.yml -> lint.yml + test.yml + deploy.yml). Updated Tech Stack bullet, Flow steps 5+7, entire CI subsection, and added CI-only secrets to Environment Variables. Also documented vercel.json disabling auto-deploy on main.
-- 2026-02-25: No update needed for commit `9ef9042` (38 integration tests for onboarding actions). Testing section already describes the exact pattern.
-- 2026-02-25: Added `isUniqueViolation` pattern to Error Handling section (commit `84143bc`).
-- Earlier: Auth pages, admin dashboard, Discord notifications, onboarding refactor all warranted CLAUDE.md section additions.
+- 2026-02-27: Admin panel expansion (roles, ban/hide, audit log). Updated 5 areas of CLAUDE.md:
+  1. Auth Flow: rewrote admin access to document DB-based role system, async helpers, isSuperAdmin sync fallback, getAdminSession
+  2. Database Schema: added role/ban/hide columns to profiles, adminAuditLog table, user_role enum
+  3. Queries: noted all 5 public queries filter banned/hidden profiles via isProfileVisible
+  4. Page Structure: expanded admin section with sub-pages, access tiers (moderator+ vs admin-only), shared components, /banned page
+  5. Environment Variables: updated ADMIN_USER_IDS to clarify it's now super-admin fallback
+- 2026-02-27 (earlier): Hardcoded Sanity config. Removed deprecated env vars from Environment Variables section.
+- 2026-02-26 (evening): Discord and milestones mocking in event-actions tests. Updated Testing section.
+- 2026-02-26: ESLint rule additions. Updated Tech Stack's Pre-commit bullet.
+- 2026-02-26: CI workflow split. Updated Tech Stack, Flow steps, CI subsection, Environment Variables.
+- 2026-02-25: No update needed for 38 integration tests (testing pattern already documented).
+- 2026-02-25: Added isUniqueViolation pattern to Error Handling section.
 
 ### Test Files (for reference)
 - `__tests__/integration/ensure-profile.test.ts` -- tests ensureProfile DB helper
 - `__tests__/integration/event-actions.test.ts` -- tests event server actions
-- `__tests__/integration/onboarding-actions.test.ts` -- tests all 6 onboarding server actions (38 tests)
+- `__tests__/integration/onboarding-actions.test.ts` -- tests all 6 onboarding server actions
+- `__tests__/integration/proxy.test.ts` -- tests proxy/middleware behavior (updated for role-based access)
+
+### Admin Architecture Notes
+- Admin access is role-based (DB `profiles.role`) with env-var super-admin fallback (`ADMIN_USER_IDS`)
+- `isAdmin`/`isModerator`/`canAccessAdmin` are async (DB lookups); only `isSuperAdmin` is sync
+- Two access tiers in admin panel: moderator+ (users list) and admin-only (roles, audit)
+- `getAdminSession()` is the standard cached helper for server components
+- Banned users redirected to `/banned` by proxy.ts middleware

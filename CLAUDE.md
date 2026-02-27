@@ -90,11 +90,12 @@ npm run db:seed      # Seed dev DB with sample data (scripts/seed.ts)
 
 Clerk auth with **custom UI forms** (not pre-built Clerk components). The auth pages use `useSignIn` and `useSignUp` hooks from `@clerk/nextjs` with email/password and OAuth (Google, GitHub).
 
-- `proxy.ts` -- Clerk middleware using Next.js 16's proxy convention (replaces traditional `middleware.ts`); redirects signed-in users from `/` to `/dashboard`; also enforces admin route protection (redirects non-admin users from `/admin/*`)
+- `proxy.ts` -- Clerk middleware using Next.js 16's proxy convention (replaces traditional `middleware.ts`); redirects signed-in users from `/` to `/dashboard`; enforces admin/moderator route protection for `/admin/*` and admin-only for `/studio`; redirects banned users to `/banned`
 - `app/(auth)/` -- Route group with a two-column layout (form left, dark panel right)
 - `app/(auth)/sign-in/` -- Posts to `/dashboard` after sign-in (email or OAuth)
 - `app/(auth)/sign-up/` -- Posts to `/hackathon` after sign-up (email or OAuth)
-- Admin access: `lib/admin.ts` exports `isAdmin(clerkUserId)` which checks the `ADMIN_USER_IDS` env var (comma-separated Clerk IDs). Guarded at both middleware and layout levels (defense-in-depth).
+- **Roles & admin access**: `lib/admin.ts` exports async helpers: `isAdmin(clerkUserId)`, `isModerator(clerkUserId)`, `canAccessAdmin(clerkUserId)`, `getRole(clerkUserId)`. Roles are stored in the `profiles.role` column (`user_role` enum: user/moderator/admin). `isSuperAdmin(clerkUserId)` is the only sync function -- checks `ADMIN_USER_IDS` env var as a fallback that always grants admin. `canAccessAdmin` returns true for admin or moderator roles. Guarded at both middleware (`proxy.ts`) and layout levels (defense-in-depth).
+- `lib/admin/get-admin-session.ts` -- `getAdminSession()` (React `cache`-wrapped) returns `{ userId, role }` for the current user if they can access admin, or null. Used by admin layout and pages to gate UI by role.
 
 ### Profile Creation (Just-in-Time)
 
@@ -105,14 +106,15 @@ No webhook. Profiles are created lazily via `lib/db/ensure-profile.ts` -- call `
 Neon Postgres with Drizzle ORM. Client in `lib/db/index.ts` uses the Neon HTTP (serverless) adapter and imports the full schema for relational queries.
 
 **Schema** (`lib/db/schema.ts`):
-- `profiles` -- clerk_id (unique), username (unique, nullable), display_name, bio, social links, country (uppercase ISO 3166-1 alpha-2 code), region (ISO 3166-2 subdivision code, nullable), experience_level enum
+- `profiles` -- clerk_id (unique), username (unique, nullable), display_name, bio, social links, country (uppercase ISO 3166-1 alpha-2 code), region (ISO 3166-2 subdivision code, nullable), experience_level enum, role (user_role enum, default 'user'), bannedAt/bannedBy/banReason (ban state), hiddenAt/hiddenBy (soft-hide state)
 - `events` -- name, slug (unique), description, dates, status enum (draft/open/active/judging/complete)
 - `eventRegistrations` -- links profile to event with team_preference enum, commitment_level enum (nullable), unique on (event_id, profile_id)
 - `projects` -- profile_id (FK), name, slug (unique, nullable), description, starting_point enum, goal_text, github_url, live_url
 - `eventProjects` -- junction linking projects to events, unique on (event_id, project_id)
+- `adminAuditLog` -- actor_profile_id (FK), action (text), target_profile_id (FK, nullable), metadata (text, nullable). Logs role changes, bans, hides, and other admin actions.
 - `users` -- legacy table (id, name, email)
 
-Enums: `experience_level`, `event_status`, `team_preference`, `starting_point`, `commitment_level`
+Enums: `experience_level`, `event_status`, `team_preference`, `starting_point`, `commitment_level`, `user_role`
 
 Type exports follow the pattern: `TableName` (select type) and `NewTableName` (insert type).
 
@@ -125,8 +127,8 @@ Config reads `DATABASE_URL` from `.env.local` (via dotenv in `drizzle.config.ts`
 `lib/countries.ts` and `lib/regions.ts` are static ISO 3166 lookup tables (countries with alpha-2 codes and flag emoji; regions/subdivisions keyed by country code). Used by the onboarding comboboxes and profile display pages. Profile display resolves stored ISO codes to human-readable names via `getCountryName()` / `getRegionName()` helpers.
 
 Two query modules:
-- `lib/admin/queries.ts` -- admin dashboard queries (growth stats, activity feed)
-- `lib/queries.ts` -- public-facing queries scoped to the hackathon event: `getHackathonProjects`, `getProjectBySlug`, `getHackathonProfiles`, `getProfileByUsername`, `getPublicStats`. Detail queries enforce visibility rules (projects must be linked to an event, profiles must be registered for the hackathon).
+- `lib/admin/queries.ts` -- admin dashboard queries (growth stats, activity feed) plus admin user-management queries (user list with search/filter, user detail, audit log entries, role management)
+- `lib/queries.ts` -- public-facing queries scoped to the hackathon event: `getHackathonProjects`, `getProjectBySlug`, `getHackathonProfiles`, `getProfileByUsername`, `getPublicStats`. All five functions filter out banned and hidden profiles (via `isProfileVisible` helper checking `bannedAt`/`hiddenAt` nullity). Detail queries also enforce that projects must be linked to an event and profiles must be registered for the hackathon.
 
 ### Page Structure
 
@@ -140,7 +142,14 @@ Settings: `app/(app)/settings/page.tsx` with `ProfileForm` (`components/settings
 
 `app/(onboarding)/` -- Minimal-chrome layout (logo + centered content, no sidebar) for guided flows. Currently contains the hackathon registration flow at `/hackathon`.
 
-`app/admin/` -- Admin-only area (Clerk auth + `isAdmin` guard in both middleware and layout). Contains the growth dashboard at `/admin/dashboard` with stat cards, signups-over-time chart (Recharts), and live activity feed. Polling API at `app/api/admin/stats/route.ts` refreshes data every 30s. DB queries in `lib/admin/queries.ts`.
+`app/admin/` -- Admin area (moderators + admins via `canAccessAdmin` guard in middleware and layout). Layout uses `getAdminSession()` to conditionally show nav links by role. Contains:
+- `/admin/dashboard` -- growth dashboard with stat cards, signups-over-time chart (Recharts), live activity feed. Polling API at `app/api/admin/stats/route.ts` refreshes every 30s.
+- `/admin/users` -- user management list with search/filter (moderator+). `/admin/users/[id]` detail page with ban/unban, hide/unhide actions. Server actions in `app/admin/users/actions.ts`.
+- `/admin/roles` -- role assignment page (admin-only, guarded in page). Server actions in `app/admin/roles/actions.ts` (`setUserRole`, `searchProfilesByName`).
+- `/admin/audit` -- audit log viewer (admin-only, guarded in page). Reads from `adminAuditLog` table.
+- Shared components in `components/admin/`: `ObfuscatedField` (click-to-reveal sensitive data), `BanUserDialog`, `HideUserDialog`.
+
+`app/banned/page.tsx` -- Static page shown to banned users (redirected here by `proxy.ts`). Displays ban reason and links to support.
 
 `app/studio/[[...tool]]/page.tsx` -- Embedded Sanity Studio at `/studio`. Client component rendering `NextStudio`. Protected by admin guard in `proxy.ts`. Manages sponsor logos and volunteer roles displayed on the homepage. Sanity config, client, image helper, schemas, and queries live in `lib/sanity/`.
 
@@ -191,7 +200,7 @@ Required in `.env.local` (local dev uses Neon `dev` branch + Clerk test keys):
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` -- Clerk auth keys (`pk_test_`/`sk_test_` locally, `pk_live_`/`sk_live_` in production)
 - `NEXT_PUBLIC_CLERK_SIGN_IN_URL` (`/sign-in`) / `NEXT_PUBLIC_CLERK_SIGN_UP_URL` (`/sign-up`)
 - `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` (`/dashboard`) / `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` (`/hackathon`)
-- `ADMIN_USER_IDS` -- comma-separated Clerk user IDs granted admin access
+- `ADMIN_USER_IDS` -- comma-separated Clerk user IDs granted super-admin access (sync fallback; these users are always treated as admin role regardless of DB `profiles.role` value)
 - `DISCORD_WEBHOOK_SIGNUPS` -- Discord webhook URL for signup/project notification pings (optional, no-ops if unset)
 - `DISCORD_WEBHOOK_MILESTONES` -- Discord webhook URL for milestone alerts (optional, no-ops if unset)
 

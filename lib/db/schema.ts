@@ -52,6 +52,12 @@ export const commitmentLevelEnum = pgEnum("commitment_level", [
   "not_sure",
 ]);
 
+export const userRoleEnum = pgEnum("user_role", [
+  "user",
+  "moderator",
+  "admin",
+]);
+
 // --- Profiles ---
 
 export const profiles = pgTable("profiles", {
@@ -68,6 +74,12 @@ export const profiles = pgTable("profiles", {
   country: text("country"),
   region: text("region"),
   experienceLevel: experienceLevelEnum("experience_level"),
+  role: userRoleEnum("role").default("user").notNull(),
+  bannedAt: timestamp("banned_at"),
+  bannedBy: uuid("banned_by"),
+  banReason: text("ban_reason"),
+  hiddenAt: timestamp("hidden_at"),
+  hiddenBy: uuid("hidden_by"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -205,5 +217,34 @@ export const eventProjectsRelations = relations(eventProjects, ({ one }) => ({
   project: one(projects, {
     fields: [eventProjects.projectId],
     references: [projects.id],
+  }),
+}));
+
+// --- Admin Audit Log ---
+
+export const adminAuditLog = pgTable("admin_audit_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  actorProfileId: uuid("actor_profile_id")
+    .notNull()
+    .references(() => profiles.id),
+  action: text("action").notNull(),
+  targetProfileId: uuid("target_profile_id").references(() => profiles.id),
+  metadata: text("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type AdminAuditLogEntry = typeof adminAuditLog.$inferSelect;
+export type NewAdminAuditLogEntry = typeof adminAuditLog.$inferInsert;
+
+export const adminAuditLogRelations = relations(adminAuditLog, ({ one }) => ({
+  actor: one(profiles, {
+    fields: [adminAuditLog.actorProfileId],
+    references: [profiles.id],
+    relationName: "auditActor",
+  }),
+  target: one(profiles, {
+    fields: [adminAuditLog.targetProfileId],
+    references: [profiles.id],
+    relationName: "auditTarget",
   }),
 }));
