@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { getProfileByUsername } from "@/lib/queries";
 import { getCountryByCode, formatLocation } from "@/lib/countries";
 import { getRegionName } from "@/lib/regions";
@@ -22,9 +25,14 @@ export default async function ProfileDetailPage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const profile = await getProfileByUsername(username);
+  const [profile, { userId }] = await Promise.all([
+    getProfileByUsername(username),
+    auth(),
+  ]);
 
   if (!profile) notFound();
+
+  const isOwner = userId != null && profile.clerkId === userId;
 
   return (
     <div className="p-8 lg:p-12 w-full max-w-3xl">
@@ -39,7 +47,7 @@ export default async function ProfileDetailPage({
         <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center text-xl font-medium text-foreground">
           {profile.displayName.charAt(0).toUpperCase()}
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="font-heading text-3xl text-foreground">
             {profile.displayName}
           </h1>
@@ -49,6 +57,14 @@ export default async function ProfileDetailPage({
             </p>
           )}
         </div>
+        {isOwner && (
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/settings">
+              <Icon name="edit" size="3.5" />
+              Edit profile
+            </Link>
+          </Button>
+        )}
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">

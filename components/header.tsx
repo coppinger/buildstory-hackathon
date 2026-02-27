@@ -6,7 +6,7 @@ import Link from "next/link";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 
-const navItems = ["what", "why", "where", "who", "faq"];
+const navItems = ["what", "rules", "why", "where", "who", "faq"];
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

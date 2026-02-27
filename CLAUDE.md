@@ -80,6 +80,7 @@ npm run db:generate  # Generate migrations from schema changes
 npm run db:migrate   # Run pending migrations against current DATABASE_URL
 npm run db:push      # Push schema changes directly to database (dev/prototyping only)
 npm run db:studio    # Open Drizzle Studio (DB browser)
+npm run db:seed      # Seed dev DB with sample data (scripts/seed.ts)
 ```
 
 ## Architecture
@@ -105,12 +106,12 @@ Neon Postgres with Drizzle ORM. Client in `lib/db/index.ts` uses the Neon HTTP (
 **Schema** (`lib/db/schema.ts`):
 - `profiles` -- clerk_id (unique), username (unique, nullable), display_name, bio, social links, country (uppercase ISO 3166-1 alpha-2 code), region (ISO 3166-2 subdivision code, nullable), experience_level enum
 - `events` -- name, slug (unique), description, dates, status enum (draft/open/active/judging/complete)
-- `eventRegistrations` -- links profile to event with team_preference enum, unique on (event_id, profile_id)
+- `eventRegistrations` -- links profile to event with team_preference enum, commitment_level enum (nullable), unique on (event_id, profile_id)
 - `projects` -- profile_id (FK), name, slug (unique, nullable), description, starting_point enum, goal_text, github_url, live_url
 - `eventProjects` -- junction linking projects to events, unique on (event_id, project_id)
 - `users` -- legacy table (id, name, email)
 
-Enums: `experience_level`, `event_status`, `team_preference`, `starting_point`
+Enums: `experience_level`, `event_status`, `team_preference`, `starting_point`, `commitment_level`
 
 Type exports follow the pattern: `TableName` (select type) and `NewTableName` (insert type).
 
@@ -128,9 +129,13 @@ Two query modules:
 
 ### Page Structure
 
-`app/page.tsx` is an async server component composing all landing page sections. It fetches real DB stats via `getPublicStats` and uses constants for external links. Client-side interactivity is isolated to individual components (countdown timer, globe, activity feed, FAQ accordion). Components use `BlurFade` wrapper for staggered scroll-triggered animations.
+`app/page.tsx` is an async server component composing all landing page sections (what, rules, why, where, who, FAQ). It fetches real DB stats via `getPublicStats` and uses constants for external links. Client-side interactivity is isolated to individual components (countdown timer, globe, activity feed, FAQ accordion). Components use `BlurFade` wrapper for staggered scroll-triggered animations.
 
-`app/(app)/` -- Authenticated app shell with `AppTopbar` + `AppSidebar` layout (see `components/app-topbar.tsx`, `components/app-sidebar.tsx`). Sidebar nav: Dashboard, Hackathon, Projects, Profiles. The dashboard (`app/(app)/dashboard/page.tsx`) is a server component that queries hackathon data, registration status, and real stats via `getPublicStats`, with client components in `components/dashboard/` (countdown timer, activity feed). Dynamic detail routes: `app/(app)/projects/[slug]/page.tsx` and `app/(app)/profiles/[username]/page.tsx`.
+`app/(app)/` -- Authenticated app shell with `AppTopbar` + `AppSidebar` layout (see `components/app-topbar.tsx`, `components/app-sidebar.tsx`). Sidebar nav: Dashboard, Hackathon, Projects, Profiles, Settings. The dashboard (`app/(app)/dashboard/page.tsx`) is a server component that queries hackathon data, registration status, and real stats via `getPublicStats`, with client components in `components/dashboard/` (countdown timer, activity feed). Dynamic detail routes: `app/(app)/projects/[slug]/page.tsx` and `app/(app)/profiles/[username]/page.tsx`.
+
+Project CRUD: `app/(app)/projects/new/page.tsx` (create), `app/(app)/projects/[slug]/edit/page.tsx` (edit with ownership check). Shared `ProjectForm` component in `components/projects/project-form.tsx` handles both modes. `DeleteProjectDialog` in `components/projects/delete-project-dialog.tsx` for deletion with confirmation. Server actions (`createProject`, `updateProject`, `deleteProject`) in `app/(app)/projects/actions.ts` -- all enforce ownership via profile ID.
+
+Settings: `app/(app)/settings/page.tsx` with `ProfileForm` (`components/settings/profile-form.tsx`) for editing display name, username, bio, social links, country/region, and experience level. Country/region comboboxes (`components/settings/country-combobox.tsx`, `components/settings/region-combobox.tsx`) reuse the ISO data from `lib/countries.ts` / `lib/regions.ts`. Server action `updateProfile` in `app/(app)/settings/actions.ts`.
 
 `app/(onboarding)/` -- Minimal-chrome layout (logo + centered content, no sidebar) for guided flows. Currently contains the hackathon registration flow at `/hackathon`.
 
@@ -138,11 +143,11 @@ Two query modules:
 
 ### Hackathon Onboarding Flow
 
-Multi-step registration at `/hackathon` (`app/(onboarding)/hackathon/`). Eight isolated steps identified by string `StepId`: `identity`, `experience`, `team_preference`, `bridge`, `project_basics`, `starting_point`, `project_goal`, `celebration`. Steps map to three high-level stepper phases (Register, Build, Done).
+Multi-step registration at `/hackathon` (`app/(onboarding)/hackathon/`). Nine isolated steps identified by string `StepId`: `identity`, `experience`, `commitment_level`, `team_preference`, `bridge`, `project_basics`, `starting_point`, `project_goal`, `celebration`. Steps map to three high-level stepper phases (Register, Build, Done). The stepper supports sub-step dot indicators (`subStepCounts` / `currentSubStep` props) to show progress within a phase.
 
 - Server page checks auth, ensures profile, detects existing registration
 - Orchestrator (`hackathon-onboarding.tsx`) owns all state (`OnboardingState`), navigation, and server action calls -- individual step components are pure presentation receiving props/callbacks
-- Each step is a separate component in `components/onboarding/steps/` (e.g., `identity-step.tsx`, `experience-step.tsx`, `project-basics-step.tsx`). Old monolithic `registration-step.tsx` and `project-step.tsx` were removed.
+- Each step is a separate component in `components/onboarding/steps/` (e.g., `identity-step.tsx`, `experience-step.tsx`, `commitment-level-step.tsx`, `project-basics-step.tsx`).
 - `WizardCard` wraps most steps with a consistent card layout (label, title, description, primary/secondary buttons)
 - 6 server actions in `actions.ts`: `checkUsernameAvailability`, `completeRegistration`, `createOnboardingProject`, `searchUsers`, `searchProjects`, `checkProjectSlugAvailability`
 - Reusable onboarding components in `components/onboarding/` (predictive search, section radio group with optional icon support, live preview badge, step transitions, country/region comboboxes with virtualized lists via `@tanstack/react-virtual`)

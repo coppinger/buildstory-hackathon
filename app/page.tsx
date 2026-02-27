@@ -215,6 +215,80 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Rules */}
+      <section id="rules" className="relative z-10 px-6 border-b border-border bg-neutral-950">
+        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-6 md:px-12 lg:px-24">
+          {/* Left — copy */}
+          <div className="py-16 md:py-40">
+            <BlurFade inView>
+              <span className="text-xs uppercase tracking-[0.25em] text-white/30">
+                rules
+              </span>
+            </BlurFade>
+
+            <div className="mt-12 flex flex-col gap-10 font-heading text-3xl md:text-5xl">
+              <BlurFade inView delay={0.1}>
+                <p className="text-white/85">
+                  A few ground rules to keep things fair and fun.
+                </p>
+              </BlurFade>
+              <BlurFade inView delay={0.2}>
+                <p className="text-white/85">
+                  No fine print. No gotchas.
+                </p>
+              </BlurFade>
+              <BlurFade inView delay={0.3}>
+                <p className="text-buildstory-500">
+                  Just build something real.
+                </p>
+              </BlurFade>
+            </div>
+          </div>
+
+          {/* Right — rule cards */}
+          <div className="py-16 md:py-40 flex items-start">
+            <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <BlurFade inView delay={0.1}>
+                <div className="border border-white/10 px-6 py-5">
+                  <p className="text-lg font-medium text-[#e8e4de]">Ship something</p>
+                  <p className="text-white/50 mt-1">Submit a working project by the end of the week. It doesn&apos;t have to be perfect.</p>
+                </div>
+              </BlurFade>
+              <BlurFade inView delay={0.15}>
+                <div className="border border-white/10 px-6 py-5">
+                  <p className="text-lg font-medium text-[#e8e4de]">Start or continue</p>
+                  <p className="text-white/50 mt-1">New project or existing — both welcome. Just make meaningful progress this week.</p>
+                </div>
+              </BlurFade>
+              <BlurFade inView delay={0.2}>
+                <div className="border border-white/10 px-6 py-5">
+                  <p className="text-lg font-medium text-[#e8e4de]">Use any tools</p>
+                  <p className="text-white/50 mt-1">Any language, framework, or platform. We&apos;re not here to limit what you build with.</p>
+                </div>
+              </BlurFade>
+              <BlurFade inView delay={0.25}>
+                <div className="border border-white/10 px-6 py-5">
+                  <p className="text-lg font-medium text-[#e8e4de]">AI is encouraged</p>
+                  <p className="text-white/50 mt-1">Use AI tools freely — coding assistants, image generators, whatever helps you build.</p>
+                </div>
+              </BlurFade>
+              <BlurFade inView delay={0.3}>
+                <div className="border border-white/10 px-6 py-5">
+                  <p className="text-lg font-medium text-[#e8e4de]">Be honest</p>
+                  <p className="text-white/50 mt-1">Represent your work truthfully. Credit collaborators. Don&apos;t claim others&apos; work as your own.</p>
+                </div>
+              </BlurFade>
+              <BlurFade inView delay={0.35}>
+                <div className="border border-white/10 px-6 py-5">
+                  <p className="text-lg font-medium text-[#e8e4de]">Be kind</p>
+                  <p className="text-white/50 mt-1">Constructive feedback only. Respect everyone&apos;s experience level. We&apos;re all here to learn.</p>
+                </div>
+              </BlurFade>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* When */}
       <section className="relative z-10 px-6 border-b border-border ">
         <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-6 md:px-12 lg:px-24">

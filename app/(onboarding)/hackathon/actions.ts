@@ -92,6 +92,7 @@ export async function completeRegistration(data: {
   country: string | null;
   region: string | null;
   experienceLevel: "getting_started" | "built_a_few" | "ships_constantly";
+  commitmentLevel: "all_in" | "daily" | "nights_weekends" | "not_sure" | null;
   teamPreference: "solo" | "has_team" | "has_team_open" | "looking_for_team";
   eventId: string;
 }): Promise<ActionResult> {
@@ -133,6 +134,7 @@ export async function completeRegistration(data: {
         eventId: data.eventId,
         profileId,
         teamPreference: data.teamPreference,
+        commitmentLevel: data.commitmentLevel,
       })
       .onConflictDoNothing();
 

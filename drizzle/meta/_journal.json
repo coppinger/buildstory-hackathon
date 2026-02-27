@@ -43,6 +43,13 @@
       "when": 1772073401998,
       "tag": "0005_dusty_moon_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1772090360253,
+      "tag": "0006_clean_hellfire_club",
+      "breakpoints": true
     }
   ]
 }

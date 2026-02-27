@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -36,6 +36,7 @@ export function ProjectBasicsStep({
   onUpdate,
   onSlugStatusChange,
 }: ProjectBasicsStepProps) {
+  const projectNameRef = useRef<HTMLInputElement>(null);
   const [customSlug, setCustomSlug] = useState(false);
 
   // Store the result of the last async slug check
@@ -51,6 +52,11 @@ export function ProjectBasicsStep({
     if (checkResult?.slug === slug) return checkResult.status;
     return "checking";
   }, [projectSlug, checkResult]);
+
+  // Auto-focus project name input on mount
+  useEffect(() => {
+    projectNameRef.current?.focus();
+  }, []);
 
   // Report status to parent whenever it changes
   useEffect(() => {
@@ -87,6 +93,7 @@ export function ProjectBasicsStep({
           Project name <span className="text-amber-400">*</span>
         </Label>
         <Input
+          ref={projectNameRef}
           id="projectName"
           value={projectName}
           onChange={(e) => onUpdate({ projectName: e.target.value })}

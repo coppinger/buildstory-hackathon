@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Icon } from "@/components/ui/icon";
@@ -32,6 +32,13 @@ export function IdentityStep({
   onUsernameStatusChange,
   initialDisplayName,
 }: IdentityStepProps) {
+  const displayNameRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus display name input on mount
+  useEffect(() => {
+    displayNameRef.current?.focus();
+  }, []);
+
   // Store the result of the last async availability check
   const [checkResult, setCheckResult] = useState<{
     username: string;
@@ -97,6 +104,7 @@ export function IdentityStep({
             Display name <span className="text-amber-400">*</span>
           </Label>
           <Input
+            ref={displayNameRef}
             id="displayName"
             value={displayName}
             onChange={(e) => onUpdate({ displayName: e.target.value })}

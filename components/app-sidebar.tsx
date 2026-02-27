@@ -9,6 +9,7 @@ const navItems = [
   { label: "Hackathon", href: "/hackathon" },
   { label: "Projects", href: "/projects" },
   { label: "Profiles", href: "/profiles" },
+  { label: "Settings", href: "/settings" },
 ];
 
 export function AppSidebar() {

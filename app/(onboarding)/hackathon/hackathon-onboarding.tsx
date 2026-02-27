@@ -7,6 +7,7 @@ import { StepTransition } from "@/components/onboarding/step-transition";
 import { WizardCard } from "@/components/onboarding/wizard-card";
 import { IdentityStep } from "@/components/onboarding/steps/identity-step";
 import { ExperienceStep } from "@/components/onboarding/steps/experience-step";
+import { CommitmentLevelStep } from "@/components/onboarding/steps/commitment-level-step";
 import { TeamPreferenceStep } from "@/components/onboarding/steps/team-preference-step";
 import { BridgeStep } from "@/components/onboarding/steps/bridge-step";
 import { ProjectBasicsStep } from "@/components/onboarding/steps/project-basics-step";
@@ -22,6 +23,7 @@ import { Icon } from "@/components/ui/icon";
 type StepId =
   | "identity"
   | "experience"
+  | "commitment_level"
   | "team_preference"
   | "bridge"
   | "project_basics"
@@ -39,6 +41,12 @@ type OnboardingState = {
     | "getting_started"
     | "built_a_few"
     | "ships_constantly"
+    | null;
+  commitmentLevel:
+    | "all_in"
+    | "daily"
+    | "nights_weekends"
+    | "not_sure"
     | null;
   teamPreference:
     | "solo"
@@ -65,6 +73,7 @@ const initialState: OnboardingState = {
   countryCode: "",
   region: "",
   experienceLevel: null,
+  commitmentLevel: null,
   teamPreference: null,
   bridgeChoice: null,
   joiningTeamLeadId: null,
@@ -89,6 +98,7 @@ const DEV_MOCK_STATE: Partial<OnboardingState> = {
   countryCode: "IE",
   region: "IE-D",
   experienceLevel: "built_a_few",
+  commitmentLevel: "daily",
   teamPreference: "solo",
   projectName: "AI Recipe Remixer",
   projectSlug: "ai-recipe-remixer",
@@ -102,6 +112,7 @@ const DEV_MOCK_STATE: Partial<OnboardingState> = {
 const ALL_STEPS: StepId[] = [
   "identity",
   "experience",
+  "commitment_level",
   "team_preference",
   "bridge",
   "project_basics",
@@ -113,6 +124,7 @@ const ALL_STEPS: StepId[] = [
 const STEP_LABELS: Record<StepId, string> = {
   identity: "Identity",
   experience: "Experience",
+  commitment_level: "Commitment",
   team_preference: "Team Pref",
   bridge: "Bridge",
   project_basics: "Proj Basics",
@@ -121,10 +133,14 @@ const STEP_LABELS: Record<StepId, string> = {
   celebration: "Celebration",
 };
 
+// Sub-step counts per phase: Register (4), Build (4), Done (1)
+const SUB_STEP_COUNTS = [4, 4, 1];
+
 function getStepperIndex(step: StepId): number {
   switch (step) {
     case "identity":
     case "experience":
+    case "commitment_level":
     case "team_preference":
       return 0;
     case "bridge":
@@ -134,6 +150,29 @@ function getStepperIndex(step: StepId): number {
       return 1;
     case "celebration":
       return 2;
+  }
+}
+
+function getSubStepIndex(step: StepId): number {
+  switch (step) {
+    case "identity":
+      return 0;
+    case "experience":
+      return 1;
+    case "commitment_level":
+      return 2;
+    case "team_preference":
+      return 3;
+    case "bridge":
+      return 0;
+    case "project_basics":
+      return 1;
+    case "starting_point":
+      return 2;
+    case "project_goal":
+      return 3;
+    case "celebration":
+      return 0;
   }
 }
 
@@ -207,6 +246,7 @@ export function HackathonOnboarding({
         country: state.countryCode || null,
         region: state.region.trim() || null,
         experienceLevel: state.experienceLevel!,
+        commitmentLevel: state.commitmentLevel,
         teamPreference: state.teamPreference!,
         eventId,
       });
@@ -261,6 +301,9 @@ export function HackathonOnboarding({
         setCurrentStep("experience");
         break;
       case "experience":
+        setCurrentStep("commitment_level");
+        break;
+      case "commitment_level":
         setCurrentStep("team_preference");
         break;
       case "team_preference":
@@ -284,8 +327,11 @@ export function HackathonOnboarding({
       case "experience":
         setCurrentStep("identity");
         break;
-      case "team_preference":
+      case "commitment_level":
         setCurrentStep("experience");
+        break;
+      case "team_preference":
+        setCurrentStep("commitment_level");
         break;
       case "project_basics":
         setCurrentStep("bridge");
@@ -338,6 +384,8 @@ export function HackathonOnboarding({
         return !state.displayName.trim() || usernameStatus !== "available";
       case "experience":
         return !state.experienceLevel;
+      case "commitment_level":
+        return !state.commitmentLevel;
       case "team_preference":
         return !state.teamPreference || isPending;
       case "project_basics":
@@ -399,11 +447,15 @@ export function HackathonOnboarding({
         </div>
       )}
 
-      <Stepper
-        steps={stepperSteps}
-        currentStep={getStepperIndex(currentStep)}
-        className="mb-10 md:mb-24"
-      />
+      {currentStep !== "celebration" && (
+        <Stepper
+          steps={stepperSteps}
+          currentStep={getStepperIndex(currentStep)}
+          subStepCounts={SUB_STEP_COUNTS}
+          currentSubStep={getSubStepIndex(currentStep)}
+          className="mb-10 md:mb-24"
+        />
+      )}
 
       <StepTransition stepKey={currentStep}>
         {currentStep === "identity" && (
@@ -449,6 +501,28 @@ export function HackathonOnboarding({
           </WizardCard>
         )}
 
+        {currentStep === "commitment_level" && (
+          <WizardCard
+            title="How much time can you commit?"
+            description="No wrong answer — this helps us set expectations and match you with others on a similar schedule."
+            primaryLabel="Continue"
+            onPrimary={navigateNext}
+            primaryDisabled={isPrimaryDisabled()}
+            secondaryLabel="Back"
+            onSecondary={navigateBack}
+          >
+            <CommitmentLevelStep
+              value={state.commitmentLevel}
+              onChange={(v) =>
+                update({
+                  commitmentLevel:
+                    v as OnboardingState["commitmentLevel"],
+                })
+              }
+            />
+          </WizardCard>
+        )}
+
         {currentStep === "team_preference" && (
           <WizardCard
             title="How do you want to build?"
@@ -481,6 +555,7 @@ export function HackathonOnboarding({
           <BridgeStep
             onChoose={handleBridgeChoice}
             onJoinTeam={handleJoinTeam}
+            onBack={() => setCurrentStep("team_preference")}
           />
         )}
 
@@ -540,6 +615,7 @@ export function HackathonOnboarding({
             <ProjectGoalStep
               projectGoalText={state.projectGoalText}
               projectRepoUrl={state.projectRepoUrl}
+              showRepoUrl={state.projectStartingPoint === "existing"}
               onUpdate={update}
             />
             {error && (
@@ -555,6 +631,7 @@ export function HackathonOnboarding({
             variant={celebrationVariant}
             state={{
               displayName: state.displayName,
+              username: state.username,
               experienceLevel: state.experienceLevel,
               teamPreference: state.teamPreference,
               projectName: state.projectName,
