@@ -7,7 +7,7 @@ import * as Sentry from "@sentry/nextjs";
 import { NeonDbError } from "@neondatabase/serverless";
 import { db } from "@/lib/db";
 import { ensureProfile } from "@/lib/db/ensure-profile";
-import { projects, eventProjects } from "@/lib/db/schema";
+import { projects, eventProjects, projectMembers, teamInvites } from "@/lib/db/schema";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -193,7 +193,13 @@ export async function deleteProject(data: {
       return { success: false, error: "You do not own this project" };
     }
 
-    // Delete from eventProjects first (FK constraint)
+    // Delete related rows in FK order
+    await db
+      .delete(projectMembers)
+      .where(eq(projectMembers.projectId, data.projectId));
+    await db
+      .delete(teamInvites)
+      .where(eq(teamInvites.projectId, data.projectId));
     await db
       .delete(eventProjects)
       .where(eq(eventProjects.projectId, data.projectId));

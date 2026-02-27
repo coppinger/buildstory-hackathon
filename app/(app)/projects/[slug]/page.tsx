@@ -3,19 +3,14 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getProjectBySlug } from "@/lib/queries";
+import { getProjectBySlug, getProjectPendingInvites } from "@/lib/queries";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
+import { TeamSection } from "@/components/projects/team-section";
 
 const startingPointLabels: Record<string, string> = {
   new: "Starting from scratch",
   existing: "Building on something existing",
-};
-
-const experienceLabels: Record<string, string> = {
-  getting_started: "Getting started",
-  built_a_few: "Built a few things",
-  ships_constantly: "Ships constantly",
 };
 
 export default async function ProjectDetailPage({
@@ -30,13 +25,21 @@ export default async function ProjectDetailPage({
 
   // Check ownership
   let isOwner = false;
+  let currentUserProfileId: string | null = null;
   const { userId } = await auth();
   if (userId) {
     const profile = await ensureProfile(userId);
-    if (profile && profile.id === project.profile.id) {
-      isOwner = true;
+    if (profile) {
+      currentUserProfileId = profile.id;
+      if (profile.id === project.profile.id) {
+        isOwner = true;
+      }
     }
   }
+
+  const pendingInvites = isOwner
+    ? await getProjectPendingInvites(project.id)
+    : [];
 
   return (
     <div className="p-8 lg:p-12 w-full max-w-3xl">
@@ -121,38 +124,15 @@ export default async function ProjectDetailPage({
         )}
       </div>
 
-      {/* Author */}
-      <div className="mt-10 border-t border-border pt-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
-          Built by
-        </p>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-medium text-foreground">
-            {project.profile.displayName.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <p className="text-foreground font-medium">
-              {project.profile.displayName}
-            </p>
-            <div className="flex items-center gap-2">
-              {project.profile.username && (
-                <Link
-                  href={`/profiles/${project.profile.username}`}
-                  className="text-sm text-muted-foreground hover:text-buildstory-500 transition-colors font-mono"
-                >
-                  @{project.profile.username}
-                </Link>
-              )}
-              {project.profile.experienceLevel && (
-                <Badge variant="outline" className="text-xs">
-                  {experienceLabels[project.profile.experienceLevel] ??
-                    project.profile.experienceLevel}
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Team */}
+      <TeamSection
+        projectId={project.id}
+        isOwner={isOwner}
+        ownerProfile={project.profile}
+        members={project.members}
+        pendingInvites={pendingInvites}
+        currentUserProfileId={currentUserProfileId}
+      />
     </div>
   );
 }

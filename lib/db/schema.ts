@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  boolean,
   pgEnum,
   pgTable,
   serial,
@@ -58,6 +59,15 @@ export const userRoleEnum = pgEnum("user_role", [
   "admin",
 ]);
 
+export const inviteStatusEnum = pgEnum("invite_status", [
+  "pending",
+  "accepted",
+  "declined",
+  "revoked",
+]);
+
+export const inviteTypeEnum = pgEnum("invite_type", ["direct", "link"]);
+
 // --- Profiles ---
 
 export const profiles = pgTable("profiles", {
@@ -75,6 +85,7 @@ export const profiles = pgTable("profiles", {
   region: text("region"),
   experienceLevel: experienceLevelEnum("experience_level"),
   role: userRoleEnum("role").default("user").notNull(),
+  allowInvites: boolean("allow_invites").default(true).notNull(),
   bannedAt: timestamp("banned_at"),
   bannedBy: uuid("banned_by"),
   banReason: text("ban_reason"),
@@ -175,11 +186,55 @@ export const eventProjects = pgTable(
 export type EventProject = typeof eventProjects.$inferSelect;
 export type NewEventProject = typeof eventProjects.$inferInsert;
 
+// --- Team Invites ---
+
+export const teamInvites = pgTable("team_invites", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id),
+  senderId: uuid("sender_id")
+    .notNull()
+    .references(() => profiles.id),
+  recipientId: uuid("recipient_id").references(() => profiles.id),
+  type: inviteTypeEnum("type").notNull(),
+  status: inviteStatusEnum("status").default("pending").notNull(),
+  token: text("token").unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type TeamInvite = typeof teamInvites.$inferSelect;
+export type NewTeamInvite = typeof teamInvites.$inferInsert;
+
+// --- Project Members ---
+
+export const projectMembers = pgTable(
+  "project_members",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    profileId: uuid("profile_id")
+      .notNull()
+      .references(() => profiles.id),
+    inviteId: uuid("invite_id").references(() => teamInvites.id),
+    joinedAt: timestamp("joined_at").defaultNow().notNull(),
+  },
+  (t) => [unique().on(t.projectId, t.profileId)]
+);
+
+export type ProjectMember = typeof projectMembers.$inferSelect;
+export type NewProjectMember = typeof projectMembers.$inferInsert;
+
 // --- Relations ---
 
 export const profilesRelations = relations(profiles, ({ many }) => ({
   eventRegistrations: many(eventRegistrations),
   projects: many(projects),
+  sentInvites: many(teamInvites, { relationName: "inviteSender" }),
+  receivedInvites: many(teamInvites, { relationName: "inviteRecipient" }),
+  projectMemberships: many(projectMembers),
 }));
 
 export const eventsRelations = relations(events, ({ many }) => ({
@@ -207,6 +262,8 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
     references: [profiles.id],
   }),
   eventProjects: many(eventProjects),
+  members: many(projectMembers),
+  invites: many(teamInvites),
 }));
 
 export const eventProjectsRelations = relations(eventProjects, ({ one }) => ({
@@ -219,6 +276,41 @@ export const eventProjectsRelations = relations(eventProjects, ({ one }) => ({
     references: [projects.id],
   }),
 }));
+
+export const teamInvitesRelations = relations(teamInvites, ({ one }) => ({
+  project: one(projects, {
+    fields: [teamInvites.projectId],
+    references: [projects.id],
+  }),
+  sender: one(profiles, {
+    fields: [teamInvites.senderId],
+    references: [profiles.id],
+    relationName: "inviteSender",
+  }),
+  recipient: one(profiles, {
+    fields: [teamInvites.recipientId],
+    references: [profiles.id],
+    relationName: "inviteRecipient",
+  }),
+}));
+
+export const projectMembersRelations = relations(
+  projectMembers,
+  ({ one }) => ({
+    project: one(projects, {
+      fields: [projectMembers.projectId],
+      references: [projects.id],
+    }),
+    profile: one(profiles, {
+      fields: [projectMembers.profileId],
+      references: [profiles.id],
+    }),
+    invite: one(teamInvites, {
+      fields: [projectMembers.inviteId],
+      references: [teamInvites.id],
+    }),
+  })
+);
 
 // --- Admin Audit Log ---
 

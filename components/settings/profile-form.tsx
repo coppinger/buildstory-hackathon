@@ -60,6 +60,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   );
   const [twitchUrl, setTwitchUrl] = useState(profile.twitchUrl ?? "");
   const [streamUrl, setStreamUrl] = useState(profile.streamUrl ?? "");
+  const [allowInvites, setAllowInvites] = useState(profile.allowInvites);
 
   // Username availability
   const [usernameStatus, setUsernameStatus] = useState<
@@ -169,6 +170,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           | "built_a_few"
           | "ships_constantly"
           | null,
+        allowInvites,
       });
 
       if (result.success) {
@@ -327,6 +329,41 @@ export function ProfileForm({ profile }: ProfileFormProps) {
               </p>
             </button>
           ))}
+        </div>
+      </section>
+
+      {/* Privacy section */}
+      <section className="space-y-4">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          Privacy
+        </h2>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              Allow team invites
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Other builders can send you invites to join their projects
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={allowInvites}
+            onClick={() => setAllowInvites(!allowInvites)}
+            className={cn(
+              "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors",
+              allowInvites ? "bg-primary" : "bg-muted"
+            )}
+          >
+            <span
+              className={cn(
+                "pointer-events-none inline-block h-5 w-5 rounded-full bg-background shadow-sm transition-transform",
+                allowInvites ? "translate-x-5" : "translate-x-0"
+              )}
+            />
+          </button>
         </div>
       </section>
 

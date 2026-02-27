@@ -57,6 +57,13 @@
       "when": 1772166396901,
       "tag": "0007_classy_carmella_unuscione",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1772228897344,
+      "tag": "0008_sour_lucky_pierre",
+      "breakpoints": true
     }
   ]
 }
