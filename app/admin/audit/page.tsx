@@ -7,7 +7,7 @@ export default async function AdminAuditPage() {
   const session = await getAdminSession();
   if (!session || session.role !== "admin") redirect("/admin/dashboard");
 
-  const entries = await getAuditLog(100);
+  const entries = await getAuditLog();
 
   const serialized = entries.map((e) => ({
     ...e,
