@@ -112,9 +112,10 @@ Neon Postgres with Drizzle ORM. Client in `lib/db/index.ts` uses the Neon HTTP (
 - `projects` -- profile_id (FK), name, slug (unique, nullable), description, starting_point enum, goal_text, github_url, live_url
 - `eventProjects` -- junction linking projects to events, unique on (event_id, project_id)
 - `adminAuditLog` -- actor_profile_id (FK), action (text), target_profile_id (FK, nullable), metadata (text, nullable). Logs role changes, bans, hides, and other admin actions.
+- `mentorApplications` -- public application form data: name, email (unique), discord_handle, twitter_handle, website_url, github_handle, mentor_types (text array: design/technical/growth), background, availability, status (mentor_application_status enum), reviewed_by (FK to profiles), reviewed_at, timestamps
 - `users` -- legacy table (id, name, email)
 
-Enums: `experience_level`, `event_status`, `team_preference`, `starting_point`, `commitment_level`, `user_role`
+Enums: `experience_level`, `event_status`, `team_preference`, `starting_point`, `commitment_level`, `user_role`, `mentor_application_status`
 
 Type exports follow the pattern: `TableName` (select type) and `NewTableName` (insert type).
 
@@ -127,7 +128,7 @@ Config reads `DATABASE_URL` from `.env.local` (via dotenv in `drizzle.config.ts`
 `lib/countries.ts` and `lib/regions.ts` are static ISO 3166 lookup tables (countries with alpha-2 codes and flag emoji; regions/subdivisions keyed by country code). Used by the onboarding comboboxes and profile display pages. Profile display resolves stored ISO codes to human-readable names via `getCountryName()` / `getRegionName()` helpers.
 
 Two query modules:
-- `lib/admin/queries.ts` -- admin dashboard queries (growth stats, activity feed) plus admin user-management queries (user list with search/filter, user detail, audit log entries, role management)
+- `lib/admin/queries.ts` -- admin dashboard queries (growth stats, activity feed) plus admin user-management queries (user list with search/filter, user detail, audit log entries, role management) and mentor application queries (`getMentorApplications`, `getMentorApplicationStats`)
 - `lib/queries.ts` -- public-facing queries scoped to the hackathon event: `getHackathonProjects`, `getProjectBySlug`, `getHackathonProfiles`, `getProfileByUsername`, `getPublicStats`. All five functions filter out banned and hidden profiles (via `isProfileVisible` helper checking `bannedAt`/`hiddenAt` nullity). Detail queries also enforce that projects must be linked to an event and profiles must be registered for the hackathon.
 
 ### Page Structure
@@ -142,10 +143,13 @@ Settings: `app/(app)/settings/page.tsx` with `ProfileForm` (`components/settings
 
 `app/(onboarding)/` -- Minimal-chrome layout (logo + centered content, no sidebar) for guided flows. Currently contains the hackathon registration flow at `/hackathon`.
 
+`app/mentor-apply/` -- Public mentor application form (no auth required). Server-rendered page with client-side `MentorApplyForm` component. Collects name, email, Discord handle, optional social links, mentor types (design/technical/growth), background, and availability. Server action `submitMentorApplication` in `app/mentor-apply/actions.ts` validates inputs and inserts into `mentorApplications` table. Fires Discord notification via `notifyMentorApplication`. Email uniqueness enforced at DB level.
+
 `app/admin/` -- Admin area (moderators + admins via `canAccessAdmin` guard in middleware and layout). Layout uses `getAdminSession()` to conditionally show nav links by role. Contains:
 - `/admin/dashboard` -- growth dashboard with stat cards, signups-over-time chart (Recharts), live activity feed. Polling API at `app/api/admin/stats/route.ts` refreshes every 30s.
 - `/admin/users` -- user management list with search/filter (moderator+). `/admin/users/[id]` detail page with ban/unban, hide/unhide actions. Server actions in `app/admin/users/actions.ts`.
 - `/admin/roles` -- role assignment page (admin-only, guarded in page). Server actions in `app/admin/roles/actions.ts` (`setUserRole`, `searchProfilesByName`).
+- `/admin/mentors` -- mentor application review page (admin-only, guarded in page). Lists all applications with stats (total/pending/approved/declined). `AdminMentorsClient` component in `app/admin/mentors/admin-mentors-client.tsx`. Server actions `approveMentorApplication` / `declineMentorApplication` in `app/admin/mentors/actions.ts` -- both log to `adminAuditLog`.
 - `/admin/audit` -- audit log viewer (admin-only, guarded in page). Reads from `adminAuditLog` table.
 - Shared components in `components/admin/`: `ObfuscatedField` (click-to-reveal sensitive data), `BanUserDialog`, `HideUserDialog`.
 
@@ -169,7 +173,7 @@ Multi-step registration at `/hackathon` (`app/(onboarding)/hackathon/`). Nine is
 
 Fire-and-forget Discord webhook pings on key events. All calls are non-blocking (errors caught and reported to Sentry, never break the user flow).
 
-- `lib/discord.ts` -- `sendDiscordWebhook(url, payload)`, plus `notifySignup` and `notifyProject` helpers
+- `lib/discord.ts` -- `sendDiscordWebhook(url, payload)`, plus `notifySignup`, `notifyProject`, and `notifyMentorApplication` helpers (includes `sanitizeForDiscord` for user-submitted input)
 - `lib/milestones.ts` -- `checkSignupMilestone` / `checkProjectMilestone` fire a ping to a separate milestones webhook when totals hit thresholds (10, 25, 50, 75, 100, 150, 200, 250, 500, 1000)
 - Called from `completeRegistration` and `createOnboardingProject` in `app/(onboarding)/hackathon/actions.ts`, and from `registerForEvent` / `createProject` in `app/event/[slug]/actions.ts`
 
