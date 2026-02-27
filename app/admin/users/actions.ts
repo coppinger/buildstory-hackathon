@@ -149,9 +149,17 @@ export async function banUser(data: {
       })
       .where(eq(profiles.id, data.profileId));
 
-    // Disable login in Clerk
-    const clerk = await clerkClient();
-    await clerk.users.banUser(target.clerkId);
+    // Disable login in Clerk (non-blocking — DB ban is the source of truth)
+    try {
+      const clerk = await clerkClient();
+      await clerk.users.banUser(target.clerkId);
+    } catch (clerkError) {
+      Sentry.captureException(clerkError, {
+        tags: { component: "server-action", action: "banUser-clerk" },
+        extra: { clerkId: target.clerkId },
+      });
+      // DB ban still took effect — Clerk sync can be retried
+    }
 
     await logAudit(actor.id, "ban_user", data.profileId, {
       reason: data.reason?.trim() || null,
@@ -199,9 +207,16 @@ export async function unbanUser(data: {
       })
       .where(eq(profiles.id, data.profileId));
 
-    // Re-enable login in Clerk
-    const clerk = await clerkClient();
-    await clerk.users.unbanUser(target.clerkId);
+    // Re-enable login in Clerk (non-blocking — DB unban is the source of truth)
+    try {
+      const clerk = await clerkClient();
+      await clerk.users.unbanUser(target.clerkId);
+    } catch (clerkError) {
+      Sentry.captureException(clerkError, {
+        tags: { component: "server-action", action: "unbanUser-clerk" },
+        extra: { clerkId: target.clerkId },
+      });
+    }
 
     await logAudit(actor.id, "unban_user", data.profileId);
 

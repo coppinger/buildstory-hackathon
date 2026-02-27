@@ -156,23 +156,27 @@ export async function getAdminUserList(): Promise<AdminUser[]> {
     .from(profiles)
     .orderBy(desc(profiles.createdAt));
 
-  // Batch-fetch emails from Clerk
+  // Batch-fetch emails from Clerk (gracefully handles rate limits)
   const clerkIds = allProfiles.map((p) => p.clerkId);
   const clerkEmails = new Map<string, string>();
 
-  const clerk = await clerkClient();
-  for (let i = 0; i < clerkIds.length; i += 100) {
-    const batch = clerkIds.slice(i, i + 100);
-    const response = await clerk.users.getUserList({
-      userId: batch,
-      limit: 100,
-    });
-    for (const u of response.data) {
-      clerkEmails.set(
-        u.id,
-        u.emailAddresses[0]?.emailAddress ?? ""
-      );
+  try {
+    const clerk = await clerkClient();
+    for (let i = 0; i < clerkIds.length; i += 100) {
+      const batch = clerkIds.slice(i, i + 100);
+      const response = await clerk.users.getUserList({
+        userId: batch,
+        limit: 100,
+      });
+      for (const u of response.data) {
+        clerkEmails.set(
+          u.id,
+          u.emailAddresses[0]?.emailAddress ?? ""
+        );
+      }
     }
+  } catch {
+    // Clerk rate limit or API error — page still works without emails
   }
 
   return allProfiles.map((p) => ({
@@ -200,10 +204,15 @@ export async function getAdminUserDetail(profileId: string) {
 
   if (!profile) return null;
 
-  // Fetch email from Clerk
-  const clerk = await clerkClient();
-  const clerkUser = await clerk.users.getUser(profile.clerkId);
-  const email = clerkUser.emailAddresses[0]?.emailAddress ?? "";
+  // Fetch email from Clerk (gracefully handles rate limits)
+  let email = "";
+  try {
+    const clerk = await clerkClient();
+    const clerkUser = await clerk.users.getUser(profile.clerkId);
+    email = clerkUser.emailAddresses[0]?.emailAddress ?? "";
+  } catch {
+    // Clerk rate limit or API error — page still works without email
+  }
 
   // Fetch who banned/hid if applicable
   let bannedByName: string | null = null;
