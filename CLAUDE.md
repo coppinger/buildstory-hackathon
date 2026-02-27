@@ -27,6 +27,7 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 - **Animation**: Motion (Framer Motion), custom BlurFade component with scroll-triggered `inView` mode; `canvas-confetti` for celebration effects
 - **Map**: Mapbox GL (`mapbox-gl`) for the Globe component
 - **Shaders**: `@paper-design/shaders-react` for ShaderBackground
+- **CMS**: Sanity (`next-sanity`, `@sanity/image-url`, `sanity`) -- embedded studio at `/studio` (admin-only), manages sponsors and volunteer roles for the homepage
 - **Auth**: Clerk (`@clerk/nextjs`) -- custom sign-in/sign-up forms (not Clerk pre-built components)
 - **Database**: Neon Postgres via `@neondatabase/serverless` (HTTP adapter), Drizzle ORM
 - **Icons**: Google Material Symbols (`material-symbols`, sharp filled style) via `components/ui/icon.tsx` `<Icon>` wrapper -- brand icons (GitHub, Google) are custom SVGs in `components/icons.tsx`
@@ -141,6 +142,8 @@ Settings: `app/(app)/settings/page.tsx` with `ProfileForm` (`components/settings
 
 `app/admin/` -- Admin-only area (Clerk auth + `isAdmin` guard in both middleware and layout). Contains the growth dashboard at `/admin/dashboard` with stat cards, signups-over-time chart (Recharts), and live activity feed. Polling API at `app/api/admin/stats/route.ts` refreshes data every 30s. DB queries in `lib/admin/queries.ts`.
 
+`app/studio/[[...tool]]/page.tsx` -- Embedded Sanity Studio at `/studio`. Client component rendering `NextStudio`. Protected by admin guard in `proxy.ts`. Manages sponsor logos and volunteer roles displayed on the homepage. Sanity config, client, image helper, schemas, and queries live in `lib/sanity/`.
+
 ### Hackathon Onboarding Flow
 
 Multi-step registration at `/hackathon` (`app/(onboarding)/hackathon/`). Nine isolated steps identified by string `StepId`: `identity`, `experience`, `commitment_level`, `team_preference`, `bridge`, `project_basics`, `starting_point`, `project_goal`, `celebration`. Steps map to three high-level stepper phases (Register, Build, Done). The stepper supports sub-step dot indicators (`subStepCounts` / `currentSubStep` props) to show progress within a phase.
@@ -191,6 +194,9 @@ Required in `.env.local` (local dev uses Neon `dev` branch + Clerk test keys):
 - `ADMIN_USER_IDS` -- comma-separated Clerk user IDs granted admin access
 - `DISCORD_WEBHOOK_SIGNUPS` -- Discord webhook URL for signup/project notification pings (optional, no-ops if unset)
 - `DISCORD_WEBHOOK_MILESTONES` -- Discord webhook URL for milestone alerts (optional, no-ops if unset)
+- `NEXT_PUBLIC_SANITY_PROJECT_ID` -- Sanity project ID (from sanity.io/manage)
+- `NEXT_PUBLIC_SANITY_DATASET` -- Sanity dataset name (defaults to `production`)
+- `NEXT_PUBLIC_SANITY_API_VERSION` -- Sanity API version date string (defaults to `2026-02-26`)
 
 CI-only secrets (GitHub Actions, not in `.env.local`):
 - `PRODUCTION_DATABASE_URL` -- Neon production connection string (used by `deploy.yml` to migrate prod DB on merge to main)
