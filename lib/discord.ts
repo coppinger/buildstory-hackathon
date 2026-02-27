@@ -55,3 +55,28 @@ export function notifyProject(displayName: string, projectName: string) {
     ],
   });
 }
+
+function sanitizeForDiscord(text: string): string {
+  return text.replace(/[@*_~`|>]/g, "");
+}
+
+export function notifyMentorApplication(name: string, types: string[]) {
+  const safeName = sanitizeForDiscord(name);
+  sendDiscordWebhook(process.env.DISCORD_WEBHOOK_SIGNUPS, {
+    embeds: [
+      {
+        title: "New Mentor Application",
+        description: `**${safeName}** applied to mentor`,
+        color: 0x7c3aed,
+        fields: [
+          {
+            name: "Types",
+            value: types.join(", "),
+            inline: true,
+          },
+        ],
+        timestamp: new Date().toISOString(),
+      },
+    ],
+  });
+}

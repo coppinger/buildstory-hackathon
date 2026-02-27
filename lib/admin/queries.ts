@@ -6,6 +6,7 @@ import {
   projects,
   profiles,
   adminAuditLog,
+  mentorApplications,
 } from "@/lib/db/schema";
 import { eq, and, gte, count, desc, sql, isNotNull } from "drizzle-orm";
 import { HACKATHON_SLUG } from "@/lib/constants";
@@ -257,4 +258,39 @@ export async function getAdminUserStats() {
   ]);
 
   return { total, hidden, banned, elevated };
+}
+
+// --- Mentor Application Queries ---
+
+export async function getMentorApplications() {
+  return db
+    .select()
+    .from(mentorApplications)
+    .orderBy(desc(mentorApplications.createdAt));
+}
+
+export async function getMentorApplicationStats() {
+  const [total, pending, approved, declined] = await Promise.all([
+    db
+      .select({ count: count() })
+      .from(mentorApplications)
+      .then(([r]) => r.count),
+    db
+      .select({ count: count() })
+      .from(mentorApplications)
+      .where(eq(mentorApplications.status, "pending"))
+      .then(([r]) => r.count),
+    db
+      .select({ count: count() })
+      .from(mentorApplications)
+      .where(eq(mentorApplications.status, "approved"))
+      .then(([r]) => r.count),
+    db
+      .select({ count: count() })
+      .from(mentorApplications)
+      .where(eq(mentorApplications.status, "declined"))
+      .then(([r]) => r.count),
+  ]);
+
+  return { total, pending, approved, declined };
 }
