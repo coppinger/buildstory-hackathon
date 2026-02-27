@@ -209,7 +209,7 @@ export interface AuditLogEntry {
   createdAt: Date;
 }
 
-export async function getAuditLog(limit = 50): Promise<AuditLogEntry[]> {
+export async function getAuditLog(): Promise<AuditLogEntry[]> {
   const rows = await db
     .select({
       id: adminAuditLog.id,
@@ -228,8 +228,7 @@ export async function getAuditLog(limit = 50): Promise<AuditLogEntry[]> {
       sql`${profiles} as target`,
       sql`target.id = ${adminAuditLog.targetProfileId}`
     )
-    .orderBy(desc(adminAuditLog.createdAt))
-    .limit(limit);
+    .orderBy(desc(adminAuditLog.createdAt));
 
   return rows;
 }

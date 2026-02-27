@@ -78,7 +78,9 @@ export function AdminUsersClient({
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<TabFilter>("all");
+  const [page, setPage] = useState(1);
   const [isPending, startTransition] = useTransition();
+  const PAGE_SIZE = 20;
 
   const filtered = useMemo(() => {
     let list = users;
@@ -108,6 +110,11 @@ export function AdminUsersClient({
 
     return list;
   }, [users, tab, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const rangeStart = filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, filtered.length);
 
   const statCards = [
     { label: "Total Users", value: stats.total, icon: "group" },
@@ -188,7 +195,10 @@ export function AdminUsersClient({
           <Input
             placeholder="Search by name or username..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="pl-10"
           />
         </div>
@@ -196,7 +206,10 @@ export function AdminUsersClient({
           {tabs.map((t) => (
             <button
               key={t.key}
-              onClick={() => setTab(t.key)}
+              onClick={() => {
+                setTab(t.key);
+                setPage(1);
+              }}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 tab === t.key
                   ? "bg-foreground text-background font-medium"
@@ -219,7 +232,7 @@ export function AdminUsersClient({
             </p>
           </Card>
         ) : (
-          filtered.map((user) => {
+          paginated.map((user) => {
             const status = getStatusInfo(user);
             return (
               <Card
@@ -346,6 +359,38 @@ export function AdminUsersClient({
           })
         )}
       </div>
+
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {rangeStart}–{rangeEnd} of {filtered.length}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              <Icon name="chevron_left" size="4" />
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground tabular-nums px-2">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+              <Icon name="chevron_right" size="4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

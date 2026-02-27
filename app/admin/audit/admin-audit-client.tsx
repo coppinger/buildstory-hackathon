@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ObfuscatedField } from "@/components/admin/obfuscated-field";
 
 interface AuditEntry {
@@ -80,13 +81,21 @@ function formatMetadata(action: string, metadata: string | null): string {
   }
 }
 
+const PAGE_SIZE = 20;
+
 export function AdminAuditClient({ entries }: { entries: AuditEntry[] }) {
   const [filter, setFilter] = useState<ActionFilter>("all");
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     if (filter === "all") return entries;
     return entries.filter((e) => getActionConfig(e.action).group === filter);
   }, [entries, filter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const rangeStart = filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, filtered.length);
 
   const filters: { key: ActionFilter; label: string }[] = [
     { key: "all", label: "All" },
@@ -109,7 +118,10 @@ export function AdminAuditClient({ entries }: { entries: AuditEntry[] }) {
         {filters.map((f) => (
           <button
             key={f.key}
-            onClick={() => setFilter(f.key)}
+            onClick={() => {
+              setFilter(f.key);
+              setPage(1);
+            }}
             className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
               filter === f.key
                 ? "bg-foreground text-background font-medium"
@@ -129,7 +141,7 @@ export function AdminAuditClient({ entries }: { entries: AuditEntry[] }) {
           </p>
         ) : (
           <div className="space-y-3">
-            {filtered.map((entry) => {
+            {paginated.map((entry) => {
               const config = getActionConfig(entry.action);
               const meta = formatMetadata(entry.action, entry.metadata);
 
@@ -182,6 +194,38 @@ export function AdminAuditClient({ entries }: { entries: AuditEntry[] }) {
           </div>
         )}
       </Card>
+
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {rangeStart}–{rangeEnd} of {filtered.length}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              <Icon name="chevron_left" size="4" />
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground tabular-nums px-2">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+              <Icon name="chevron_right" size="4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
