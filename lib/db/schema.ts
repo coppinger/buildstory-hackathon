@@ -10,6 +10,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // Example table — replace with your own schema
 export const users = pgTable("users", {
@@ -349,3 +350,47 @@ export const adminAuditLogRelations = relations(adminAuditLog, ({ one }) => ({
     relationName: "auditTarget",
   }),
 }));
+
+// --- Mentor Applications ---
+
+export const mentorApplicationStatusEnum = pgEnum(
+  "mentor_application_status",
+  ["pending", "approved", "declined"]
+);
+
+export const mentorApplications = pgTable("mentor_applications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  discordHandle: text("discord_handle").notNull(),
+  twitterHandle: text("twitter_handle"),
+  websiteUrl: text("website_url"),
+  githubHandle: text("github_handle"),
+  mentorTypes: text("mentor_types")
+    .array()
+    .notNull()
+    .default(sql`'{}'::text[]`),
+  background: text("background").notNull(),
+  availability: text("availability").notNull(),
+  status: mentorApplicationStatusEnum("status").default("pending").notNull(),
+  reviewedBy: uuid("reviewed_by").references(() => profiles.id),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+export type MentorApplication = typeof mentorApplications.$inferSelect;
+export type NewMentorApplication = typeof mentorApplications.$inferInsert;
+
+export const mentorApplicationsRelations = relations(
+  mentorApplications,
+  ({ one }) => ({
+    reviewer: one(profiles, {
+      fields: [mentorApplications.reviewedBy],
+      references: [profiles.id],
+    }),
+  })
+);
