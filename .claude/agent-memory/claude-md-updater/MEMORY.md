@@ -27,6 +27,7 @@
 - Public query filtering changes: update Queries section since it affects data contracts.
 
 ### Key Decisions Log
+- 2026-02-27 (late): Clerk API rate limit error handling in admin actions. NO UPDATE needed — error handling via Sentry already documented in Error Handling section (line 176-180). Non-blocking external API pattern matches Discord notifications pattern. DB as source of truth is implicit in existing architecture. This was purely defensive/resilience improvement within existing admin feature.
 - 2026-02-27: Admin panel expansion (roles, ban/hide, audit log). Updated 5 areas of CLAUDE.md:
   1. Auth Flow: rewrote admin access to document DB-based role system, async helpers, isSuperAdmin sync fallback, getAdminSession
   2. Database Schema: added role/ban/hide columns to profiles, adminAuditLog table, user_role enum
