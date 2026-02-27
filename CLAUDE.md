@@ -194,9 +194,6 @@ Required in `.env.local` (local dev uses Neon `dev` branch + Clerk test keys):
 - `ADMIN_USER_IDS` -- comma-separated Clerk user IDs granted admin access
 - `DISCORD_WEBHOOK_SIGNUPS` -- Discord webhook URL for signup/project notification pings (optional, no-ops if unset)
 - `DISCORD_WEBHOOK_MILESTONES` -- Discord webhook URL for milestone alerts (optional, no-ops if unset)
-- `NEXT_PUBLIC_SANITY_PROJECT_ID` -- Sanity project ID (from sanity.io/manage); optional, defaults to `rw1qs5mg` if unset
-- `NEXT_PUBLIC_SANITY_DATASET` -- Sanity dataset name (defaults to `production`)
-- `NEXT_PUBLIC_SANITY_API_VERSION` -- Sanity API version date string (defaults to `2026-02-26`)
 
 CI-only secrets (GitHub Actions, not in `.env.local`):
 - `PRODUCTION_DATABASE_URL` -- Neon production connection string (used by `deploy.yml` to migrate prod DB on merge to main)
