@@ -3,16 +3,12 @@ config({ path: ".env.local" });
 
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import {
-  profiles,
-  events,
-  eventRegistrations,
-  projects,
-  eventProjects,
-} from "../lib/db/schema";
+import * as schema from "../lib/db/schema";
+
+const { profiles, events, eventRegistrations, projects, eventProjects } = schema;
 
 const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle({ client: sql });
+const db = drizzle({ client: sql, schema });
 
 const HACKATHON_EVENT = {
   name: "Hackathon 00",
@@ -211,8 +207,7 @@ async function seed() {
   const eventRow =
     event ??
     (await db.query.events.findFirst({
-      // @ts-expect-error -- drizzle query builder works at runtime
-      where: (e: { slug: unknown }, { eq }: { eq: (a: unknown, b: unknown) => unknown }) => eq(e.slug, "hackathon-00"),
+      where: (e, { eq }) => eq(e.slug, "hackathon-00"),
     }));
 
   if (!eventRow) {
@@ -236,8 +231,7 @@ async function seed() {
     } else {
       // Already exists — find it
       const existing = await db.query.profiles.findFirst({
-        // @ts-expect-error -- drizzle query builder works at runtime
-        where: (pr: { clerkId: unknown }, { eq }: { eq: (a: unknown, b: unknown) => unknown }) => eq(pr.clerkId, p.clerkId),
+        where: (pr, { eq }) => eq(pr.clerkId, p.clerkId),
       });
       if (existing) profileRows.push(existing);
     }
