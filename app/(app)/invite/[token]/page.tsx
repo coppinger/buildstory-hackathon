@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { getInviteByToken } from "@/lib/queries";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { AcceptInviteCard } from "@/components/projects/accept-invite-card";
@@ -10,6 +11,13 @@ export default async function InvitePage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+
+  // Auth gate — require sign-in before revealing invite details
+  const { userId } = await auth();
+  if (!userId) {
+    redirect(`/sign-in?redirect_url=/invite/${encodeURIComponent(token)}`);
+  }
+
   const invite = await getInviteByToken(token);
 
   if (!invite) {
@@ -31,18 +39,9 @@ export default async function InvitePage({
     );
   }
 
-  // Check if user is already a member or the owner
-  const { userId } = await auth();
-  let isOwner = false;
-
-  if (userId) {
-    const profile = await ensureProfile(userId);
-    if (profile) {
-      if (profile.id === invite.project.profile.id) {
-        isOwner = true;
-      }
-    }
-  }
+  // Check if user is the owner
+  const profile = await ensureProfile(userId);
+  const isOwner = profile?.id === invite.project.profile.id;
 
   return (
     <div className="p-8 lg:p-12 w-full max-w-lg mx-auto">

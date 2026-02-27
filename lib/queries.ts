@@ -218,20 +218,6 @@ export async function getPublicStats(eventId: string) {
 
 // --- Team & Invite Queries ---
 
-export async function getPendingInviteCount(profileId: string) {
-  const [result] = await db
-    .select({ count: count() })
-    .from(teamInvites)
-    .where(
-      and(
-        eq(teamInvites.recipientId, profileId),
-        eq(teamInvites.type, "direct"),
-        eq(teamInvites.status, "pending")
-      )
-    );
-  return result.count;
-}
-
 export async function getPendingInvitesForUser(profileId: string) {
   return db.query.teamInvites.findMany({
     where: and(

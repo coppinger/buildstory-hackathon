@@ -2,10 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { currentUser } from "@clerk/nextjs/server";
 import { ensureProfile } from "@/lib/db/ensure-profile";
-import {
-  getPendingInviteCount,
-  getPendingInvitesForUser,
-} from "@/lib/queries";
+import { getPendingInvitesForUser } from "@/lib/queries";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 
 export async function AppTopbar() {
@@ -65,10 +62,7 @@ async function InviteBell({ userId }: { userId: string }) {
   const profile = await ensureProfile(userId);
   if (!profile) return null;
 
-  const [inviteCount, invites] = await Promise.all([
-    getPendingInviteCount(profile.id),
-    getPendingInvitesForUser(profile.id),
-  ]);
+  const invites = await getPendingInvitesForUser(profile.id);
 
-  return <NotificationBell invites={invites} count={inviteCount} />;
+  return <NotificationBell invites={invites} count={invites.length} />;
 }

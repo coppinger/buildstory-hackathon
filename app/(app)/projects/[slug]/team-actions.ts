@@ -2,7 +2,7 @@
 
 import crypto from "crypto";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, or, ilike, isNull, notInArray } from "drizzle-orm";
+import { eq, and, or, ilike, isNull, isNotNull, notInArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
 import { NeonDbError } from "@neondatabase/serverless";
@@ -38,6 +38,10 @@ function isUniqueViolation(error: unknown, constraintName: string): boolean {
         ? error
         : null;
   return cause?.code === "23505" && cause?.constraint === constraintName;
+}
+
+function escapeIlike(str: string): string {
+  return str.replace(/[%_\\]/g, "\\$&");
 }
 
 const MAX_PENDING_INVITES = 5;
@@ -175,32 +179,39 @@ export async function respondToInvite(data: {
   try {
     const profileId = await getProfileId();
 
-    const invite = await db.query.teamInvites.findFirst({
-      where: eq(teamInvites.id, data.inviteId),
-      with: { project: true },
-    });
-    if (!invite || invite.recipientId !== profileId || invite.status !== "pending") {
+    // Atomically claim the invite — prevents concurrent accept race
+    const newStatus = data.accept ? "accepted" : "declined";
+    const [claimed] = await db
+      .update(teamInvites)
+      .set({ status: newStatus as "accepted" | "declined" })
+      .where(
+        and(
+          eq(teamInvites.id, data.inviteId),
+          eq(teamInvites.recipientId, profileId),
+          eq(teamInvites.status, "pending")
+        )
+      )
+      .returning();
+
+    if (!claimed) {
       return { success: false, error: "Invite not found" };
     }
 
     if (data.accept) {
       await db.insert(projectMembers).values({
-        projectId: invite.projectId,
+        projectId: claimed.projectId,
         profileId,
-        inviteId: invite.id,
+        inviteId: claimed.id,
       });
-      await db
-        .update(teamInvites)
-        .set({ status: "accepted" })
-        .where(eq(teamInvites.id, data.inviteId));
-    } else {
-      await db
-        .update(teamInvites)
-        .set({ status: "declined" })
-        .where(eq(teamInvites.id, data.inviteId));
     }
 
-    revalidatePath(`/projects/${invite.project.slug}`);
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, claimed.projectId),
+      columns: { slug: true },
+    });
+    if (project?.slug) {
+      revalidatePath(`/projects/${project.slug}`);
+    }
     return { success: true };
   } catch (error) {
     if (isUniqueViolation(error, "project_members_project_id_profile_id_unique")) {
@@ -220,6 +231,7 @@ export async function acceptInviteLink(data: {
   try {
     const profileId = await getProfileId();
 
+    // Read the invite first to check ownership
     const invite = await db.query.teamInvites.findFirst({
       where: and(
         eq(teamInvites.token, data.token),
@@ -247,15 +259,27 @@ export async function acceptInviteLink(data: {
       return { success: false, error: "You are already a team member" };
     }
 
+    // Atomically claim the invite — only one concurrent request can succeed
+    const [claimed] = await db
+      .update(teamInvites)
+      .set({ status: "accepted", recipientId: profileId })
+      .where(
+        and(
+          eq(teamInvites.id, invite.id),
+          eq(teamInvites.status, "pending")
+        )
+      )
+      .returning();
+
+    if (!claimed) {
+      return { success: false, error: "This invite has already been used" };
+    }
+
     await db.insert(projectMembers).values({
       projectId: invite.projectId,
       profileId,
       inviteId: invite.id,
     });
-    await db
-      .update(teamInvites)
-      .set({ status: "accepted", recipientId: profileId })
-      .where(eq(teamInvites.id, invite.id));
 
     revalidatePath(`/projects/${invite.project.slug}`);
     return { success: true, data: { projectSlug: invite.project.slug } };
@@ -265,7 +289,7 @@ export async function acceptInviteLink(data: {
     }
     Sentry.captureException(error, {
       tags: { component: "server-action", action: "acceptInviteLink" },
-      extra: { token: data.token },
+      extra: { tokenPrefix: data.token.slice(0, 8) },
     });
     return { success: false, error: "Failed to accept invite" };
   }
@@ -283,6 +307,9 @@ export async function revokeInvite(data: {
     });
     if (!invite || invite.senderId !== profileId) {
       return { success: false, error: "Invite not found" };
+    }
+    if (invite.status !== "pending") {
+      return { success: false, error: "Only pending invites can be revoked" };
     }
 
     await db
@@ -397,7 +424,7 @@ export async function searchUsersForInvite(data: {
     });
     const excludeIds = [profileId, ...existingMembers.map((m) => m.profileId)];
 
-    const pattern = `%${trimmed}%`;
+    const pattern = `%${escapeIlike(trimmed)}%`;
     const results = await db
       .select({
         id: profiles.id,
@@ -411,6 +438,7 @@ export async function searchUsersForInvite(data: {
             ilike(profiles.username, pattern),
             ilike(profiles.displayName, pattern)
           ),
+          isNotNull(profiles.username),
           eq(profiles.allowInvites, true),
           isNull(profiles.bannedAt),
           isNull(profiles.hiddenAt),

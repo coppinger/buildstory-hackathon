@@ -193,19 +193,19 @@ export async function deleteProject(data: {
       return { success: false, error: "You do not own this project" };
     }
 
-    // Delete related rows in FK order
-    await db
-      .delete(projectMembers)
-      .where(eq(projectMembers.projectId, data.projectId));
-    await db
-      .delete(teamInvites)
-      .where(eq(teamInvites.projectId, data.projectId));
-    await db
-      .delete(eventProjects)
-      .where(eq(eventProjects.projectId, data.projectId));
-
-    // Delete the project
-    await db.delete(projects).where(eq(projects.id, data.projectId));
+    // Delete related rows in FK order within a transaction
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(projectMembers)
+        .where(eq(projectMembers.projectId, data.projectId));
+      await tx
+        .delete(teamInvites)
+        .where(eq(teamInvites.projectId, data.projectId));
+      await tx
+        .delete(eventProjects)
+        .where(eq(eventProjects.projectId, data.projectId));
+      await tx.delete(projects).where(eq(projects.id, data.projectId));
+    });
 
     revalidatePath("/projects");
     return { success: true };
