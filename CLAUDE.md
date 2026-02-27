@@ -106,15 +106,17 @@ No webhook. Profiles are created lazily via `lib/db/ensure-profile.ts` -- call `
 Neon Postgres with Drizzle ORM. Client in `lib/db/index.ts` uses the Neon HTTP (serverless) adapter and imports the full schema for relational queries.
 
 **Schema** (`lib/db/schema.ts`):
-- `profiles` -- clerk_id (unique), username (unique, nullable), display_name, bio, social links, country (uppercase ISO 3166-1 alpha-2 code), region (ISO 3166-2 subdivision code, nullable), experience_level enum, role (user_role enum, default 'user'), bannedAt/bannedBy/banReason (ban state), hiddenAt/hiddenBy (soft-hide state)
+- `profiles` -- clerk_id (unique), username (unique, nullable), display_name, bio, social links, country (uppercase ISO 3166-1 alpha-2 code), region (ISO 3166-2 subdivision code, nullable), experience_level enum, role (user_role enum, default 'user'), allowInvites (boolean, default true -- privacy toggle for team invites), bannedAt/bannedBy/banReason (ban state), hiddenAt/hiddenBy (soft-hide state)
 - `events` -- name, slug (unique), description, dates, status enum (draft/open/active/judging/complete)
 - `eventRegistrations` -- links profile to event with team_preference enum, commitment_level enum (nullable), unique on (event_id, profile_id)
 - `projects` -- profile_id (FK), name, slug (unique, nullable), description, starting_point enum, goal_text, github_url, live_url
 - `eventProjects` -- junction linking projects to events, unique on (event_id, project_id)
+- `teamInvites` -- project_id (FK), sender_id (FK to profiles), recipient_id (FK to profiles, nullable for link invites), type (invite_type enum), status (invite_status enum, default 'pending'), token (unique, nullable -- used for link-type invites)
+- `projectMembers` -- project_id (FK), profile_id (FK), invite_id (FK to teamInvites, nullable), joinedAt timestamp; unique on (project_id, profile_id)
 - `adminAuditLog` -- actor_profile_id (FK), action (text), target_profile_id (FK, nullable), metadata (text, nullable). Logs role changes, bans, hides, and other admin actions.
 - `users` -- legacy table (id, name, email)
 
-Enums: `experience_level`, `event_status`, `team_preference`, `starting_point`, `commitment_level`, `user_role`
+Enums: `experience_level`, `event_status`, `team_preference`, `starting_point`, `commitment_level`, `user_role`, `invite_status` (pending/accepted/declined/revoked), `invite_type` (direct/link)
 
 Type exports follow the pattern: `TableName` (select type) and `NewTableName` (insert type).
 
@@ -128,7 +130,7 @@ Config reads `DATABASE_URL` from `.env.local` (via dotenv in `drizzle.config.ts`
 
 Two query modules:
 - `lib/admin/queries.ts` -- admin dashboard queries (growth stats, activity feed) plus admin user-management queries (user list with search/filter, user detail, audit log entries, role management)
-- `lib/queries.ts` -- public-facing queries scoped to the hackathon event: `getHackathonProjects`, `getProjectBySlug`, `getHackathonProfiles`, `getProfileByUsername`, `getPublicStats`. All five functions filter out banned and hidden profiles (via `isProfileVisible` helper checking `bannedAt`/`hiddenAt` nullity). Detail queries also enforce that projects must be linked to an event and profiles must be registered for the hackathon.
+- `lib/queries.ts` -- public-facing queries scoped to the hackathon event: `getHackathonProjects`, `getProjectBySlug`, `getHackathonProfiles`, `getProfileByUsername`, `getPublicStats`. All five functions filter out banned and hidden profiles (via `isProfileVisible` helper checking `bannedAt`/`hiddenAt` nullity). Detail queries also enforce that projects must be linked to an event and profiles must be registered for the hackathon. Also contains team/invite queries: `getPendingInviteCount`, `getPendingInvitesForUser`, `getProjectMembers`, `getProjectPendingInvites`, `getInviteByToken`, `getSenderPendingInviteCount`. `getProjectBySlug` and `getHackathonProjects` include project members via relational `with`.
 
 ### Page Structure
 
@@ -136,9 +138,11 @@ Two query modules:
 
 `app/(app)/` -- Authenticated app shell with `AppTopbar` + `AppSidebar` layout (see `components/app-topbar.tsx`, `components/app-sidebar.tsx`). Sidebar nav: Dashboard, Hackathon, Projects, Profiles, Settings. The dashboard (`app/(app)/dashboard/page.tsx`) is a server component that queries hackathon data, registration status, and real stats via `getPublicStats`, with client components in `components/dashboard/` (countdown timer, activity feed). Dynamic detail routes: `app/(app)/projects/[slug]/page.tsx` and `app/(app)/profiles/[username]/page.tsx`.
 
-Project CRUD: `app/(app)/projects/new/page.tsx` (create), `app/(app)/projects/[slug]/edit/page.tsx` (edit with ownership check). Shared `ProjectForm` component in `components/projects/project-form.tsx` handles both modes. `DeleteProjectDialog` in `components/projects/delete-project-dialog.tsx` for deletion with confirmation. Server actions (`createProject`, `updateProject`, `deleteProject`) in `app/(app)/projects/actions.ts` -- all enforce ownership via profile ID.
+Project CRUD: `app/(app)/projects/new/page.tsx` (create), `app/(app)/projects/[slug]/edit/page.tsx` (edit with ownership check). Shared `ProjectForm` component in `components/projects/project-form.tsx` handles both modes. `DeleteProjectDialog` in `components/projects/delete-project-dialog.tsx` for deletion with confirmation. Server actions (`createProject`, `updateProject`, `deleteProject`) in `app/(app)/projects/actions.ts` -- all enforce ownership via profile ID. `deleteProject` cascades cleanup of `projectMembers` and `teamInvites` before removing the project.
 
-Settings: `app/(app)/settings/page.tsx` with `ProfileForm` (`components/settings/profile-form.tsx`) for editing display name, username, bio, social links, country/region, and experience level. Country/region comboboxes (`components/settings/country-combobox.tsx`, `components/settings/region-combobox.tsx`) reuse the ISO data from `lib/countries.ts` / `lib/regions.ts`. Server action `updateProfile` in `app/(app)/settings/actions.ts`.
+Team invites: Project detail pages (`app/(app)/projects/[slug]/page.tsx`) show a `TeamSection` component (`components/projects/team-section.tsx`) displaying the owner, members, and (for owners) invite UI. Owners can send direct invites via username search (`components/projects/invite-user-search.tsx`) or generate shareable invite links. 8 server actions in `app/(app)/projects/[slug]/team-actions.ts`: `sendDirectInvite`, `generateInviteLink`, `respondToInvite`, `acceptInviteLink`, `revokeInvite`, `removeTeamMember`, `leaveProject`, `searchUsersForInvite` -- all enforce ownership/membership checks. Invite links use `crypto.randomUUID()` tokens. Rate limit: max 5 pending invites per sender (`MAX_PENDING_INVITES`). `app/(app)/invite/[token]/page.tsx` is the invite link acceptance page rendering `AcceptInviteCard` (`components/projects/accept-invite-card.tsx`). Notification bell (`components/notifications/notification-bell.tsx`) in `AppTopbar` shows pending direct invite count with a popover to accept/decline.
+
+Settings: `app/(app)/settings/page.tsx` with `ProfileForm` (`components/settings/profile-form.tsx`) for editing display name, username, bio, social links, country/region, experience level, and privacy toggles (allowInvites). Country/region comboboxes (`components/settings/country-combobox.tsx`, `components/settings/region-combobox.tsx`) reuse the ISO data from `lib/countries.ts` / `lib/regions.ts`. Server action `updateProfile` in `app/(app)/settings/actions.ts`.
 
 `app/(onboarding)/` -- Minimal-chrome layout (logo + centered content, no sidebar) for guided flows. Currently contains the hackathon registration flow at `/hackathon`.
 
