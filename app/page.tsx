@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { BlurFade } from "@/components/blur-fade"
 import Link from "next/link";
 import { getHackathonEvent } from "@/lib/admin/queries";
-import { getPublicStats } from "@/lib/queries";
+import { getPublicStats, getPublicActivityFeed } from "@/lib/queries";
 import { VOLUNTEER_URL, SPONSOR_URL } from "@/lib/constants";
 import { TeamSection } from "@/components/landing/team-section";
 import { getSponsors, getVolunteerRoles } from "@/lib/sanity/queries";
@@ -16,13 +16,19 @@ import { urlFor } from "@/lib/sanity/image";
 
 export default async function Home() {
   const event = await getHackathonEvent();
-  const [publicStats, sponsors, volunteerRoles] = await Promise.all([
+  const [publicStats, sponsors, volunteerRoles, activityFeed] = await Promise.all([
     event
       ? getPublicStats(event.id)
       : Promise.resolve({ signups: 0, teamCount: 0, soloCount: 0, countryCount: 0, projectCount: 0 }),
     getSponsors(),
     getVolunteerRoles(),
+    getPublicActivityFeed(),
   ]);
+
+  const serializedActivities = activityFeed.map((a) => ({
+    ...a,
+    timestamp: a.timestamp.toISOString(),
+  }));
 
   const stats = [
     `${publicStats.signups} people`,
@@ -138,7 +144,7 @@ export default async function Home() {
           {/* Right — activity feed */}
           <div className="relative min-h-[400px] md:min-h-0">
             <div className="absolute inset-0 overflow-hidden">
-              <ActivityFeed />
+              <ActivityFeed activities={serializedActivities} />
             </div>
           </div>
         </div>

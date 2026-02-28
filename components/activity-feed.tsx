@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import allActivities from "@/data/mock-activity.json";
 
 const SEED_COUNT = 20;
 
 function getInitials(name: string) {
+  if (!name) return "?";
   return name
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .join("")
-    .toUpperCase();
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 const colors = [
@@ -23,43 +25,87 @@ const colors = [
   "bg-teal-700/60",
 ];
 
-function getActivityIcon(action: string) {
-  if (action.startsWith("signed up")) return "→";
-  if (action.startsWith("added a project")) return "◆";
-  if (action.startsWith("created a new team")) return "⬡";
-  if (action.startsWith("volunteer")) return "✦";
+function getActivityIcon(type: string) {
+  if (type === "signup") return "→";
+  if (type === "project") return "◆";
+  if (type === "team_join") return "⬡";
   return "→";
+}
+
+function formatAction(type: string, detail: string | null) {
+  if (type === "signup") return "signed up";
+  if (type === "project") return `added a project: '${detail}'`;
+  if (type === "team_join") return `joined team on '${detail}'`;
+  return "signed up";
+}
+
+interface SerializedActivity {
+  type: "signup" | "project" | "team_join";
+  displayName: string;
+  username: string | null;
+  detail: string | null;
+  timestamp: string;
 }
 
 interface FeedItem {
   id: number;
+  type: "signup" | "project" | "team_join";
   name: string;
   handle: string;
   action: string;
 }
 
-export function ActivityFeed() {
+interface ActivityFeedProps {
+  activities: SerializedActivity[];
+}
+
+export function ActivityFeed({ activities }: ActivityFeedProps) {
+  const nextIndexRef = useRef(SEED_COUNT);
   const [items, setItems] = useState<FeedItem[]>(() => {
-    return allActivities
+    if (activities.length === 0) return [];
+    return activities
       .slice(0, SEED_COUNT)
       .reverse()
-      .map((a, i) => ({ id: i, ...a }));
+      .map((a, i) => ({
+        id: i,
+        type: a.type,
+        name: a.displayName,
+        handle: a.username ? `@${a.username}` : "",
+        action: formatAction(a.type, a.detail),
+      }));
   });
-  const [nextIndex, setNextIndex] = useState(SEED_COUNT);
 
   const addItem = useCallback(() => {
-    const activity = allActivities[nextIndex % allActivities.length];
+    if (activities.length === 0) return;
+    const activity = activities[nextIndexRef.current % activities.length];
     setItems((prev) => {
-      const newItem: FeedItem = { id: Date.now(), ...activity };
+      const newItem: FeedItem = {
+        id: Date.now(),
+        type: activity.type,
+        name: activity.displayName,
+        handle: activity.username ? `@${activity.username}` : "",
+        action: formatAction(activity.type, activity.detail),
+      };
       return [newItem, ...prev].slice(0, 20);
     });
-    setNextIndex((prev) => prev + 1);
-  }, [nextIndex]);
+    nextIndexRef.current += 1;
+  }, [activities]);
 
   useEffect(() => {
+    if (activities.length === 0) return;
     const interval = setInterval(addItem, 2400);
     return () => clearInterval(interval);
-  }, [addItem]);
+  }, [addItem, activities.length]);
+
+  if (activities.length === 0) {
+    return (
+      <div className="relative h-full overflow-hidden max-w-lg">
+        <div className="h-full overflow-hidden border-x border-border px-6 flex items-center justify-center">
+          <p className="text-sm text-white/30">No activity yet</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full overflow-hidden max-w-lg">
@@ -86,7 +132,7 @@ export function ActivityFeed() {
               >
                 {/* Activity type icon */}
                 <span className="w-4 shrink-0 text-center text-sm text-buildstory-300">
-                  {getActivityIcon(item.action)}
+                  {getActivityIcon(item.type)}
                 </span>
 
                 {/* Avatar */}
