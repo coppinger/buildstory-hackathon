@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { DashboardCountdown } from "@/components/dashboard/dashboard-countdown";
 import { DashboardActivityFeed } from "@/components/dashboard/dashboard-activity-feed";
 import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card";
-import { getPublicStats } from "@/lib/queries";
+import { getPublicStats, getPublicActivityFeed } from "@/lib/queries";
 import {
   HACKATHON_SLUG,
   DISCORD_INVITE_URL,
@@ -68,7 +68,15 @@ async function getUserDashboardData(eventId: string) {
 }
 
 export default async function DashboardPage() {
-  const data = await getHackathonData();
+  const [data, activityFeed] = await Promise.all([
+    getHackathonData(),
+    getPublicActivityFeed(),
+  ]);
+
+  const serializedActivities = activityFeed.map((a) => ({
+    ...a,
+    timestamp: a.timestamp.toISOString(),
+  }));
 
   const hackathon = data
     ? {
@@ -264,7 +272,7 @@ export default async function DashboardPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
             Activity
           </p>
-          <DashboardActivityFeed />
+          <DashboardActivityFeed activities={serializedActivities} />
         </Card>
       </aside>
     </div>
