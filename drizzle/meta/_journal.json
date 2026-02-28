@@ -78,6 +78,13 @@
       "when": 1772234997434,
       "tag": "0010_quick_shard",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1772247304973,
+      "tag": "0011_familiar_psynapse",
+      "breakpoints": true
     }
   ]
 }

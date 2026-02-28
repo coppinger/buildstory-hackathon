@@ -51,6 +51,12 @@ export default async function AdminLayout({
                   Mentors
                 </Link>
                 <Link
+                  href="/admin/sponsors"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Sponsors
+                </Link>
+                <Link
                   href="/admin/roles"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
