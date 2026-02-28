@@ -17,7 +17,7 @@ const KICKOFF_END = "2026-03-01T12:30:00Z";
 function buildCalendarUrl() {
   const title = encodeURIComponent("Buildstory Hackathon 00 Kickoff");
   const details = encodeURIComponent(
-    "Hackathon 00 kicks off! 7 days to build something real with AI.\n\nhttps://buildstory.com/event/hackathon-00"
+    "Hackathon 00 kicks off! 7 days to build something real with AI.\n\nhttps://buildstory.com"
   );
   const start = KICKOFF_START.replace(/[-:]/g, "").replace(".000", "");
   const end = KICKOFF_END.replace(/[-:]/g, "").replace(".000", "");
@@ -90,9 +90,7 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
       : "You\u2019re registered for Hackathon 00!";
 
   const shareText =
-    variant === "with_project" && state.projectGoalText
-      ? `7 days to ${state.projectGoalText} \u2014 I'm building ${state.projectName} at @buildstory's first hackathon. buildstory.com/project/${state.projectSlug}`
-      : "I just signed up for @buildstory's first hackathon \u2014 7 days to build something real with AI. buildstory.com/event/hackathon-00";
+    "I just signed up for the Buildstory hackathon to spend a week shipping with AI @buildstorycom";
 
   function handleCopy() {
     navigator.clipboard.writeText(shareText);

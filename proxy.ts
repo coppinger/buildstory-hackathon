@@ -7,6 +7,17 @@ import { isAdmin, canAccessAdmin } from "@/lib/admin";
 const PROFILE_COOKIE = "bs_profile";
 
 export const proxy = clerkMiddleware(async (auth, request) => {
+  // Redirect /event/* to landing page
+  if (request.nextUrl.pathname.startsWith("/event")) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  // Redirect /profiles/* to /members/*
+  if (request.nextUrl.pathname.startsWith("/profiles")) {
+    const newPath = request.nextUrl.pathname.replace(/^\/profiles/, "/members");
+    return NextResponse.redirect(new URL(newPath, request.url));
+  }
+
   const { userId } = await auth();
 
   // Signed-in users visiting the landing page → dashboard
