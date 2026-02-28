@@ -137,7 +137,7 @@ Two query modules:
 
 `app/page.tsx` is an async server component composing all landing page sections (what, rules, why, where, who, FAQ). It fetches real DB stats via `getPublicStats` and uses constants for external links. Client-side interactivity is isolated to individual components (countdown timer, globe, activity feed, FAQ accordion). Components use `BlurFade` wrapper for staggered scroll-triggered animations.
 
-`app/(app)/` -- Authenticated app shell with `AppTopbar` + `AppSidebar` layout (see `components/app-topbar.tsx`, `components/app-sidebar.tsx`). Sidebar nav: Dashboard, Hackathon, Projects, Profiles, Settings. The dashboard (`app/(app)/dashboard/page.tsx`) is a server component that queries hackathon data, registration status, and real stats via `getPublicStats`, with client components in `components/dashboard/` (countdown timer, activity feed). Dynamic detail routes: `app/(app)/projects/[slug]/page.tsx` and `app/(app)/profiles/[username]/page.tsx`.
+`app/(app)/` -- Authenticated app shell with `AppTopbar` + `AppSidebar` layout (see `components/app-topbar.tsx`, `components/app-sidebar.tsx`). Sidebar nav: Dashboard, Hackathon, Projects, Profiles, Settings. The dashboard (`app/(app)/dashboard/page.tsx`) is a server component that queries hackathon data, registration status, the user's hackathon project, and real stats via `getPublicStats`. Components in `components/dashboard/`: countdown timer, activity feed, `DashboardProjectCard` (two states: empty CTA prompting project creation + Discord team-finding, or populated project details with edit link). Dynamic detail routes: `app/(app)/projects/[slug]/page.tsx` and `app/(app)/profiles/[username]/page.tsx`.
 
 Project CRUD: `app/(app)/projects/new/page.tsx` (create), `app/(app)/projects/[slug]/edit/page.tsx` (edit with ownership check). Shared `ProjectForm` component in `components/projects/project-form.tsx` handles both modes. `DeleteProjectDialog` in `components/projects/delete-project-dialog.tsx` for deletion with confirmation. Server actions (`createProject`, `updateProject`, `deleteProject`) in `app/(app)/projects/actions.ts` -- all enforce ownership via profile ID. `deleteProject` cascades cleanup of `projectMembers`, `teamInvites`, and `eventProjects` in a `db.transaction()` before removing the project.
 
@@ -193,13 +193,11 @@ Integration tests in `__tests__/integration/` run against the real Neon database
 
 ### CI
 
-Five GitHub Actions workflows in `.github/workflows/`:
+Three GitHub Actions workflows in `.github/workflows/`:
 
 - **`lint.yml`** -- runs on PRs to `main`. Lints only (fast feedback).
 - **`test.yml`** -- runs on PRs to `main`. Runs `db:migrate` against the dev/test Neon DB, then `npm test`. The migration step ensures the test database schema stays in sync with pending migrations before tests run. Tests hit the real Neon DB via `DATABASE_URL` stored in GitHub repo secrets.
 - **`deploy.yml`** -- runs on push to `main` (i.e., after PR merge). Runs lint + test in parallel, then a `deploy` job (gated on both passing) that migrates the **production** Neon DB (`PRODUCTION_DATABASE_URL`) and triggers a Vercel deploy hook (`VERCEL_DEPLOY_HOOK`). `vercel.json` disables Vercel's automatic git-triggered deploy on `main` so the build only starts after production migrations complete. Preview deployments on PR branches are unaffected.
-- **`claude.yml`** -- Claude Code PR assistant. Triggers when `@claude` is mentioned in issue/PR comments, review comments, or issue bodies. Uses `anthropics/claude-code-action@v1`.
-- **`claude-code-review.yml`** -- automated Claude Code review on every PR (opened, synchronized, reopened). Runs the `code-review` plugin via `anthropics/claude-code-action@v1`.
 
 ## Environment Variables
 
