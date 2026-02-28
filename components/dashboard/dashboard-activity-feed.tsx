@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 const SEED_COUNT = 12;
 
 function getInitials(name: string) {
+  if (!name) return "?";
   return name
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .join("")
-    .toUpperCase();
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 const colors = [
@@ -46,7 +49,7 @@ interface SerializedActivity {
 
 interface FeedItem {
   id: number;
-  type: string;
+  type: "signup" | "project" | "team_join";
   name: string;
   handle: string;
   action: string;
@@ -57,6 +60,7 @@ interface DashboardActivityFeedProps {
 }
 
 export function DashboardActivityFeed({ activities }: DashboardActivityFeedProps) {
+  const nextIndexRef = useRef(SEED_COUNT);
   const [items, setItems] = useState<FeedItem[]>(() => {
     if (activities.length === 0) return [];
     return activities
@@ -70,11 +74,10 @@ export function DashboardActivityFeed({ activities }: DashboardActivityFeedProps
         action: formatAction(a.type, a.detail),
       }));
   });
-  const [nextIndex, setNextIndex] = useState(SEED_COUNT);
 
   const addItem = useCallback(() => {
     if (activities.length === 0) return;
-    const activity = activities[nextIndex % activities.length];
+    const activity = activities[nextIndexRef.current % activities.length];
     setItems((prev) => {
       const newItem: FeedItem = {
         id: Date.now(),
@@ -85,8 +88,8 @@ export function DashboardActivityFeed({ activities }: DashboardActivityFeedProps
       };
       return [newItem, ...prev].slice(0, 12);
     });
-    setNextIndex((prev) => prev + 1);
-  }, [nextIndex, activities]);
+    nextIndexRef.current += 1;
+  }, [activities]);
 
   useEffect(() => {
     if (activities.length === 0) return;

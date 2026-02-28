@@ -17,6 +17,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  aliasedTable,
 } from "drizzle-orm";
 import { HACKATHON_SLUG } from "@/lib/constants";
 
@@ -316,6 +317,8 @@ export async function getPublicActivityFeed(
     isNull(profiles.hiddenAt)
   );
 
+  const ownerProfiles = aliasedTable(profiles, "owner_profiles");
+
   const [signups, projectCreations, teamJoins] = await Promise.all([
     // Signups: event registrations
     db
@@ -326,7 +329,9 @@ export async function getPublicActivityFeed(
       })
       .from(eventRegistrations)
       .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
-      .where(and(eq(eventRegistrations.eventId, eventId), notBannedOrHidden)),
+      .where(and(eq(eventRegistrations.eventId, eventId), notBannedOrHidden))
+      .orderBy(desc(eventRegistrations.registeredAt))
+      .limit(limit),
 
     // Project creations: projects linked to the hackathon
     db
@@ -339,9 +344,12 @@ export async function getPublicActivityFeed(
       .from(eventProjects)
       .innerJoin(projects, eq(eventProjects.projectId, projects.id))
       .innerJoin(profiles, eq(projects.profileId, profiles.id))
-      .where(and(eq(eventProjects.eventId, eventId), notBannedOrHidden)),
+      .where(and(eq(eventProjects.eventId, eventId), notBannedOrHidden))
+      .orderBy(desc(eventProjects.submittedAt))
+      .limit(limit),
 
     // Team joins: project members on hackathon projects
+    // Also filter out projects whose owner is banned/hidden
     db
       .select({
         displayName: profiles.displayName,
@@ -353,7 +361,17 @@ export async function getPublicActivityFeed(
       .innerJoin(profiles, eq(projectMembers.profileId, profiles.id))
       .innerJoin(projects, eq(projectMembers.projectId, projects.id))
       .innerJoin(eventProjects, eq(eventProjects.projectId, projects.id))
-      .where(and(eq(eventProjects.eventId, eventId), notBannedOrHidden)),
+      .innerJoin(ownerProfiles, eq(projects.profileId, ownerProfiles.id))
+      .where(
+        and(
+          eq(eventProjects.eventId, eventId),
+          notBannedOrHidden,
+          isNull(ownerProfiles.bannedAt),
+          isNull(ownerProfiles.hiddenAt)
+        )
+      )
+      .orderBy(desc(projectMembers.joinedAt))
+      .limit(limit),
   ]);
 
   const items: ActivityFeedItem[] = [
