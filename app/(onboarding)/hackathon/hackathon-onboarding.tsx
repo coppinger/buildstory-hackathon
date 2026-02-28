@@ -18,6 +18,7 @@ import {
   completeRegistration,
   createOnboardingProject,
 } from "@/app/(onboarding)/hackathon/actions";
+import { setUsernameAfterSignUp } from "@/app/(auth)/sign-up/actions";
 import { Icon } from "@/components/ui/icon";
 import { USERNAME_REGEX } from "@/lib/constants";
 
@@ -202,28 +203,51 @@ export function HackathonOnboarding({
   const [flowStarted, setFlowStarted] = useState(false);
 
   const [currentStep, setCurrentStep] = useState<StepId>("identity");
-  const [state, setState] = useState<OnboardingState>(() => {
-    // Pre-fill username from sign-up page if stored in sessionStorage
-    let usernameValue = initialUsername;
+
+  // Capture signup username from sessionStorage (set during sign-up for OAuth users)
+  const [signupUsername] = useState<string>(() => {
+    if (initialUsername) return ""; // Already persisted to DB
     if (typeof window !== "undefined") {
       const stored = sessionStorage.getItem("signup_username");
-      if (stored && USERNAME_REGEX.test(stored)) {
-        usernameValue = stored;
-      }
       sessionStorage.removeItem("signup_username");
+      if (stored && USERNAME_REGEX.test(stored)) {
+        return stored;
+      }
     }
+    return "";
+  });
+
+  const [state, setState] = useState<OnboardingState>(() => {
     return {
       ...initialState,
       displayName: initialDisplayName !== "User" ? initialDisplayName : "",
-      username: usernameValue,
+      username: initialUsername || signupUsername,
       countryCode: initialCountryCode,
       region: initialRegion,
       experienceLevel: initialExperienceLevel,
     };
   });
-  const [usernameStatus, setUsernameStatus] = useState(
-    initialUsername ? "available" : "idle"
+
+  // Track the effective "existing" username (from DB or sessionStorage being persisted)
+  const [effectiveExistingUsername, setEffectiveExistingUsername] = useState(
+    initialUsername || signupUsername
   );
+  const [usernameStatus, setUsernameStatus] = useState(
+    (initialUsername || signupUsername) ? "available" : "idle"
+  );
+
+  // For OAuth users: persist the username chosen during sign-up to the DB
+  useEffect(() => {
+    if (!signupUsername) return;
+
+    setUsernameAfterSignUp(signupUsername).then((result) => {
+      if (!result.success) {
+        // Username was taken between sign-up and now — reveal the field
+        setEffectiveExistingUsername("");
+        setUsernameStatus("idle");
+      }
+    });
+  }, [signupUsername]);
   const [slugStatus, setSlugStatus] = useState("idle");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -462,7 +486,7 @@ export function HackathonOnboarding({
                 ...initialState,
                 displayName:
                   initialDisplayName !== "User" ? initialDisplayName : "",
-                username: initialUsername,
+                username: effectiveExistingUsername,
                 countryCode: initialCountryCode,
                 region: initialRegion,
                 experienceLevel: initialExperienceLevel,
@@ -505,7 +529,7 @@ export function HackathonOnboarding({
               onUpdate={update}
               onUsernameStatusChange={setUsernameStatus}
               initialDisplayName={initialDisplayName}
-              existingUsername={initialUsername}
+              existingUsername={effectiveExistingUsername}
             />
           </WizardCard>
         )}
