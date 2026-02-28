@@ -73,26 +73,34 @@ export async function setUserRole(data: {
 }
 
 export async function searchProfilesByName(query: string) {
-  if (!query || query.length < 2) return [];
+  try {
+    if (!query || query.length < 2) return [];
 
-  const pattern = `%${query}%`;
+    const pattern = `%${query}%`;
 
-  const results = await db
-    .select({
-      id: profiles.id,
-      displayName: profiles.displayName,
-      username: profiles.username,
-      role: profiles.role,
-      clerkId: profiles.clerkId,
-    })
-    .from(profiles)
-    .where(
-      or(
-        ilike(profiles.displayName, pattern),
-        ilike(profiles.username, pattern)
+    const results = await db
+      .select({
+        id: profiles.id,
+        displayName: profiles.displayName,
+        username: profiles.username,
+        role: profiles.role,
+        clerkId: profiles.clerkId,
+      })
+      .from(profiles)
+      .where(
+        or(
+          ilike(profiles.displayName, pattern),
+          ilike(profiles.username, pattern)
+        )
       )
-    )
-    .limit(10);
+      .limit(10);
 
-  return results;
+    return results;
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "server-action", action: "searchProfilesByName" },
+      extra: { query },
+    });
+    return [];
+  }
 }

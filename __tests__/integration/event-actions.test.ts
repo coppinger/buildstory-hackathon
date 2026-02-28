@@ -6,8 +6,10 @@ import {
   eventRegistrations,
   projects,
   eventProjects,
+  projectMembers,
+  teamInvites,
 } from "@/lib/db/schema";
-import { eq, like, and } from "drizzle-orm";
+import { eq, like, and, inArray } from "drizzle-orm";
 
 // --- Mocks ---
 
@@ -132,7 +134,7 @@ beforeEach(() => {
 });
 
 afterAll(async () => {
-  // Delete in FK order
+  // Delete tracked resources in FK order
   for (const eid of createdEventIds) {
     await db.delete(eventProjects).where(eq(eventProjects.eventId, eid));
     await db.delete(eventRegistrations).where(eq(eventRegistrations.eventId, eid));
@@ -143,6 +145,26 @@ afterAll(async () => {
   }
   for (const eid of createdEventIds) {
     await db.delete(events).where(eq(events.id, eid));
+  }
+  // Catch-all: clean up all FK references to test profiles (handles untracked resources)
+  const testProfiles = await db
+    .select({ id: profiles.id })
+    .from(profiles)
+    .where(like(profiles.clerkId, `${TEST_PREFIX}%`));
+  const profileIds = testProfiles.map((p) => p.id);
+  if (profileIds.length > 0) {
+    const ownedProjects = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(inArray(projects.profileId, profileIds));
+    const ownedProjectIds = ownedProjects.map((p) => p.id);
+    if (ownedProjectIds.length > 0) {
+      await db.delete(projectMembers).where(inArray(projectMembers.projectId, ownedProjectIds));
+      await db.delete(teamInvites).where(inArray(teamInvites.projectId, ownedProjectIds));
+      await db.delete(eventProjects).where(inArray(eventProjects.projectId, ownedProjectIds));
+      await db.delete(projects).where(inArray(projects.id, ownedProjectIds));
+    }
+    await db.delete(eventRegistrations).where(inArray(eventRegistrations.profileId, profileIds));
   }
   await db.delete(profiles).where(like(profiles.clerkId, `${TEST_PREFIX}%`));
 });

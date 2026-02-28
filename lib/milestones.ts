@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { getTotalSignups, getTotalProjects } from "@/lib/admin/queries";
 import { sendDiscordWebhook } from "@/lib/discord";
 
@@ -19,8 +20,11 @@ export function checkSignupMilestone(eventId: string): void {
           ],
         });
       }
-    } catch {
-      // Fire-and-forget — don't break the action
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { component: "milestones", action: "checkSignupMilestone" },
+        extra: { eventId },
+      });
     }
   })();
 }
@@ -41,8 +45,11 @@ export function checkProjectMilestone(eventId: string): void {
           ],
         });
       }
-    } catch {
-      // Fire-and-forget — don't break the action
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { component: "milestones", action: "checkProjectMilestone" },
+        extra: { eventId },
+      });
     }
   })();
 }
