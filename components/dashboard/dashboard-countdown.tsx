@@ -38,7 +38,7 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-export function DashboardCountdown() {
+export function DashboardCountdown({ compact = false }: { compact?: boolean }) {
   const [state, setState] = useState(getState);
 
   useEffect(() => {
@@ -61,19 +61,28 @@ export function DashboardCountdown() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 sm:gap-4">
+      <div className={compact ? "flex items-center gap-2" : "flex items-center gap-3 sm:gap-4"}>
         {segments.map((seg, i) => (
-          <div key={seg.label} className="flex items-center gap-3 sm:gap-4">
+          <div key={seg.label} className={compact ? "flex items-center gap-2" : "flex items-center gap-3 sm:gap-4"}>
             <div className="flex flex-col items-center">
-              <span className="font-mono text-4xl sm:text-5xl tabular-nums tracking-tight text-foreground">
+              <span className={compact
+                ? "font-mono text-2xl tabular-nums tracking-tight text-foreground"
+                : "font-mono text-4xl sm:text-5xl tabular-nums tracking-tight text-foreground"
+              }>
                 {pad(seg.value)}
               </span>
-              <span className="text-[11px] uppercase tracking-widest text-muted-foreground/60 mt-1">
+              <span className={compact
+                ? "text-[10px] uppercase tracking-widest text-muted-foreground/60 mt-0.5"
+                : "text-[11px] uppercase tracking-widest text-muted-foreground/60 mt-1"
+              }>
                 {seg.label}
               </span>
             </div>
             {i < segments.length - 1 && (
-              <span className="text-2xl sm:text-3xl text-muted-foreground/30 font-light -mt-4">
+              <span className={compact
+                ? "text-lg text-muted-foreground/30 font-light -mt-3"
+                : "text-2xl sm:text-3xl text-muted-foreground/30 font-light -mt-4"
+              }>
                 :
               </span>
             )}

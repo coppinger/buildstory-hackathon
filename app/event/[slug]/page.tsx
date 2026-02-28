@@ -118,23 +118,23 @@ export default async function EventPage({
             <BlurFade inView delay={0.1}>
               <div className="border border-border p-6 md:p-8 text-center">
                 <p className="font-heading text-2xl text-[#e8e4de]">
-                  Sign in to participate
+                  Login to participate
                 </p>
                 <p className="mt-2 text-neutral-500">
-                  Create an account or sign in to register for this hackathon.
+                  Create an account or login to register for this hackathon.
                 </p>
                 <div className="mt-6 flex items-center justify-center gap-4">
                   <Link
                     href="/sign-in"
                     className="inline-block border border-border bg-transparent font-mono text-sm text-[#e8e4de] px-8 py-3 hover:border-white/30 transition-colors"
                   >
-                    Sign in
+                    Login
                   </Link>
                   <Link
                     href="/sign-up"
                     className="inline-block bg-buildstory-500 text-black font-mono text-sm px-8 py-3 hover:bg-white/90 transition-colors"
                   >
-                    Sign up
+                    Register
                   </Link>
                 </div>
               </div>

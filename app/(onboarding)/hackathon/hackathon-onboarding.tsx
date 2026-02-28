@@ -209,7 +209,9 @@ export function HackathonOnboarding({
     region: initialRegion,
     experienceLevel: initialExperienceLevel,
   });
-  const [usernameStatus, setUsernameStatus] = useState("idle");
+  const [usernameStatus, setUsernameStatus] = useState(
+    initialUsername ? "available" : "idle"
+  );
   const [slugStatus, setSlugStatus] = useState("idle");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);

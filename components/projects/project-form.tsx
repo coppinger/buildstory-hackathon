@@ -37,10 +37,11 @@ interface ProjectData {
 interface ProjectFormProps {
   mode: "create" | "edit";
   project?: ProjectData;
+  eventId?: string;
   onSuccess?: () => void;
 }
 
-export function ProjectForm({ mode, project, onSuccess }: ProjectFormProps) {
+export function ProjectForm({ mode, project, eventId, onSuccess }: ProjectFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -122,6 +123,7 @@ export function ProjectForm({ mode, project, onSuccess }: ProjectFormProps) {
           goalText,
           repoUrl,
           liveUrl,
+          eventId,
         });
 
         if (result.success) {

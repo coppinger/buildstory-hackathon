@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSignUp } from "@clerk/nextjs";
@@ -17,6 +17,11 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { GoogleIcon, GitHubIcon } from "@/components/icons";
+import { checkUsernameAvailability } from "@/app/(onboarding)/hackathon/actions";
+import { setUsernameAfterSignUp } from "@/app/(auth)/sign-up/actions";
+import { USERNAME_REGEX } from "@/lib/constants";
+
+type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid";
 
 export default function SignUpPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -24,6 +29,7 @@ export default function SignUpPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [touched, setTouched] = useState<{ email?: boolean; password?: boolean }>({});
@@ -31,6 +37,48 @@ export default function SignUpPage() {
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState("");
+
+  // Username availability check
+  const [checkResult, setCheckResult] = useState<{
+    username: string;
+    status: "available" | "taken";
+  } | null>(null);
+
+  const usernameStatus: UsernameStatus = useMemo(() => {
+    const trimmed = username.trim().toLowerCase();
+    if (!trimmed) return "idle";
+    if (!USERNAME_REGEX.test(trimmed)) return "invalid";
+    if (checkResult?.username === trimmed) return checkResult.status;
+    return "checking";
+  }, [username, checkResult]);
+
+  useEffect(() => {
+    const trimmed = username.trim().toLowerCase();
+    if (!trimmed || !USERNAME_REGEX.test(trimmed)) return;
+
+    const timer = setTimeout(async () => {
+      const result = await checkUsernameAvailability(trimmed);
+      if (result.success && result.data) {
+        setCheckResult({
+          username: trimmed,
+          status: result.data.available ? "available" : "taken",
+        });
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [username]);
+
+  const usernameIcon =
+    usernameStatus === "checking" ? (
+      <Icon name="progress_activity" size="3.5" className="animate-spin text-neutral-500" />
+    ) : usernameStatus === "available" ? (
+      <Icon name="check_circle" size="3.5" className="text-green-400" />
+    ) : usernameStatus === "taken" ? (
+      <Icon name="cancel" size="3.5" className="text-red-400" />
+    ) : usernameStatus === "invalid" ? (
+      <Icon name="error" size="3.5" className="text-amber-400" />
+    ) : null;
 
   function validateField(field: "email" | "password", value: string) {
     if (field === "email") {
@@ -126,6 +174,20 @@ export default function SignUpPage() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
+
+        // Save username to profile if provided — if it fails (e.g. race
+        // condition where another user claimed it), the onboarding identity
+        // step will prompt for a username since the profile still has none.
+        if (username.trim()) {
+          const usernameResult = await setUsernameAfterSignUp(
+            username.trim().toLowerCase()
+          );
+          if (!usernameResult.success) {
+            // eslint-disable-next-line no-console
+            console.warn("Username set failed, will prompt during onboarding:", usernameResult.error);
+          }
+        }
+
         router.push("/hackathon");
       }
     } catch (err: unknown) {
@@ -252,6 +314,44 @@ export default function SignUpPage() {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="username" className="text-base text-neutral-300">
+              Username
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-base">
+                @
+              </span>
+              <Input
+                id="username"
+                value={username}
+                onChange={(e) =>
+                  setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))
+                }
+                placeholder="username"
+                className="bg-neutral-900 border-border text-white placeholder:text-neutral-500 h-11 text-base md:text-base pl-8 pr-9"
+              />
+              {usernameIcon && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {usernameIcon}
+                </div>
+              )}
+            </div>
+            {usernameStatus === "invalid" && username.length > 0 && (
+              <p className="text-sm text-amber-400">
+                3-30 characters: letters, numbers, hyphens, underscores
+              </p>
+            )}
+            {usernameStatus === "taken" && (
+              <p className="text-sm text-red-400">This username is taken</p>
+            )}
+            {usernameStatus === "available" && (
+              <p className="text-sm text-neutral-500">
+                buildstory.com/@{username}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="password" className="text-base text-neutral-300">
               Password
             </Label>
@@ -286,7 +386,7 @@ export default function SignUpPage() {
             href="/sign-in"
             className="text-buildstory-400 hover:text-buildstory-500"
           >
-            Sign in
+            Login
           </Link>
         </p>
       </CardContent>

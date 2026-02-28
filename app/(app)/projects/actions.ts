@@ -7,7 +7,7 @@ import * as Sentry from "@sentry/nextjs";
 import { NeonDbError } from "@neondatabase/serverless";
 import { db } from "@/lib/db";
 import { ensureProfile } from "@/lib/db/ensure-profile";
-import { projects, eventProjects, projectMembers, teamInvites } from "@/lib/db/schema";
+import { projects, events, eventProjects, projectMembers, teamInvites } from "@/lib/db/schema";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -84,12 +84,18 @@ export async function createProject(data: {
       })
       .returning();
 
-    // Optionally link to event
+    // Optionally link to event — validate server-side that event exists and is open
     if (data.eventId) {
-      await db
-        .insert(eventProjects)
-        .values({ eventId: data.eventId, projectId: project.id })
-        .onConflictDoNothing();
+      const event = await db.query.events.findFirst({
+        where: eq(events.id, data.eventId),
+        columns: { id: true, status: true },
+      });
+      if (event && (event.status === "open" || event.status === "active")) {
+        await db
+          .insert(eventProjects)
+          .values({ eventId: event.id, projectId: project.id })
+          .onConflictDoNothing();
+      }
     }
 
     revalidatePath("/projects");

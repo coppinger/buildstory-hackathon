@@ -16,6 +16,7 @@ import {
 } from "@/lib/db/schema";
 import { notifySignup, notifyProject } from "@/lib/discord";
 import { checkSignupMilestone, checkProjectMilestone } from "@/lib/milestones";
+import { USERNAME_REGEX } from "@/lib/constants";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -55,7 +56,7 @@ function isUniqueViolation(error: unknown, constraintName: string): boolean {
   return cause?.code === "23505" && cause?.constraint === constraintName;
 }
 
-const USERNAME_REGEX = /^[a-z0-9][a-z0-9_-]{1,28}[a-z0-9]$/;
+
 
 export async function checkUsernameAvailability(
   username: string

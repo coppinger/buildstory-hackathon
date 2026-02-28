@@ -116,7 +116,7 @@ export default function SignInPage() {
           Welcome back
         </CardTitle>
         <CardDescription className="text-base text-neutral-400">
-          Sign in to your account
+          Login to your account
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -198,7 +198,7 @@ export default function SignInPage() {
             className="bg-buildstory-500 text-black hover:bg-buildstory-400 h-11 font-medium w-full text-base"
           >
             {loading && <Icon name="progress_activity" className="animate-spin" size="4" />}
-            Sign in
+            Login
           </Button>
         </form>
 
@@ -208,7 +208,7 @@ export default function SignInPage() {
             href="/sign-up"
             className="text-buildstory-400 hover:text-buildstory-500"
           >
-            Sign up
+            Register
           </Link>
         </p>
       </CardContent>
