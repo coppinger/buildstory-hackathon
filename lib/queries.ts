@@ -17,8 +17,17 @@ import {
   inArray,
   isNotNull,
   isNull,
+  aliasedTable,
 } from "drizzle-orm";
 import { HACKATHON_SLUG } from "@/lib/constants";
+
+export interface ActivityFeedItem {
+  type: "signup" | "project" | "team_join";
+  displayName: string;
+  username: string | null;
+  detail: string | null;
+  timestamp: Date;
+}
 
 async function getHackathonEventId(): Promise<string | null> {
   const event = await db.query.events.findFirst({
@@ -293,4 +302,102 @@ export async function getSenderPendingInviteCount(profileId: string) {
       )
     );
   return result.count;
+}
+
+// --- Public Activity Feed ---
+
+export async function getPublicActivityFeed(
+  limit = 50
+): Promise<ActivityFeedItem[]> {
+  const eventId = await getHackathonEventId();
+  if (!eventId) return [];
+
+  const notBannedOrHidden = and(
+    isNull(profiles.bannedAt),
+    isNull(profiles.hiddenAt)
+  );
+
+  const ownerProfiles = aliasedTable(profiles, "owner_profiles");
+
+  const [signups, projectCreations, teamJoins] = await Promise.all([
+    // Signups: event registrations
+    db
+      .select({
+        displayName: profiles.displayName,
+        username: profiles.username,
+        timestamp: eventRegistrations.registeredAt,
+      })
+      .from(eventRegistrations)
+      .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
+      .where(and(eq(eventRegistrations.eventId, eventId), notBannedOrHidden))
+      .orderBy(desc(eventRegistrations.registeredAt))
+      .limit(limit),
+
+    // Project creations: projects linked to the hackathon
+    db
+      .select({
+        displayName: profiles.displayName,
+        username: profiles.username,
+        projectName: projects.name,
+        timestamp: eventProjects.submittedAt,
+      })
+      .from(eventProjects)
+      .innerJoin(projects, eq(eventProjects.projectId, projects.id))
+      .innerJoin(profiles, eq(projects.profileId, profiles.id))
+      .where(and(eq(eventProjects.eventId, eventId), notBannedOrHidden))
+      .orderBy(desc(eventProjects.submittedAt))
+      .limit(limit),
+
+    // Team joins: project members on hackathon projects
+    // Also filter out projects whose owner is banned/hidden
+    db
+      .select({
+        displayName: profiles.displayName,
+        username: profiles.username,
+        projectName: projects.name,
+        timestamp: projectMembers.joinedAt,
+      })
+      .from(projectMembers)
+      .innerJoin(profiles, eq(projectMembers.profileId, profiles.id))
+      .innerJoin(projects, eq(projectMembers.projectId, projects.id))
+      .innerJoin(eventProjects, eq(eventProjects.projectId, projects.id))
+      .innerJoin(ownerProfiles, eq(projects.profileId, ownerProfiles.id))
+      .where(
+        and(
+          eq(eventProjects.eventId, eventId),
+          notBannedOrHidden,
+          isNull(ownerProfiles.bannedAt),
+          isNull(ownerProfiles.hiddenAt)
+        )
+      )
+      .orderBy(desc(projectMembers.joinedAt))
+      .limit(limit),
+  ]);
+
+  const items: ActivityFeedItem[] = [
+    ...signups.map((r) => ({
+      type: "signup" as const,
+      displayName: r.displayName,
+      username: r.username,
+      detail: null,
+      timestamp: r.timestamp,
+    })),
+    ...projectCreations.map((r) => ({
+      type: "project" as const,
+      displayName: r.displayName,
+      username: r.username,
+      detail: r.projectName,
+      timestamp: r.timestamp,
+    })),
+    ...teamJoins.map((r) => ({
+      type: "team_join" as const,
+      displayName: r.displayName,
+      username: r.username,
+      detail: r.projectName,
+      timestamp: r.timestamp,
+    })),
+  ];
+
+  items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  return items.slice(0, limit);
 }
