@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { canAccessAdmin } from "@/lib/admin";
 import {
   getDashboardStats,
@@ -21,20 +22,31 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const [stats, signupsOverTime, recentActivity] = await Promise.all([
-    getDashboardStats(eventId),
-    getSignupsOverTime(eventId),
-    getRecentActivity(eventId, 20),
-  ]);
+  try {
+    const [stats, signupsOverTime, recentActivity] = await Promise.all([
+      getDashboardStats(eventId),
+      getSignupsOverTime(eventId),
+      getRecentActivity(eventId, 20),
+    ]);
 
-  const serializedActivity = recentActivity.map((a) => ({
-    ...a,
-    timestamp: a.timestamp.toISOString(),
-  }));
+    const serializedActivity = recentActivity.map((a) => ({
+      ...a,
+      timestamp: a.timestamp.toISOString(),
+    }));
 
-  return NextResponse.json({
-    stats,
-    signupsOverTime,
-    recentActivity: serializedActivity,
-  });
+    return NextResponse.json({
+      stats,
+      signupsOverTime,
+      recentActivity: serializedActivity,
+    });
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "api-route", action: "admin-stats" },
+      extra: { eventId },
+    });
+    return NextResponse.json(
+      { error: "Failed to fetch stats" },
+      { status: 500 }
+    );
+  }
 }
