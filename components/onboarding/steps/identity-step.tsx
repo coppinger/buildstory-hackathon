@@ -8,10 +8,9 @@ import { LivePreviewBadge } from "@/components/onboarding/live-preview-badge";
 import { CountryCombobox } from "@/components/onboarding/country-combobox";
 import { RegionCombobox } from "@/components/onboarding/region-combobox";
 import { checkUsernameAvailability } from "@/app/(onboarding)/hackathon/actions";
+import { USERNAME_REGEX } from "@/lib/constants";
 
 type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid";
-
-const USERNAME_REGEX = /^[a-z0-9][a-z0-9_-]{1,28}[a-z0-9]$/;
 
 interface IdentityStepProps {
   displayName: string;
@@ -118,47 +117,50 @@ export function IdentityStep({
           />
         </div>
 
-        <div>
-          <Label htmlFor="username" className="text-neutral-400 text-sm">
-            Username <span className="text-amber-400">*</span>
-          </Label>
-          <div className="relative mt-1.5">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-base">
-              @
-            </span>
-            <Input
-              id="username"
-              value={username}
-              onChange={(e) =>
-                onUpdate({
-                  username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""),
-                })
-              }
-              placeholder="username"
-              className="bg-white/5 border-neutral-700 text-white placeholder:text-neutral-600 pl-8 pr-9"
-            />
-            {usernameIcon && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                {usernameIcon}
-              </div>
+        {/* Show username field only if not already set (e.g. OAuth users) */}
+        {!existingUsername && (
+          <div>
+            <Label htmlFor="username" className="text-neutral-400 text-sm">
+              Username <span className="text-amber-400">*</span>
+            </Label>
+            <div className="relative mt-1.5">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-base">
+                @
+              </span>
+              <Input
+                id="username"
+                value={username}
+                onChange={(e) =>
+                  onUpdate({
+                    username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""),
+                  })
+                }
+                placeholder="username"
+                className="bg-white/5 border-neutral-700 text-white placeholder:text-neutral-600 pl-8 pr-9"
+              />
+              {usernameIcon && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {usernameIcon}
+                </div>
+              )}
+            </div>
+            {usernameStatus === "invalid" && username.length > 0 && (
+              <p className="mt-1 text-sm text-amber-400">
+                3-30 characters: letters, numbers, hyphens, underscores
+              </p>
+            )}
+            {usernameStatus === "taken" && (
+              <p className="mt-1 text-sm text-red-400">
+                This username is taken
+              </p>
+            )}
+            {usernameStatus === "available" && (
+              <p className="mt-1 text-sm text-neutral-500">
+                buildstory.com/@{username}
+              </p>
             )}
           </div>
-          {usernameStatus === "invalid" && username.length > 0 && (
-            <p className="mt-1 text-sm text-amber-400">
-              3-30 characters: letters, numbers, hyphens, underscores
-            </p>
-          )}
-          {usernameStatus === "taken" && (
-            <p className="mt-1 text-sm text-red-400">
-              This username is taken
-            </p>
-          )}
-          {usernameStatus === "available" && (
-            <p className="mt-1 text-sm text-neutral-500">
-              buildstory.com/@{username}
-            </p>
-          )}
-        </div>
+        )}
 
         <CountryCombobox
           value={countryCode}

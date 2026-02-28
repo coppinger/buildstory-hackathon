@@ -4,6 +4,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { getPendingInvitesForUser } from "@/lib/queries";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { UserMenu } from "@/components/user-menu";
 
 export async function AppTopbar() {
   const user = await currentUser();
@@ -28,28 +29,19 @@ export async function AppTopbar() {
           {user ? (
             <div className="flex items-center gap-3">
               <InviteBell userId={user.id} />
-              <Image
-                src={user.imageUrl}
-                alt={user.firstName ?? "Avatar"}
-                width={48}
-                height={48}
-                className="rounded-full"
+              <UserMenu
+                imageUrl={user.imageUrl}
+                firstName={user.firstName}
+                username={user.username}
+                emailFallback={user.primaryEmailAddress?.emailAddress?.split("@")[0] ?? "user"}
               />
-              <div className="flex flex-col">
-                <p className="text-base font-semibold">
-                  {user.firstName ?? user.username ?? "Builder"}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  @{user.username ?? user.primaryEmailAddress?.emailAddress?.split("@")[0] ?? "user"}
-                </p>
-              </div>
             </div>
           ) : (
             <Link
               href="/sign-in"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              Sign in
+              Login
             </Link>
           )}
         </div>

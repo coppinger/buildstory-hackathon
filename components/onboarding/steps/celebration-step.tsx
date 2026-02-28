@@ -11,8 +11,8 @@ import { DISCORD_INVITE_URL } from "@/lib/constants";
 
 type CelebrationVariant = "no_project" | "joining_team" | "with_project";
 
-const KICKOFF_START = "2026-03-01T12:00:00Z";
-const KICKOFF_END = "2026-03-01T12:30:00Z";
+const KICKOFF_START = "2026-03-01T20:00:00Z"; // 12 pm PST (UTC-8)
+const KICKOFF_END = "2026-03-01T20:30:00Z";
 
 function buildCalendarUrl() {
   const title = encodeURIComponent("Buildstory Hackathon 00 Kickoff");
@@ -181,7 +181,7 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
           <p className="text-sm uppercase tracking-[0.2em] text-neutral-500">
             Hackathon starts in
           </p>
-          <DashboardCountdown />
+          <DashboardCountdown compact />
           <p className="text-sm text-neutral-400">
             Live 30-min kickoff to welcome everyone and get you building.
           </p>

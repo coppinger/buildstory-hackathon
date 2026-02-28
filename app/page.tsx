@@ -87,7 +87,7 @@ export default async function Home() {
               size="lg"
               className="bg-buildstory-500 text-black hover:bg-white/90 px-8 h-12 text-sm font-medium ease-in duration-200"
             >
-              I&apos;m in, sign me up
+              I&apos;m in, register now
             </Button>
           </Link>
           </div>
@@ -550,7 +550,7 @@ export default async function Home() {
                 href="/sign-up"
                 className="mt-8 inline-block border border-[#3d3a36] bg-transparent font-mono text-sm text-[#e8e4de] px-8 py-4 hover:border-neutral-500 text-neutral-500 transition-colors"
               >
-                Sign up &rarr;
+                Register &rarr;
               </Link>
             </BlurFade>
           </div>
@@ -699,7 +699,7 @@ export default async function Home() {
                   className="bg-buildstory-500 text-black hover:bg-white/90 px-8 h-12 text-sm font-medium ease-in duration-200"
                   asChild
                 >
-                  <Link href="/sign-up">I&apos;m in, sign me up</Link>
+                  <Link href="/sign-up">I&apos;m in, register now</Link>
                 </Button>
               </div>
             </BlurFade>
