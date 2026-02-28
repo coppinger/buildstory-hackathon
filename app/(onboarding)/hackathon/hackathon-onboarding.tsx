@@ -179,6 +179,10 @@ function getSubStepIndex(step: StepId): number {
 interface HackathonOnboardingProps {
   eventId: string;
   initialDisplayName: string;
+  initialUsername?: string;
+  initialCountryCode?: string;
+  initialRegion?: string;
+  initialExperienceLevel?: "getting_started" | "built_a_few" | "ships_constantly" | null;
   isAlreadyRegistered: boolean;
   devMode?: boolean;
 }
@@ -186,6 +190,10 @@ interface HackathonOnboardingProps {
 export function HackathonOnboarding({
   eventId,
   initialDisplayName,
+  initialUsername = "",
+  initialCountryCode = "",
+  initialRegion = "",
+  initialExperienceLevel = null,
   isAlreadyRegistered,
   devMode = false,
 }: HackathonOnboardingProps) {
@@ -196,6 +204,10 @@ export function HackathonOnboarding({
   const [state, setState] = useState<OnboardingState>({
     ...initialState,
     displayName: initialDisplayName !== "User" ? initialDisplayName : "",
+    username: initialUsername,
+    countryCode: initialCountryCode,
+    region: initialRegion,
+    experienceLevel: initialExperienceLevel,
   });
   const [usernameStatus, setUsernameStatus] = useState("idle");
   const [slugStatus, setSlugStatus] = useState("idle");
@@ -436,6 +448,10 @@ export function HackathonOnboarding({
                 ...initialState,
                 displayName:
                   initialDisplayName !== "User" ? initialDisplayName : "",
+                username: initialUsername,
+                countryCode: initialCountryCode,
+                region: initialRegion,
+                experienceLevel: initialExperienceLevel,
               });
               setCurrentStep("identity");
             }}
@@ -475,6 +491,7 @@ export function HackathonOnboarding({
               onUpdate={update}
               onUsernameStatusChange={setUsernameStatus}
               initialDisplayName={initialDisplayName}
+              existingUsername={initialUsername}
             />
           </WizardCard>
         )}

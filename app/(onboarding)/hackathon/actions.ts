@@ -71,6 +71,7 @@ export async function checkUsernameAvailability(
 
     const existing = await db.query.profiles.findFirst({
       where: eq(profiles.username, trimmed),
+      columns: { id: true },
     });
 
     return {

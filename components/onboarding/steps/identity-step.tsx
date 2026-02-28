@@ -21,6 +21,7 @@ interface IdentityStepProps {
   onUpdate: (partial: { displayName?: string; username?: string; countryCode?: string; region?: string }) => void;
   onUsernameStatusChange: (status: UsernameStatus) => void;
   initialDisplayName: string;
+  existingUsername?: string;
 }
 
 export function IdentityStep({
@@ -31,6 +32,7 @@ export function IdentityStep({
   onUpdate,
   onUsernameStatusChange,
   initialDisplayName,
+  existingUsername,
 }: IdentityStepProps) {
   const displayNameRef = useRef<HTMLInputElement>(null);
 
@@ -50,9 +52,11 @@ export function IdentityStep({
     const trimmed = username.trim().toLowerCase();
     if (!trimmed) return "idle";
     if (!USERNAME_REGEX.test(trimmed)) return "invalid";
+    // User's own existing username is always available
+    if (existingUsername && trimmed === existingUsername.toLowerCase()) return "available";
     if (checkResult?.username === trimmed) return checkResult.status;
     return "checking";
-  }, [username, checkResult]);
+  }, [username, checkResult, existingUsername]);
 
   // Report status to parent whenever it changes
   useEffect(() => {
@@ -65,10 +69,11 @@ export function IdentityStep({
     }
   }, [initialDisplayName, displayName, onUpdate]);
 
-  // Debounced async availability check
+  // Debounced async availability check — skip for user's own existing username
   useEffect(() => {
     const trimmed = username.trim().toLowerCase();
     if (!trimmed || !USERNAME_REGEX.test(trimmed)) return;
+    if (existingUsername && trimmed === existingUsername.toLowerCase()) return;
 
     const timer = setTimeout(async () => {
       const result = await checkUsernameAvailability(trimmed);
@@ -81,7 +86,7 @@ export function IdentityStep({
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [username]);
+  }, [username, existingUsername]);
 
   const usernameIcon =
     usernameStatus === "checking" ? (

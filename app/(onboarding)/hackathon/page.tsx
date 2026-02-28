@@ -51,6 +51,10 @@ export default async function HackathonOnboardingPage({
     <HackathonOnboarding
       eventId={event.id}
       initialDisplayName={profile.displayName}
+      initialUsername={profile.username ?? ""}
+      initialCountryCode={profile.country ?? ""}
+      initialRegion={profile.region ?? ""}
+      initialExperienceLevel={profile.experienceLevel}
       isAlreadyRegistered={devMode ? false : !!existingRegistration}
       devMode={devMode}
     />
