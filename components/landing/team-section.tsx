@@ -14,34 +14,11 @@ interface TeamMember {
 
 const TEAM_MEMBERS: TeamMember[] = [
   {
-    name: "Sean Coppinger",
-    bio: "Founder of Buildstory. Building tools for builders.",
+    name: "Charlie Coppinger",
+    bio: "Doing it live since 2018",
     socials: {
-      x: "https://x.com/seancoppinger",
+      x: "https://x.com/thecoppinger",
       github: "https://github.com/coppinger",
-    },
-  },
-  {
-    name: "Michael Shimeles",
-    bio: "Full-stack builder. Making AI-first products.",
-    socials: {
-      x: "https://x.com/michaelshimeles",
-      github: "https://github.com/michaelshimeles",
-    },
-  },
-  {
-    name: "Aiden Laud",
-    bio: "Developer and community organizer.",
-    socials: {
-      x: "https://x.com/aidenlaud",
-      github: "https://github.com/aidenlaud",
-    },
-  },
-  {
-    name: "Dave",
-    bio: "Design and frontend. Crafting the Buildstory experience.",
-    socials: {
-      x: "https://x.com/dave",
     },
   },
 ];
