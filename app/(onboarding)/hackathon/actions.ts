@@ -56,8 +56,8 @@ function isUniqueViolation(error: unknown, constraintName: string): boolean {
   return cause?.code === "23505" && cause?.constraint === constraintName;
 }
 
-
-
+// NOTE: Intentionally unauthenticated — called from the public sign-up page.
+// Username availability is non-sensitive (usernames are public on profile pages).
 export async function checkUsernameAvailability(
   username: string
 ): Promise<ActionResult<{ available: boolean }>> {
