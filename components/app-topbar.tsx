@@ -8,6 +8,7 @@ import { UserMenu } from "@/components/user-menu";
 
 export async function AppTopbar() {
   const user = await currentUser();
+  const profile = user ? await ensureProfile(user.id) : null;
 
   return (
     <header className="border-b border-border">
@@ -31,8 +32,8 @@ export async function AppTopbar() {
               <InviteBell userId={user.id} />
               <UserMenu
                 imageUrl={user.imageUrl}
-                firstName={user.firstName}
-                username={user.username}
+                firstName={profile?.displayName ?? user.firstName}
+                username={profile?.username ?? user.username}
                 emailFallback={user.primaryEmailAddress?.emailAddress?.split("@")[0] ?? "user"}
               />
             </div>

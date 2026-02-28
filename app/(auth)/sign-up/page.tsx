@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSignUp } from "@clerk/nextjs";
@@ -27,9 +27,20 @@ export default function SignUpPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
 
+  // Step state: "username" or "auth"
+  const [step, setStep] = useState<"username" | "auth">("username");
+
+  // Username state
+  const [username, setUsername] = useState("");
+  const [checkResult, setCheckResult] = useState<{
+    username: string;
+    status: "available" | "taken";
+  } | null>(null);
+  const usernameInputRef = useRef<HTMLInputElement>(null);
+
+  // Auth form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [touched, setTouched] = useState<{ email?: boolean; password?: boolean }>({});
@@ -38,11 +49,7 @@ export default function SignUpPage() {
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState("");
 
-  // Username availability check
-  const [checkResult, setCheckResult] = useState<{
-    username: string;
-    status: "available" | "taken";
-  } | null>(null);
+  // --- Username validation (same pattern as identity-step.tsx) ---
 
   const usernameStatus: UsernameStatus = useMemo(() => {
     const trimmed = username.trim().toLowerCase();
@@ -52,6 +59,7 @@ export default function SignUpPage() {
     return "checking";
   }, [username, checkResult]);
 
+  // Debounced async availability check
   useEffect(() => {
     const trimmed = username.trim().toLowerCase();
     if (!trimmed || !USERNAME_REGEX.test(trimmed)) return;
@@ -63,11 +71,19 @@ export default function SignUpPage() {
           username: trimmed,
           status: result.data.available ? "available" : "taken",
         });
+      } else {
+        // Reset so user isn't stuck on an infinite spinner
+        setCheckResult(null);
       }
     }, 600);
 
     return () => clearTimeout(timer);
   }, [username]);
+
+  // Auto-focus username input on mount
+  useEffect(() => {
+    usernameInputRef.current?.focus();
+  }, []);
 
   const usernameIcon =
     usernameStatus === "checking" ? (
@@ -79,6 +95,12 @@ export default function SignUpPage() {
     ) : usernameStatus === "invalid" ? (
       <Icon name="error" size="3.5" className="text-amber-400" />
     ) : null;
+
+  // --- Auth form helpers ---
+
+  function storeUsername() {
+    sessionStorage.setItem("signup_username", username.trim().toLowerCase());
+  }
 
   function validateField(field: "email" | "password", value: string) {
     if (field === "email") {
@@ -119,6 +141,7 @@ export default function SignUpPage() {
   async function handleOAuth(strategy: "oauth_google" | "oauth_github") {
     if (!isLoaded) return;
     setOauthLoading(strategy);
+    storeUsername();
     try {
       await signUp.authenticateWithRedirect({
         strategy,
@@ -138,6 +161,7 @@ export default function SignUpPage() {
 
     setLoading(true);
     setError("");
+    storeUsername();
 
     try {
       await signUp.create({
@@ -183,7 +207,6 @@ export default function SignUpPage() {
             username.trim().toLowerCase()
           );
           if (!usernameResult.success) {
-            // eslint-disable-next-line no-console
             console.warn("Username set failed, will prompt during onboarding:", usernameResult.error);
           }
         }
@@ -199,6 +222,8 @@ export default function SignUpPage() {
       setLoading(false);
     }
   }
+
+  // --- Verification screen ---
 
   if (pendingVerification) {
     return (
@@ -248,14 +273,99 @@ export default function SignUpPage() {
     );
   }
 
+  // --- Step 1: Choose your username ---
+
+  if (step === "username") {
+    return (
+      <Card className="w-full max-w-md bg-transparent shadow-none border-none">
+        <CardHeader className="text-center">
+          <CardTitle className="font-heading text-4xl text-white">
+            Choose your username
+          </CardTitle>
+          <CardDescription className="text-base text-neutral-400">
+            This is how you&apos;ll appear on Buildstory
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username" className="text-base text-neutral-300">
+                Username
+              </Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-base">
+                  @
+                </span>
+                <Input
+                  ref={usernameInputRef}
+                  id="username"
+                  value={username}
+                  onChange={(e) =>
+                    setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))
+                  }
+                  placeholder="username"
+                  className="bg-neutral-900 border-border text-white placeholder:text-neutral-500 h-11 text-base md:text-base pl-8 pr-9"
+                />
+                {usernameIcon && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {usernameIcon}
+                  </div>
+                )}
+              </div>
+              {usernameStatus === "invalid" && username.length > 0 && (
+                <p className="text-sm text-amber-400">
+                  3-30 characters: letters, numbers, hyphens, underscores
+                </p>
+              )}
+              {usernameStatus === "taken" && (
+                <p className="text-sm text-red-400">
+                  This username is taken
+                </p>
+              )}
+              {usernameStatus === "available" && (
+                <p className="text-sm text-neutral-500">
+                  buildstory.com/@{username}
+                </p>
+              )}
+            </div>
+
+            <Button
+              onClick={() => {
+                setError("");
+                setStep("auth");
+              }}
+              disabled={usernameStatus !== "available"}
+              className="bg-buildstory-500 text-black hover:bg-buildstory-400 h-11 font-medium w-full text-base"
+            >
+              Continue
+            </Button>
+          </div>
+
+          <p className="mt-6 text-center text-base text-neutral-400">
+            Already have an account?{" "}
+            <Link
+              href="/sign-in"
+              className="text-buildstory-400 hover:text-buildstory-500"
+            >
+              Sign in
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // --- Step 2: Create your account ---
+
   return (
     <Card className="w-full max-w-md bg-transparent shadow-none border-none">
       <CardHeader className="text-center">
         <CardTitle className="font-heading text-4xl text-white">
-          Create an account
+          Create your account
         </CardTitle>
         <CardDescription className="text-base text-neutral-400">
-          Sign up to get started
+          Signing up as{" "}
+          <span className="text-white font-medium">@{username}</span>
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -314,44 +424,6 @@ export default function SignUpPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="username" className="text-base text-neutral-300">
-              Username
-            </Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-base">
-                @
-              </span>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) =>
-                  setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))
-                }
-                placeholder="username"
-                className="bg-neutral-900 border-border text-white placeholder:text-neutral-500 h-11 text-base md:text-base pl-8 pr-9"
-              />
-              {usernameIcon && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  {usernameIcon}
-                </div>
-              )}
-            </div>
-            {usernameStatus === "invalid" && username.length > 0 && (
-              <p className="text-sm text-amber-400">
-                3-30 characters: letters, numbers, hyphens, underscores
-              </p>
-            )}
-            {usernameStatus === "taken" && (
-              <p className="text-sm text-red-400">This username is taken</p>
-            )}
-            {usernameStatus === "available" && (
-              <p className="text-sm text-neutral-500">
-                buildstory.com/@{username}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="password" className="text-base text-neutral-300">
               Password
             </Label>
@@ -381,6 +453,13 @@ export default function SignUpPage() {
         </form>
 
         <p className="mt-6 text-center text-base text-neutral-400">
+          <button
+            onClick={() => setStep("username")}
+            className="text-buildstory-400 hover:text-buildstory-500 cursor-pointer"
+          >
+            Back
+          </button>
+          <span className="mx-2 text-neutral-600">·</span>
           Already have an account?{" "}
           <Link
             href="/sign-in"

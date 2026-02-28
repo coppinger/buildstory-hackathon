@@ -19,6 +19,7 @@ import {
   createOnboardingProject,
 } from "@/app/(onboarding)/hackathon/actions";
 import { Icon } from "@/components/ui/icon";
+import { USERNAME_REGEX } from "@/lib/constants";
 
 type StepId =
   | "identity"
@@ -201,13 +202,24 @@ export function HackathonOnboarding({
   const [flowStarted, setFlowStarted] = useState(false);
 
   const [currentStep, setCurrentStep] = useState<StepId>("identity");
-  const [state, setState] = useState<OnboardingState>({
-    ...initialState,
-    displayName: initialDisplayName !== "User" ? initialDisplayName : "",
-    username: initialUsername,
-    countryCode: initialCountryCode,
-    region: initialRegion,
-    experienceLevel: initialExperienceLevel,
+  const [state, setState] = useState<OnboardingState>(() => {
+    // Pre-fill username from sign-up page if stored in sessionStorage
+    let usernameValue = initialUsername;
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("signup_username");
+      if (stored && USERNAME_REGEX.test(stored)) {
+        usernameValue = stored;
+      }
+      sessionStorage.removeItem("signup_username");
+    }
+    return {
+      ...initialState,
+      displayName: initialDisplayName !== "User" ? initialDisplayName : "",
+      username: usernameValue,
+      countryCode: initialCountryCode,
+      region: initialRegion,
+      experienceLevel: initialExperienceLevel,
+    };
   });
   const [usernameStatus, setUsernameStatus] = useState(
     initialUsername ? "available" : "idle"
