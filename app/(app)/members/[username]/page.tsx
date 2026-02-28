@@ -37,10 +37,10 @@ export default async function ProfileDetailPage({
   return (
     <div className="p-8 lg:p-12 w-full max-w-3xl">
       <Link
-        href="/profiles"
+        href="/members"
         className="text-sm text-muted-foreground hover:text-foreground transition-colors font-mono"
       >
-        ← Back to profiles
+        ← Back to members
       </Link>
 
       <div className="mt-6 flex items-center gap-4">
