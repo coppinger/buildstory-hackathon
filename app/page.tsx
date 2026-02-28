@@ -10,6 +10,7 @@ import Link from "next/link";
 import { getHackathonEvent } from "@/lib/admin/queries";
 import { getPublicStats } from "@/lib/queries";
 import { VOLUNTEER_URL, SPONSOR_URL } from "@/lib/constants";
+import { TeamSection } from "@/components/landing/team-section";
 import { getSponsors, getVolunteerRoles } from "@/lib/sanity/queries";
 import { urlFor } from "@/lib/sanity/image";
 
@@ -639,6 +640,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Team */}
+      <TeamSection />
 
       {/* FAQ */}
       <section id="faq" className="relative z-10 px-6 border-b border-border ">

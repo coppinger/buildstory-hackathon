@@ -7,6 +7,7 @@ import {
   profiles,
   adminAuditLog,
   mentorApplications,
+  sponsorshipInquiries,
 } from "@/lib/db/schema";
 import { eq, and, gte, count, desc, sql, isNotNull } from "drizzle-orm";
 import { HACKATHON_SLUG } from "@/lib/constants";
@@ -293,4 +294,44 @@ export async function getMentorApplicationStats() {
   ]);
 
   return { total, pending, approved, declined };
+}
+
+// --- Sponsorship Inquiry Queries ---
+
+export async function getSponsorInquiries() {
+  return db
+    .select()
+    .from(sponsorshipInquiries)
+    .orderBy(desc(sponsorshipInquiries.createdAt));
+}
+
+export async function getSponsorInquiryStats() {
+  const [total, pending, contacted, accepted, declined] = await Promise.all([
+    db
+      .select({ count: count() })
+      .from(sponsorshipInquiries)
+      .then(([r]) => r.count),
+    db
+      .select({ count: count() })
+      .from(sponsorshipInquiries)
+      .where(eq(sponsorshipInquiries.status, "pending"))
+      .then(([r]) => r.count),
+    db
+      .select({ count: count() })
+      .from(sponsorshipInquiries)
+      .where(eq(sponsorshipInquiries.status, "contacted"))
+      .then(([r]) => r.count),
+    db
+      .select({ count: count() })
+      .from(sponsorshipInquiries)
+      .where(eq(sponsorshipInquiries.status, "accepted"))
+      .then(([r]) => r.count),
+    db
+      .select({ count: count() })
+      .from(sponsorshipInquiries)
+      .where(eq(sponsorshipInquiries.status, "declined"))
+      .then(([r]) => r.count),
+  ]);
+
+  return { total, pending, contacted, accepted, declined };
 }

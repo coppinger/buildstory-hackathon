@@ -394,3 +394,41 @@ export const mentorApplicationsRelations = relations(
     }),
   })
 );
+
+// --- Sponsorship Inquiries ---
+
+export const sponsorshipInquiryStatusEnum = pgEnum(
+  "sponsorship_inquiry_status",
+  ["pending", "contacted", "accepted", "declined"]
+);
+
+export const sponsorshipInquiries = pgTable("sponsorship_inquiries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyName: text("company_name").notNull(),
+  contactName: text("contact_name").notNull(),
+  email: text("email").notNull().unique(),
+  websiteUrl: text("website_url"),
+  offerDescription: text("offer_description").notNull(),
+  additionalNotes: text("additional_notes"),
+  status: sponsorshipInquiryStatusEnum("status").default("pending").notNull(),
+  reviewedBy: uuid("reviewed_by").references(() => profiles.id),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+export type SponsorshipInquiry = typeof sponsorshipInquiries.$inferSelect;
+export type NewSponsorshipInquiry = typeof sponsorshipInquiries.$inferInsert;
+
+export const sponsorshipInquiriesRelations = relations(
+  sponsorshipInquiries,
+  ({ one }) => ({
+    reviewer: one(profiles, {
+      fields: [sponsorshipInquiries.reviewedBy],
+      references: [profiles.id],
+    }),
+  })
+);

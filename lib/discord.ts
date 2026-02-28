@@ -80,3 +80,28 @@ export function notifyMentorApplication(name: string, types: string[]) {
     ],
   });
 }
+
+export function notifySponsorInquiry(
+  companyName: string,
+  contactName: string
+) {
+  const safeCompany = sanitizeForDiscord(companyName);
+  const safeContact = sanitizeForDiscord(contactName);
+  sendDiscordWebhook(process.env.DISCORD_WEBHOOK_TEAM_CHAT, {
+    embeds: [
+      {
+        title: "New Sponsorship Inquiry",
+        description: `**${safeCompany}** submitted a sponsorship inquiry`,
+        color: 0xc4a35a,
+        fields: [
+          {
+            name: "Contact",
+            value: safeContact,
+            inline: true,
+          },
+        ],
+        timestamp: new Date().toISOString(),
+      },
+    ],
+  });
+}
