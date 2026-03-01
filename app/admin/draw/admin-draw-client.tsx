@@ -426,22 +426,6 @@ export function AdminDrawClient() {
         </BlurFade>
       )}
 
-      {/* Previous result when idle */}
-      {phase === "idle" && result && (
-        <BlurFade delay={0.1}>
-          <div className="space-y-4">
-            <h2 className="text-sm font-medium text-muted-foreground">
-              Previous Result
-            </h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {result.winners.map((winner) => (
-                <WinnerCard key={winner.username} winner={winner} />
-              ))}
-            </div>
-            <TransparencyPanel result={result} collapsed />
-          </div>
-        </BlurFade>
-      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, isNull, isNotNull, asc } from "drizzle-orm";
+import { eq, and, isNull, isNotNull } from "drizzle-orm";
 import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
 import { events, eventRegistrations, profiles } from "@/lib/db/schema";
@@ -89,8 +89,7 @@ export async function drawWinners(count: number): Promise<ActionResult> {
           isNull(profiles.hiddenAt),
           isNotNull(profiles.username)
         )
-      )
-      .orderBy(asc(profiles.username));
+      );
 
     if (count > eligible.length) {
       return {
@@ -98,6 +97,10 @@ export async function drawWinners(count: number): Promise<ActionResult> {
         error: `Requested ${count} winners but only ${eligible.length} eligible participants`,
       };
     }
+
+    // Sort eligible list in JavaScript to ensure consistent ordering for verification.
+    // Uses UTF-16 code point comparison for cross-environment reproducibility.
+    eligible.sort((a, b) => (a.username! < b.username! ? -1 : a.username! > b.username! ? 1 : 0));
 
     // Generate cryptographic seed
     const seed = crypto.randomUUID();
@@ -114,7 +117,7 @@ export async function drawWinners(count: number): Promise<ActionResult> {
       avatarUrl: w.avatarUrl,
     }));
 
-    const allUsernames = eligible.map((e) => e.username!).sort();
+    const allUsernames = eligible.map((e) => e.username!);
 
     return {
       success: true,
