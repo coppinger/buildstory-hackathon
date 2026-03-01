@@ -28,7 +28,7 @@ export function DeleteUserDialog({
   const [isPending, startTransition] = useTransition();
 
   const confirmText = username || displayName;
-  const isConfirmed = confirmation === confirmText;
+  const isConfirmed = confirmText.length > 0 && confirmation === confirmText;
 
   function handleDelete() {
     if (!isConfirmed) return;

@@ -307,6 +307,27 @@ export async function deleteUser(data: {
         .where(eq(projectMembers.profileId, target.id));
 
       // 3. Remove team invites where user is sender or recipient
+      // First nullify inviteId on any projectMembers referencing these invites
+      const userInvites = await tx
+        .select({ id: teamInvites.id })
+        .from(teamInvites)
+        .where(
+          or(
+            eq(teamInvites.senderId, target.id),
+            eq(teamInvites.recipientId, target.id)
+          )
+        );
+      if (userInvites.length > 0) {
+        await tx
+          .update(projectMembers)
+          .set({ inviteId: null })
+          .where(
+            inArray(
+              projectMembers.inviteId,
+              userInvites.map((i) => i.id)
+            )
+          );
+      }
       await tx
         .delete(teamInvites)
         .where(
