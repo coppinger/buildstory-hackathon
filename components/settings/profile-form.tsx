@@ -104,7 +104,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
     try {
       await user.setProfileImage({ file: null });
       await user.reload();
-      await syncAvatarUrl({ avatarUrl: user.imageUrl ?? null });
+      await syncAvatarUrl({ avatarUrl: null });
       router.refresh();
     } catch {
       setAvatarError("Failed to remove image");

@@ -12,11 +12,7 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 ">
-    <div className="backdrop-blur-xl py-3">
-      <p className="text-center text-muted-foreground text-xs">Buildstory stands with Anthropic <Image src="/claude-ai-logo.svg" alt="Claude AI Logo" width={12} height={12} className="inline-block" /></p>
-    </div>
-    <header className="border-y border-border backdrop-blur-xl">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border backdrop-blur-xl">
       <div className="mx-auto flex h-20 max-w-8xl items-center justify-between px-6">
         <Link href="/" className="shrink-0">
           <Image
@@ -114,6 +110,5 @@ export function Header() {
         </nav>
       )}
     </header>
-    </div>
   );
 }
