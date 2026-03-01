@@ -79,13 +79,14 @@ function SlotMachineText({
     let elapsed = 0;
     const totalDuration = 1800;
     let timeoutId: ReturnType<typeof setTimeout>;
+    let doneTimeoutId: ReturnType<typeof setTimeout>;
 
     const tick = () => {
       elapsed += interval;
       if (elapsed >= totalDuration) {
         setDisplayName(winner.username);
         setLanded(true);
-        onDone();
+        doneTimeoutId = setTimeout(onDone, 400);
         return;
       }
       setDisplayName(
@@ -97,7 +98,10 @@ function SlotMachineText({
     };
 
     timeoutId = setTimeout(tick, interval);
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+      clearTimeout(doneTimeoutId);
+    };
   }, [allUsernames, winner.username, onDone]);
 
   return (
