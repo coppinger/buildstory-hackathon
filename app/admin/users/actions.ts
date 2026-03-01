@@ -1,22 +1,13 @@
 "use server";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { eq, inArray, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
-import {
-  profiles,
-  adminAuditLog,
-  projects,
-  projectMembers,
-  teamInvites,
-  eventProjects,
-  eventRegistrations,
-  mentorApplications,
-  sponsorshipInquiries,
-} from "@/lib/db/schema";
+import { profiles, adminAuditLog } from "@/lib/db/schema";
 import { isModerator, isAdmin, isSuperAdmin } from "@/lib/admin";
+import { deleteProfileCascade } from "@/lib/db/delete-profile";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -273,107 +264,7 @@ export async function deleteUser(data: {
     }
 
     // Cascading delete in a transaction (FK-safe order)
-    await db.transaction(async (tx) => {
-      // 1. Delete data for projects owned by this user
-      const ownedProjects = await tx
-        .select({ id: projects.id })
-        .from(projects)
-        .where(eq(projects.profileId, target.id));
-
-      if (ownedProjects.length > 0) {
-        const ownedProjectIds = ownedProjects.map((p) => p.id);
-
-        // projectMembers referencing invites on these projects — clear invite FK first
-        await tx
-          .update(projectMembers)
-          .set({ inviteId: null })
-          .where(inArray(projectMembers.projectId, ownedProjectIds));
-
-        await tx
-          .delete(projectMembers)
-          .where(inArray(projectMembers.projectId, ownedProjectIds));
-        await tx
-          .delete(teamInvites)
-          .where(inArray(teamInvites.projectId, ownedProjectIds));
-        await tx
-          .delete(eventProjects)
-          .where(inArray(eventProjects.projectId, ownedProjectIds));
-        await tx.delete(projects).where(inArray(projects.id, ownedProjectIds));
-      }
-
-      // 2. Remove team memberships on other projects
-      await tx
-        .delete(projectMembers)
-        .where(eq(projectMembers.profileId, target.id));
-
-      // 3. Remove team invites where user is sender or recipient
-      // First nullify inviteId on any projectMembers referencing these invites
-      const userInvites = await tx
-        .select({ id: teamInvites.id })
-        .from(teamInvites)
-        .where(
-          or(
-            eq(teamInvites.senderId, target.id),
-            eq(teamInvites.recipientId, target.id)
-          )
-        );
-      if (userInvites.length > 0) {
-        await tx
-          .update(projectMembers)
-          .set({ inviteId: null })
-          .where(
-            inArray(
-              projectMembers.inviteId,
-              userInvites.map((i) => i.id)
-            )
-          );
-      }
-      await tx
-        .delete(teamInvites)
-        .where(
-          or(
-            eq(teamInvites.senderId, target.id),
-            eq(teamInvites.recipientId, target.id)
-          )
-        );
-
-      // 4. Event registrations
-      await tx
-        .delete(eventRegistrations)
-        .where(eq(eventRegistrations.profileId, target.id));
-
-      // 5. Nullify references in mentor_applications and sponsorship_inquiries
-      await tx
-        .update(mentorApplications)
-        .set({ reviewedBy: null })
-        .where(eq(mentorApplications.reviewedBy, target.id));
-      await tx
-        .update(sponsorshipInquiries)
-        .set({ reviewedBy: null })
-        .where(eq(sponsorshipInquiries.reviewedBy, target.id));
-
-      // 6. Audit log cleanup
-      await tx
-        .update(adminAuditLog)
-        .set({ targetProfileId: null })
-        .where(eq(adminAuditLog.targetProfileId, target.id));
-      await tx
-        .delete(adminAuditLog)
-        .where(eq(adminAuditLog.actorProfileId, target.id));
-
-      // 7. Nullify ban/hide references from other profiles
-      await tx
-        .update(profiles)
-        .set({ bannedBy: null })
-        .where(eq(profiles.bannedBy, target.id));
-      await tx
-        .update(profiles)
-        .set({ hiddenBy: null })
-        .where(eq(profiles.hiddenBy, target.id));
-
-      // 8. Delete the profile
-      await tx.delete(profiles).where(eq(profiles.id, target.id));
-    });
+    await deleteProfileCascade(target.id);
 
     // Audit log (outside transaction — target profile is gone, so targetProfileId is null)
     // Non-blocking: DB deletion already committed, so audit failure shouldn't block Clerk cleanup
