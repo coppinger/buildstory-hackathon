@@ -76,7 +76,7 @@ export default async function ProjectsPage({
                 )}
 
                 <div className="mt-auto pt-3 flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex-1 flex items-center gap-3 min-w-0">
                     <UserAvatar
                       avatarUrl={project.profile.avatarUrl}
                       displayName={project.profile.displayName}
