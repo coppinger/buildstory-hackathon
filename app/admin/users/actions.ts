@@ -1,11 +1,21 @@
 "use server";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { eq, inArray, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
-import { profiles, adminAuditLog } from "@/lib/db/schema";
+import {
+  profiles,
+  adminAuditLog,
+  projects,
+  projectMembers,
+  teamInvites,
+  eventProjects,
+  eventRegistrations,
+  mentorApplications,
+  sponsorshipInquiries,
+} from "@/lib/db/schema";
 import { isModerator, isAdmin, isSuperAdmin } from "@/lib/admin";
 
 type ActionResult = { success: true } | { success: false; error: string };
@@ -228,5 +238,148 @@ export async function unbanUser(data: {
       extra: { profileId: data.profileId },
     });
     return { success: false, error: "Failed to unban user" };
+  }
+}
+
+export async function deleteUser(data: {
+  profileId: string;
+}): Promise<ActionResult> {
+  try {
+    const { userId } = await auth();
+    if (!userId || !(await isAdmin(userId))) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const target = await db.query.profiles.findFirst({
+      where: eq(profiles.id, data.profileId),
+      columns: {
+        id: true,
+        clerkId: true,
+        displayName: true,
+        username: true,
+      },
+    });
+    if (!target) return { success: false, error: "User not found" };
+
+    if (isSuperAdmin(target.clerkId)) {
+      return { success: false, error: "Cannot delete a super-admin" };
+    }
+
+    const actor = await getActorProfile(userId);
+    if (!actor) return { success: false, error: "Actor profile not found" };
+
+    if (actor.id === data.profileId) {
+      return { success: false, error: "Cannot delete yourself" };
+    }
+
+    // Cascading delete in a transaction (FK-safe order)
+    await db.transaction(async (tx) => {
+      // 1. Delete data for projects owned by this user
+      const ownedProjects = await tx
+        .select({ id: projects.id })
+        .from(projects)
+        .where(eq(projects.profileId, target.id));
+
+      if (ownedProjects.length > 0) {
+        const ownedProjectIds = ownedProjects.map((p) => p.id);
+
+        // projectMembers referencing invites on these projects — clear invite FK first
+        await tx
+          .update(projectMembers)
+          .set({ inviteId: null })
+          .where(inArray(projectMembers.projectId, ownedProjectIds));
+
+        await tx
+          .delete(projectMembers)
+          .where(inArray(projectMembers.projectId, ownedProjectIds));
+        await tx
+          .delete(teamInvites)
+          .where(inArray(teamInvites.projectId, ownedProjectIds));
+        await tx
+          .delete(eventProjects)
+          .where(inArray(eventProjects.projectId, ownedProjectIds));
+        await tx.delete(projects).where(inArray(projects.id, ownedProjectIds));
+      }
+
+      // 2. Remove team memberships on other projects
+      await tx
+        .delete(projectMembers)
+        .where(eq(projectMembers.profileId, target.id));
+
+      // 3. Remove team invites where user is sender or recipient
+      await tx
+        .delete(teamInvites)
+        .where(
+          or(
+            eq(teamInvites.senderId, target.id),
+            eq(teamInvites.recipientId, target.id)
+          )
+        );
+
+      // 4. Event registrations
+      await tx
+        .delete(eventRegistrations)
+        .where(eq(eventRegistrations.profileId, target.id));
+
+      // 5. Nullify references in mentor_applications and sponsorship_inquiries
+      await tx
+        .update(mentorApplications)
+        .set({ reviewedBy: null })
+        .where(eq(mentorApplications.reviewedBy, target.id));
+      await tx
+        .update(sponsorshipInquiries)
+        .set({ reviewedBy: null })
+        .where(eq(sponsorshipInquiries.reviewedBy, target.id));
+
+      // 6. Audit log cleanup
+      await tx
+        .update(adminAuditLog)
+        .set({ targetProfileId: null })
+        .where(eq(adminAuditLog.targetProfileId, target.id));
+      await tx
+        .delete(adminAuditLog)
+        .where(eq(adminAuditLog.actorProfileId, target.id));
+
+      // 7. Nullify ban/hide references from other profiles
+      await tx
+        .update(profiles)
+        .set({ bannedBy: null })
+        .where(eq(profiles.bannedBy, target.id));
+      await tx
+        .update(profiles)
+        .set({ hiddenBy: null })
+        .where(eq(profiles.hiddenBy, target.id));
+
+      // 8. Delete the profile
+      await tx.delete(profiles).where(eq(profiles.id, target.id));
+    });
+
+    // Audit log (outside transaction — target profile is gone, so targetProfileId is null)
+    await logAudit(actor.id, "delete_user", null, {
+      deletedProfileId: target.id,
+      displayName: target.displayName,
+      username: target.username,
+      clerkId: target.clerkId,
+    });
+
+    // Delete from Clerk (non-blocking — DB deletion is the source of truth)
+    try {
+      const clerk = await clerkClient();
+      await clerk.users.deleteUser(target.clerkId);
+    } catch (clerkError) {
+      Sentry.captureException(clerkError, {
+        tags: { component: "server-action", action: "deleteUser-clerk" },
+        extra: { clerkId: target.clerkId },
+      });
+    }
+
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "server-action", action: "deleteUser" },
+      extra: { profileId: data.profileId },
+    });
+    return { success: false, error: "Failed to delete user" };
   }
 }
