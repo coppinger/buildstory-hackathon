@@ -104,7 +104,7 @@ export function CountryCombobox({ value, onChange }: CountryComboboxProps) {
     return (
       <div>
         <Label className="text-sm font-medium">Country</Label>
-        <div className="mt-1.5 flex items-center gap-2 border border-input bg-transparent px-3 py-2 rounded-none">
+        <div className="mt-1.5 flex items-center gap-2 border border-input bg-transparent dark:bg-input/10 px-3 py-2 rounded-none">
           <span className="text-lg leading-none">{selected?.flag}</span>
           <span className="flex-1 text-base text-foreground truncate">
             {selected?.name ?? value}
@@ -143,7 +143,7 @@ export function CountryCombobox({ value, onChange }: CountryComboboxProps) {
           onKeyDown={handleKeyDown}
           placeholder="Search for your country..."
           autoComplete="off"
-          className="flex h-12 w-full rounded-none border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+          className="flex h-12 w-full rounded-none border border-input bg-transparent dark:bg-input/10 px-3 py-1 text-base shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
           <Icon
