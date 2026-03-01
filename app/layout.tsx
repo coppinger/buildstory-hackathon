@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Instrument_Serif, DM_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -64,7 +65,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className={`dark ${dmSans.variable} ${instrumentSerif.variable} ${dmMono.variable}`}>
         <body className="antialiased">
-          {children}
+          <NuqsAdapter>{children}</NuqsAdapter>
         </body>
       </html>
     </ClerkProvider>

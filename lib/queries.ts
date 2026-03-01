@@ -20,6 +20,20 @@ import {
   aliasedTable,
 } from "drizzle-orm";
 import { HACKATHON_SLUG } from "@/lib/constants";
+import { DEFAULT_PAGE_SIZE } from "@/lib/search-params";
+
+export interface PaginationParams {
+  page: number;
+  pageSize?: number;
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
 
 export interface ActivityFeedItem {
   type: "signup" | "project" | "team_join";
@@ -45,32 +59,99 @@ function isProfileVisible(profile: {
   return profile.bannedAt === null && profile.hiddenAt === null;
 }
 
-export async function getHackathonProjects() {
+export async function getHackathonProjects(
+  pagination?: PaginationParams
+) {
   const eventId = await getHackathonEventId();
-  if (!eventId) return [];
+  if (!eventId) {
+    return pagination
+      ? { items: [], totalCount: 0, page: 1, pageSize: pagination.pageSize ?? DEFAULT_PAGE_SIZE, totalPages: 1 }
+      : [];
+  }
 
-  const entries = await db.query.eventProjects.findMany({
-    where: eq(eventProjects.eventId, eventId),
-    with: {
-      project: {
-        with: {
-          profile: true,
-          members: {
-            with: {
-              profile: {
-                columns: { id: true, displayName: true, username: true, avatarUrl: true },
+  const visibilityFilter = and(
+    eq(eventProjects.eventId, eventId),
+    isNull(profiles.bannedAt),
+    isNull(profiles.hiddenAt)
+  );
+
+  if (!pagination) {
+    // Non-paginated: use relational query for backward compat
+    const entries = await db.query.eventProjects.findMany({
+      where: eq(eventProjects.eventId, eventId),
+      with: {
+        project: {
+          with: {
+            profile: true,
+            members: {
+              with: {
+                profile: {
+                  columns: { id: true, displayName: true, username: true, avatarUrl: true },
+                },
               },
             },
           },
         },
       },
+      orderBy: [desc(eventProjects.submittedAt)],
+    });
+
+    return entries
+      .filter((ep) => isProfileVisible(ep.project.profile))
+      .map((ep) => ep.project);
+  }
+
+  // Paginated: push filtering + pagination into the DB
+  const pageSize = pagination.pageSize ?? DEFAULT_PAGE_SIZE;
+
+  // 1. Get total count of visible projects
+  const [{ totalCount }] = await db
+    .select({ totalCount: count() })
+    .from(eventProjects)
+    .innerJoin(projects, eq(eventProjects.projectId, projects.id))
+    .innerJoin(profiles, eq(projects.profileId, profiles.id))
+    .where(visibilityFilter);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const page = Math.max(1, Math.min(pagination.page, totalPages));
+
+  if (totalCount === 0) {
+    return { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
+  }
+
+  // 2. Get the paginated project IDs
+  const paginatedIds = await db
+    .select({ projectId: eventProjects.projectId })
+    .from(eventProjects)
+    .innerJoin(projects, eq(eventProjects.projectId, projects.id))
+    .innerJoin(profiles, eq(projects.profileId, profiles.id))
+    .where(visibilityFilter)
+    .orderBy(desc(eventProjects.submittedAt))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+
+  const ids = paginatedIds.map((r) => r.projectId);
+
+  // 3. Hydrate with relational query (includes members)
+  const hydrated = await db.query.projects.findMany({
+    where: inArray(projects.id, ids),
+    with: {
+      profile: true,
+      members: {
+        with: {
+          profile: {
+            columns: { id: true, displayName: true, username: true, avatarUrl: true },
+          },
+        },
+      },
     },
-    orderBy: [desc(eventProjects.submittedAt)],
   });
 
-  return entries
-    .filter((ep) => isProfileVisible(ep.project.profile))
-    .map((ep) => ep.project);
+  // Preserve the original sort order from step 2
+  const byId = new Map(hydrated.map((p) => [p.id, p]));
+  const items = ids.map((id) => byId.get(id)!);
+
+  return { items, totalCount, page, pageSize, totalPages };
 }
 
 export async function getProjectBySlug(slug: string) {
@@ -96,24 +177,78 @@ export async function getProjectBySlug(slug: string) {
   return project;
 }
 
-export async function getHackathonProfiles() {
+export async function getHackathonProfiles(
+  pagination?: PaginationParams
+) {
   const eventId = await getHackathonEventId();
-  if (!eventId) return [];
+  if (!eventId) {
+    return pagination
+      ? { items: [], totalCount: 0, page: 1, pageSize: pagination.pageSize ?? DEFAULT_PAGE_SIZE, totalPages: 1 }
+      : [];
+  }
 
-  const registrations = await db.query.eventRegistrations.findMany({
-    where: eq(eventRegistrations.eventId, eventId),
-    with: {
-      profile: true,
-    },
-    orderBy: [desc(eventRegistrations.registeredAt)],
+  const visibilityFilter = and(
+    eq(eventRegistrations.eventId, eventId),
+    isNull(profiles.bannedAt),
+    isNull(profiles.hiddenAt)
+  );
+
+  if (!pagination) {
+    // Non-paginated: use relational query for backward compat
+    const registrations = await db.query.eventRegistrations.findMany({
+      where: eq(eventRegistrations.eventId, eventId),
+      with: { profile: true },
+      orderBy: [desc(eventRegistrations.registeredAt)],
+    });
+
+    return registrations
+      .filter((r) => isProfileVisible(r.profile))
+      .map((r) => ({ profile: r.profile, teamPreference: r.teamPreference }));
+  }
+
+  // Paginated: push filtering + pagination into the DB
+  const pageSize = pagination.pageSize ?? DEFAULT_PAGE_SIZE;
+
+  const [{ totalCount }] = await db
+    .select({ totalCount: count() })
+    .from(eventRegistrations)
+    .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
+    .where(visibilityFilter);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const page = Math.max(1, Math.min(pagination.page, totalPages));
+
+  if (totalCount === 0) {
+    return { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
+  }
+
+  const rows = await db
+    .select({
+      profileId: eventRegistrations.profileId,
+      teamPreference: eventRegistrations.teamPreference,
+    })
+    .from(eventRegistrations)
+    .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
+    .where(visibilityFilter)
+    .orderBy(desc(eventRegistrations.registeredAt))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+
+  const profileIds = rows.map((r) => r.profileId);
+  const teamPrefMap = new Map(rows.map((r) => [r.profileId, r.teamPreference]));
+
+  const hydratedProfiles = await db.query.profiles.findMany({
+    where: inArray(profiles.id, profileIds),
   });
 
-  return registrations
-    .filter((r) => isProfileVisible(r.profile))
-    .map((r) => ({
-      profile: r.profile,
-      teamPreference: r.teamPreference,
-    }));
+  // Preserve the sort order from the paginated query
+  const byId = new Map(hydratedProfiles.map((p) => [p.id, p]));
+  const items = profileIds.map((id) => ({
+    profile: byId.get(id)!,
+    teamPreference: teamPrefMap.get(id)!,
+  }));
+
+  return { items, totalCount, page, pageSize, totalPages };
 }
 
 export async function getProfileByUsername(username: string) {
