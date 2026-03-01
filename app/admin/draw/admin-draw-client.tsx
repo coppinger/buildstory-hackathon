@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
+import { getInitials } from "@/lib/utils";
 
 type Phase = "idle" | "drawing" | "revealing" | "revealed";
 
@@ -35,15 +36,6 @@ function fireConfetti() {
     }
   };
   frame();
-}
-
-function getInitials(displayName: string) {
-  return displayName
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 }
 
 function WinnerCard({ winner }: { winner: DrawWinner }) {
