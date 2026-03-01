@@ -7,6 +7,9 @@ import { createLinearIssue } from "@/lib/linear";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
+const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+const lastSubmission = new Map<string, number>();
+
 export async function submitFeedback(data: {
   title: string;
   description: string;
@@ -14,6 +17,15 @@ export async function submitFeedback(data: {
   const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Not authenticated" };
+  }
+
+  const lastTime = lastSubmission.get(userId);
+  if (lastTime && Date.now() - lastTime < COOLDOWN_MS) {
+    const remainingSeconds = Math.ceil((COOLDOWN_MS - (Date.now() - lastTime)) / 1000);
+    const minutes = Math.floor(remainingSeconds / 60);
+    const seconds = remainingSeconds % 60;
+    const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+    return { success: false, error: `Please wait ${timeStr} before submitting again.` };
   }
 
   const title = data.title.trim();
@@ -41,6 +53,8 @@ export async function submitFeedback(data: {
     if (!result.success) {
       return { success: false, error: result.error };
     }
+
+    lastSubmission.set(userId, Date.now());
 
     return { success: true };
   } catch (error) {
