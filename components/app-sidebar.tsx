@@ -15,8 +15,8 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="px-16 py-8 max-w-xs w-full border-r border-border">
-      <nav className="flex flex-col gap-8">
+    <aside className="hidden md:block px-16 w-58 lg:w-63 shrink-0 border-r border-border min-h-full">
+      <nav className="sticky top-0 flex flex-col gap-4 lg:gap-6 py-8">
         {navItems.map(({ label, href }) => {
           const isActive =
             pathname === href || pathname.startsWith(href + "/");
@@ -25,7 +25,7 @@ export function AppSidebar() {
             <Link key={href} href={href}>
               <p
                 className={cn(
-                  "text-xl font-medium transition-colors",
+                  "text-lg lg:text-xl font-medium transition-colors",
                   isActive
                     ? "font-semibold text-foreground"
                     : "text-muted-foreground hover:text-foreground"

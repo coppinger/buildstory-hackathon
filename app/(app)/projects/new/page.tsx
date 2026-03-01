@@ -17,7 +17,7 @@ export default async function NewProjectPage() {
   });
 
   return (
-    <div className="p-8 lg:p-12 w-full max-w-2xl">
+    <div className="p-6 md:p-8 lg:p-12 w-full max-w-2xl">
       <Link
         href="/projects"
         className="text-sm text-muted-foreground hover:text-foreground transition-colors font-mono"

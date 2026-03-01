@@ -5,6 +5,7 @@ import { ensureProfile } from "@/lib/db/ensure-profile";
 import { getPendingInvitesForUser } from "@/lib/queries";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { UserMenu } from "@/components/user-menu";
+import { MobileSidebar } from "@/components/mobile-sidebar";
 
 export async function AppTopbar() {
   const user = await currentUser();
@@ -27,11 +28,12 @@ export async function AppTopbar() {
   return (
     <header className="border-b border-border">
       <div className="max-w-8xl mx-auto h-18 flex items-center border-border">
-        {/* Logo area — matches sidebar column width */}
-        <div className="max-w-xs w-full border-r border-border h-full flex items-center px-16">
+        {/* Logo area — matches sidebar column width on md+ */}
+        <div className="px-4 md:px-16 md:max-w-58 lg:max-w-63 md:w-full md:border-r border-border h-full flex items-center gap-3">
+          <MobileSidebar />
           <Link href="/">
             <Image
-              className="w-[140px]"
+              className="w-35 min-w-24"
               src="/buildstory-logo.svg"
               alt="BuildStory"
               width={120}
@@ -41,7 +43,7 @@ export async function AppTopbar() {
         </div>
 
         {/* Right section */}
-        <div className="flex justify-end w-full items-center px-6">
+        <div className="flex justify-end w-full items-center px-4 md:px-6">
           {user ? (
             <div className="flex items-center gap-1">
               {profileId && <InviteBell profileId={profileId} />}
