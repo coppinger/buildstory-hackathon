@@ -232,7 +232,7 @@ function MemberRow({
         </div>
         {profile.username && (
           <Link
-            href={`/profiles/${profile.username}`}
+            href={`/members/${profile.username}`}
             className="text-sm text-muted-foreground hover:text-buildstory-500 transition-colors font-mono"
           >
             @{profile.username}

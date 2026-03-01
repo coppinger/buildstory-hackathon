@@ -132,7 +132,10 @@ export async function updateProfile(data: {
       .where(eq(profiles.id, profile.id));
 
     revalidatePath("/settings");
-    revalidatePath(`/profiles/${trimmedUsername}`);
+    revalidatePath(`/members/${trimmedUsername}`);
+    if (profile.username && profile.username !== trimmedUsername) {
+      revalidatePath(`/members/${profile.username}`);
+    }
 
     return { success: true };
   } catch (error) {

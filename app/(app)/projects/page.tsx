@@ -67,7 +67,7 @@ export default async function ProjectsPage() {
                   by{" "}
                   {project.profile.username ? (
                     <Link
-                      href={`/profiles/${project.profile.username}`}
+                      href={`/members/${project.profile.username}`}
                       className="text-foreground hover:text-buildstory-500 transition-colors"
                     >
                       @{project.profile.username}

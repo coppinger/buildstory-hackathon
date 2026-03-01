@@ -9,11 +9,20 @@ import { UserMenu } from "@/components/user-menu";
 export async function AppTopbar() {
   const user = await currentUser();
 
-  const displayName = user?.firstName ?? user?.username ?? "Builder";
-  const username =
-    user?.username ??
-    user?.primaryEmailAddress?.emailAddress?.split("@")[0] ??
-    "user";
+  let displayName = "Builder";
+  let username: string | null = null;
+  let profileId: string | null = null;
+
+  if (user) {
+    const profile = await ensureProfile(user.id);
+    if (profile) {
+      displayName = profile.displayName ?? user.firstName ?? "Builder";
+      username = profile.username ?? null;
+      profileId = profile.id;
+    } else {
+      displayName = user.firstName ?? "Builder";
+    }
+  }
 
   return (
     <header className="border-b border-border">
@@ -35,7 +44,7 @@ export async function AppTopbar() {
         <div className="flex justify-end w-full items-center px-6">
           {user ? (
             <div className="flex items-center gap-1">
-              <InviteBell userId={user.id} />
+              {profileId && <InviteBell profileId={profileId} />}
               <UserMenu
                 imageUrl={user.imageUrl}
                 displayName={displayName}
@@ -56,11 +65,8 @@ export async function AppTopbar() {
   );
 }
 
-async function InviteBell({ userId }: { userId: string }) {
-  const profile = await ensureProfile(userId);
-  if (!profile) return null;
-
-  const invites = await getPendingInvitesForUser(profile.id);
+async function InviteBell({ profileId }: { profileId: string }) {
+  const invites = await getPendingInvitesForUser(profileId);
 
   return <NotificationBell invites={invites} count={invites.length} />;
 }

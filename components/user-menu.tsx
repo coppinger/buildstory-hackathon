@@ -18,7 +18,7 @@ import { Icon } from "@/components/ui/icon";
 interface UserMenuProps {
   imageUrl: string;
   displayName: string;
-  username: string;
+  username: string | null;
 }
 
 export function UserMenu({ imageUrl, displayName, username }: UserMenuProps) {
@@ -47,16 +47,25 @@ export function UserMenu({ imageUrl, displayName, username }: UserMenuProps) {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col gap-0.5">
             <p className="text-sm font-medium">{displayName}</p>
-            <p className="text-xs text-muted-foreground">@{username}</p>
+            <p className="text-xs text-muted-foreground">
+              {username ? `@${username}` : "No username set"}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href={`/members/${username}`}>
-              <Icon name="person" size="4" />
-              Profile
-            </Link>
+            {username ? (
+              <Link href={`/members/${username}`}>
+                <Icon name="person" size="4" />
+                Profile
+              </Link>
+            ) : (
+              <Link href="/settings">
+                <Icon name="person" size="4" />
+                Set up profile
+              </Link>
+            )}
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/settings">
