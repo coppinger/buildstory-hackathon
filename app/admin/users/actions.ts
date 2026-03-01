@@ -376,12 +376,20 @@ export async function deleteUser(data: {
     });
 
     // Audit log (outside transaction — target profile is gone, so targetProfileId is null)
-    await logAudit(actor.id, "delete_user", null, {
-      deletedProfileId: target.id,
-      displayName: target.displayName,
-      username: target.username,
-      clerkId: target.clerkId,
-    });
+    // Non-blocking: DB deletion already committed, so audit failure shouldn't block Clerk cleanup
+    try {
+      await logAudit(actor.id, "delete_user", null, {
+        deletedProfileId: target.id,
+        displayName: target.displayName,
+        username: target.username,
+        clerkId: target.clerkId,
+      });
+    } catch (auditError) {
+      Sentry.captureException(auditError, {
+        tags: { component: "server-action", action: "deleteUser-audit" },
+        extra: { deletedProfileId: target.id, clerkId: target.clerkId },
+      });
+    }
 
     // Delete from Clerk (non-blocking — DB deletion is the source of truth)
     try {

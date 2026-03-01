@@ -39,25 +39,36 @@ function pad(n: number) {
 }
 
 export function DashboardCountdown({ compact = false }: { compact?: boolean }) {
-  const [state, setState] = useState(getState);
+  const [state, setState] = useState<ReturnType<typeof getState> | null>(null);
 
   useEffect(() => {
-    const interval = setInterval(() => setState(getState()), 1000);
+    const tick = () => setState(getState());
+    tick();
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const segments = [
-    { value: state.days, label: "days" },
-    { value: state.hours, label: "hrs" },
-    { value: state.minutes, label: "min" },
-    { value: state.seconds, label: "sec" },
-  ];
-
-  if (state.phase === "ended") {
+  if (state?.phase === "ended") {
     return (
       <p className="text-sm text-muted-foreground">Event has ended</p>
     );
   }
+
+  const placeholder = [
+    { value: "--", label: "days" },
+    { value: "--", label: "hrs" },
+    { value: "--", label: "min" },
+    { value: "--", label: "sec" },
+  ];
+
+  const segments = state
+    ? [
+        { value: pad(state.days), label: "days" },
+        { value: pad(state.hours), label: "hrs" },
+        { value: pad(state.minutes), label: "min" },
+        { value: pad(state.seconds), label: "sec" },
+      ]
+    : placeholder;
 
   return (
     <div className="flex flex-col gap-4">
@@ -69,7 +80,7 @@ export function DashboardCountdown({ compact = false }: { compact?: boolean }) {
                 ? "font-mono text-2xl tabular-nums tracking-tight text-foreground"
                 : "font-mono text-4xl sm:text-5xl tabular-nums tracking-tight text-foreground"
               }>
-                {pad(seg.value)}
+                {seg.value}
               </span>
               <span className={compact
                 ? "text-[10px] uppercase tracking-widest text-muted-foreground/60 mt-0.5"
@@ -89,9 +100,6 @@ export function DashboardCountdown({ compact = false }: { compact?: boolean }) {
           </div>
         ))}
       </div>
-      {/* <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground/60">
-        {label}
-      </p> */}
     </div>
   );
 }
