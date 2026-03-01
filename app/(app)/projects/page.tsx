@@ -76,42 +76,43 @@ export default async function ProjectsPage({
                 )}
 
                 <div className="mt-auto pt-3 flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="flex items-center -space-x-2">
-                      <UserAvatar
-                        avatarUrl={project.profile.avatarUrl}
-                        displayName={project.profile.displayName}
-                        size="xs"
-                        className="ring-2 ring-background"
-                      />
-                      {project.members.slice(0, 3).map((member) => (
-                        <UserAvatar
-                          key={member.profile.id}
-                          avatarUrl={member.profile.avatarUrl}
-                          displayName={member.profile.displayName}
-                          size="xs"
-                          className="ring-2 ring-background"
-                        />
-                      ))}
-                      {project.members.length > 3 && (
-                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-foreground ring-2 ring-background shrink-0">
-                          +{project.members.length - 3}
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-muted-foreground font-mono truncate">
-                      by{" "}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <UserAvatar
+                      avatarUrl={project.profile.avatarUrl}
+                      displayName={project.profile.displayName}
+                      size="sm"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-foreground font-medium truncate">
+                        {project.profile.displayName}
+                      </p>
                       {project.profile.username ? (
                         <Link
                           href={`/members/${project.profile.username}`}
-                          className="text-foreground hover:text-buildstory-500 transition-colors"
+                          className="text-muted-foreground hover:text-buildstory-500 transition-colors font-mono truncate block"
                         >
                           @{project.profile.username}
                         </Link>
-                      ) : (
-                        project.profile.displayName
-                      )}
-                    </span>
+                      ) : null}
+                    </div>
+                    {project.members.length > 0 && (
+                      <div className="flex items-center -space-x-2 ml-auto">
+                        {project.members.slice(0, 3).map((member) => (
+                          <UserAvatar
+                            key={member.profile.id}
+                            avatarUrl={member.profile.avatarUrl}
+                            displayName={member.profile.displayName}
+                            size="xs"
+                            className="ring-2 ring-background"
+                          />
+                        ))}
+                        {project.members.length > 3 && (
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-foreground ring-2 ring-background shrink-0">
+                            +{project.members.length - 3}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
