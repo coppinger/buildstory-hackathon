@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PaginatedList } from "@/components/paginated-list";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { getHackathonProjects } from "@/lib/queries";
 import { loadPaginationParams, DEFAULT_PAGE_SIZE } from "@/lib/search-params";
 
@@ -75,26 +76,45 @@ export default async function ProjectsPage({
                 )}
 
                 <div className="mt-auto pt-3 flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground font-mono">
-                    by{" "}
-                    {project.profile.username ? (
-                      <Link
-                        href={`/members/${project.profile.username}`}
-                        className="text-foreground hover:text-buildstory-500 transition-colors"
-                      >
-                        @{project.profile.username}
-                      </Link>
-                    ) : (
-                      project.profile.displayName
-                    )}
-                    {project.members.length > 0 && (
-                      <span className="text-muted-foreground">
-                        {" "}+ {project.members.length} other{project.members.length !== 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center -space-x-2">
+                      <UserAvatar
+                        avatarUrl={project.profile.avatarUrl}
+                        displayName={project.profile.displayName}
+                        size="xs"
+                        className="ring-2 ring-background"
+                      />
+                      {project.members.slice(0, 3).map((member) => (
+                        <UserAvatar
+                          key={member.profile.id}
+                          avatarUrl={member.profile.avatarUrl}
+                          displayName={member.profile.displayName}
+                          size="xs"
+                          className="ring-2 ring-background"
+                        />
+                      ))}
+                      {project.members.length > 3 && (
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-foreground ring-2 ring-background shrink-0">
+                          +{project.members.length - 3}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-muted-foreground font-mono truncate">
+                      by{" "}
+                      {project.profile.username ? (
+                        <Link
+                          href={`/members/${project.profile.username}`}
+                          className="text-foreground hover:text-buildstory-500 transition-colors"
+                        >
+                          @{project.profile.username}
+                        </Link>
+                      ) : (
+                        project.profile.displayName
+                      )}
+                    </span>
+                  </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 shrink-0">
                     {project.githubUrl && (
                       <a
                         href={project.githubUrl}
