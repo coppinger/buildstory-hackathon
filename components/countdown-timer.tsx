@@ -41,36 +41,49 @@ function pad(n: number) {
 }
 
 export function CountdownTimer() {
-  const [state, setState] = useState(getState);
+  const [state, setState] = useState<ReturnType<typeof getState> | null>(null);
 
   useEffect(() => {
+    setState(getState());
     const interval = setInterval(() => setState(getState()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const segments = [
-    { value: state.days, label: "days" },
-    { value: state.hours, label: "hrs" },
-    { value: state.minutes, label: "min" },
-    { value: state.seconds, label: "sec" },
+  const placeholder = [
+    { value: "--", label: "days" },
+    { value: "--", label: "hrs" },
+    { value: "--", label: "min" },
+    { value: "--", label: "sec" },
   ];
 
-  const label =
-    state.phase === "before"
+  const segments = state
+    ? [
+        { value: pad(state.days), label: "days" },
+        { value: pad(state.hours), label: "hrs" },
+        { value: pad(state.minutes), label: "min" },
+        { value: pad(state.seconds), label: "sec" },
+      ]
+    : placeholder;
+
+  const label = !state
+    ? "Starts March 1st, 12 pm PST"
+    : state.phase === "before"
       ? "Starts March 1st, 12 pm PST"
       : state.phase === "live"
         ? "Live now \u2014 ends March 8th, 12 pm PST"
         : "That\u2019s a wrap!";
 
+  const showDigits = !state || state.phase !== "ended";
+
   return (
     <div className="flex flex-col items-center gap-6">
-      {state.phase !== "ended" && (
+      {showDigits && (
         <div className="flex items-center gap-3 sm:gap-4">
           {segments.map((seg, i) => (
             <div key={seg.label} className="flex items-center gap-3 sm:gap-4">
               <div className="flex flex-col items-center">
                 <span className="font-mono text-4xl sm:text-5xl tabular-nums tracking-tight text-white">
-                  {pad(seg.value)}
+                  {seg.value}
                 </span>
                 <span className="text-[11px] uppercase tracking-widest text-white/40 mt-1">
                   {seg.label}
