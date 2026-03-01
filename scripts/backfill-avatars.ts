@@ -37,7 +37,7 @@ async function main() {
     for (const profile of batch) {
       try {
         const user = await clerk.users.getUser(profile.clerkId);
-        if (user.imageUrl) {
+        if (user.hasImage && user.imageUrl) {
           await db
             .update(profiles)
             .set({ avatarUrl: user.imageUrl })

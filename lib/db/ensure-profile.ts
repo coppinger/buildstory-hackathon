@@ -19,7 +19,7 @@ export const ensureProfile = cache(async (clerkId: string) => {
 
   const [created] = await db
     .insert(profiles)
-    .values({ clerkId, displayName, avatarUrl: user.imageUrl || null })
+    .values({ clerkId, displayName, avatarUrl: user.hasImage ? user.imageUrl : null })
     .onConflictDoNothing({ target: profiles.clerkId })
     .returning();
 
