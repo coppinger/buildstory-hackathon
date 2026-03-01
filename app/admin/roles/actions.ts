@@ -83,6 +83,7 @@ export async function searchProfilesByName(query: string) {
         id: profiles.id,
         displayName: profiles.displayName,
         username: profiles.username,
+        avatarUrl: profiles.avatarUrl,
         role: profiles.role,
         clerkId: profiles.clerkId,
       })

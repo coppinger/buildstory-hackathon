@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useTransition, useEffect, useCallback } from "react";
+import { useState, useTransition, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { ImageCropDialog } from "@/components/settings/image-crop-dialog";
 import { CountryCombobox } from "@/components/settings/country-combobox";
 import { RegionCombobox } from "@/components/settings/region-combobox";
-import { updateProfile } from "@/app/(app)/settings/actions";
+import { updateProfile, syncAvatarUrl } from "@/app/(app)/settings/actions";
 import { checkUsernameAvailability } from "@/app/(onboarding)/hackathon/actions";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/db/schema";
@@ -40,7 +43,75 @@ const experienceOptions = [
 
 export function ProfileForm({ profile }: ProfileFormProps) {
   const router = useRouter();
+  const { user } = useUser();
   const [isPending, startTransition] = useTransition();
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const currentAvatarUrl = profile.avatarUrl ?? user?.imageUrl ?? null;
+  const hasCustomAvatar = !!profile.avatarUrl;
+
+  function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setAvatarError(null);
+
+    if (!file.type.startsWith("image/")) {
+      setAvatarError("File must be an image");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setAvatarError("Image must be under 10MB");
+      return;
+    }
+
+    setCropImageSrc(URL.createObjectURL(file));
+    setCropDialogOpen(true);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function closeCropDialog() {
+    setCropDialogOpen(false);
+    if (cropImageSrc) URL.revokeObjectURL(cropImageSrc);
+    setCropImageSrc(null);
+  }
+
+  async function handleCropComplete(blob: Blob) {
+    if (!user) return;
+    closeCropDialog();
+    setAvatarUploading(true);
+    try {
+      const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+      const result = await user.setProfileImage({ file });
+      await syncAvatarUrl({ avatarUrl: result.publicUrl ?? null });
+      await user.reload();
+      router.refresh();
+    } catch {
+      setAvatarError("Failed to upload image");
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
+
+  async function handleAvatarRemove() {
+    if (!user) return;
+    setAvatarError(null);
+    setAvatarUploading(true);
+    try {
+      await user.setProfileImage({ file: null });
+      await user.reload();
+      await syncAvatarUrl({ avatarUrl: null });
+      router.refresh();
+    } catch {
+      setAvatarError("Failed to remove image");
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
 
   // Form state
   const [displayName, setDisplayName] = useState(profile.displayName);
@@ -184,6 +255,65 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-10">
+      {/* Profile picture section */}
+      <section className="space-y-4">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          Profile picture
+        </h2>
+
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <UserAvatar
+              avatarUrl={currentAvatarUrl}
+              displayName={profile.displayName}
+              size="lg"
+            />
+            {avatarUploading && (
+              <div className="absolute inset-0 rounded-full bg-background/60 flex items-center justify-center">
+                <Icon
+                  name="progress_activity"
+                  size="5"
+                  className="text-foreground animate-spin"
+                />
+              </div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={avatarUploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Upload photo
+            </Button>
+            {hasCustomAvatar && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={avatarUploading}
+                onClick={handleAvatarRemove}
+                className="text-muted-foreground"
+              >
+                Remove photo
+              </Button>
+            )}
+            {avatarError && (
+              <p className="text-xs text-destructive">{avatarError}</p>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Identity section */}
       <section className="space-y-4">
         <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -478,6 +608,17 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       >
         {isPending ? "Saving..." : "Save changes"}
       </Button>
+
+      {cropImageSrc && (
+        <ImageCropDialog
+          imageSrc={cropImageSrc}
+          open={cropDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) closeCropDialog();
+          }}
+          onCropComplete={handleCropComplete}
+        />
+      )}
     </form>
   );
 }

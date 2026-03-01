@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { InviteUserSearch } from "@/components/projects/invite-user-search";
 import {
   generateInviteLink,
@@ -18,6 +19,7 @@ interface MemberProfile {
   id: string;
   displayName: string;
   username: string | null;
+  avatarUrl: string | null;
   experienceLevel: string | null;
 }
 
@@ -218,9 +220,11 @@ function MemberRow({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-medium text-foreground shrink-0">
-        {profile.displayName.charAt(0).toUpperCase()}
-      </div>
+      <UserAvatar
+        avatarUrl={profile.avatarUrl}
+        displayName={profile.displayName}
+        size="sm"
+      />
       <div>
         <div className="flex items-center gap-2">
           <p className="text-foreground font-medium">{profile.displayName}</p>

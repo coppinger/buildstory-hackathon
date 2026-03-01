@@ -8,6 +8,7 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { ObfuscatedField } from "@/components/admin/obfuscated-field";
 import { BanUserDialog } from "@/components/admin/ban-user-dialog";
 import { HideUserDialog } from "@/components/admin/hide-user-dialog";
@@ -18,6 +19,7 @@ interface SerializedUser {
   clerkId: string;
   username: string | null;
   displayName: string;
+  avatarUrl: string | null;
   country: string | null;
   role: "user" | "moderator" | "admin";
   bannedAt: string | null;
@@ -241,11 +243,11 @@ export function AdminUsersClient({
               >
                 {/* Avatar + Name */}
                 <div className="flex items-center gap-3 min-w-0 lg:w-56">
-                  <div className="size-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      {user.displayName[0]?.toUpperCase() ?? "?"}
-                    </span>
-                  </div>
+                  <UserAvatar
+                    avatarUrl={user.avatarUrl}
+                    displayName={user.displayName}
+                    size="sm"
+                  />
                   <div className="min-w-0">
                     <ObfuscatedField value={user.displayName} type="text" />
                     {user.username && (

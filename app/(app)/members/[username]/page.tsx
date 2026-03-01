@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { getProfileByUsername } from "@/lib/queries";
 import { getCountryByCode, formatLocation } from "@/lib/countries";
 import { getRegionName } from "@/lib/regions";
@@ -44,9 +45,11 @@ export default async function ProfileDetailPage({
       </Link>
 
       <div className="mt-6 flex items-center gap-4">
-        <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center text-xl font-medium text-foreground">
-          {profile.displayName.charAt(0).toUpperCase()}
-        </div>
+        <UserAvatar
+          avatarUrl={profile.avatarUrl}
+          displayName={profile.displayName}
+          size="md"
+        />
         <div className="flex-1">
           <h1 className="font-heading text-3xl text-foreground">
             {profile.displayName}
