@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { BanUserDialog } from "@/components/admin/ban-user-dialog";
 import { HideUserDialog } from "@/components/admin/hide-user-dialog";
+import { DeleteUserDialog } from "@/components/admin/delete-user-dialog";
 import { unhideUser, unbanUser } from "../actions";
 
 interface UserDetailActionsProps {
   profileId: string;
   displayName: string;
+  username: string | null;
   bannedAt: string | null;
   hiddenAt: string | null;
   currentRole: "admin" | "moderator";
@@ -19,6 +21,7 @@ interface UserDetailActionsProps {
 export function UserDetailActions({
   profileId,
   displayName,
+  username,
   bannedAt,
   hiddenAt,
   currentRole,
@@ -95,6 +98,28 @@ export function UserDetailActions({
           <Icon name="check_circle" size="4" className="text-green-400" />
           {isPending ? "Unbanning..." : "Unban user"}
         </Button>
+      )}
+
+      {/* Delete (admin-only) */}
+      {currentRole === "admin" && (
+        <>
+          <div className="border-t border-border pt-2 mt-2" />
+          <DeleteUserDialog
+            profileId={profileId}
+            displayName={displayName}
+            username={username}
+            trigger={
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2 text-destructive hover:text-destructive"
+              >
+                <Icon name="delete_forever" size="4" />
+                Delete user permanently
+              </Button>
+            }
+            onComplete={() => router.push("/admin/users")}
+          />
+        </>
       )}
     </div>
   );

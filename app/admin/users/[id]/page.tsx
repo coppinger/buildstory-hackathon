@@ -220,6 +220,7 @@ export default async function AdminUserDetailPage({
             <UserDetailActions
               profileId={user.id}
               displayName={user.displayName}
+              username={user.username}
               bannedAt={user.bannedAt?.toISOString() ?? null}
               hiddenAt={user.hiddenAt?.toISOString() ?? null}
               currentRole={session.role}
