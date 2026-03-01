@@ -22,7 +22,7 @@ export default async function InvitePage({
 
   if (!invite) {
     return (
-      <div className="p-8 lg:p-12 w-full max-w-lg mx-auto text-center">
+      <div className="p-6 md:p-8 lg:p-12 w-full max-w-lg mx-auto text-center">
         <h1 className="font-heading text-2xl text-foreground">
           Invalid invite
         </h1>
@@ -44,7 +44,7 @@ export default async function InvitePage({
   const isOwner = profile?.id === invite.project.profile.id;
 
   return (
-    <div className="p-8 lg:p-12 w-full max-w-lg mx-auto">
+    <div className="p-6 md:p-8 lg:p-12 w-full max-w-lg mx-auto">
       <h1 className="font-heading text-2xl text-foreground">
         You&apos;ve been invited
       </h1>

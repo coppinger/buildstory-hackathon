@@ -42,7 +42,7 @@ export default async function ProjectDetailPage({
     : [];
 
   return (
-    <div className="p-8 lg:p-12 w-full max-w-3xl">
+    <div className="p-6 md:p-8 lg:p-12 w-full max-w-3xl">
       <div className="flex items-center justify-between">
         <Link
           href="/projects"

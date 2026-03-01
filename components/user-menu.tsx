@@ -38,13 +38,13 @@ export function UserMenu({ imageUrl, displayName, username }: UserMenuProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="gap-2">
-            <Avatar className="size-7">
+          <Button variant="ghost" size="sm" className="gap-2 px-1.5 md:px-3">
+            <Avatar className="size-6 md:size-7">
               <AvatarImage src={imageUrl} alt={displayName} />
               <AvatarFallback className="text-xs">{initials}</AvatarFallback>
             </Avatar>
-            {displayName}
-            <Icon name="expand_more" size="4" className="text-muted-foreground" />
+            <span className="hidden md:inline">{displayName}</span>
+            <Icon name="expand_more" size="4" className="hidden md:inline text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" sideOffset={8} className="w-56">

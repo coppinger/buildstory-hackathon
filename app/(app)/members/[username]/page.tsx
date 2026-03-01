@@ -36,7 +36,7 @@ export default async function ProfileDetailPage({
   const isOwner = userId != null && profile.clerkId === userId;
 
   return (
-    <div className="p-8 lg:p-12 w-full max-w-3xl">
+    <div className="p-6 md:p-8 lg:p-12 w-full max-w-3xl">
       <Link
         href="/members"
         className="text-sm text-muted-foreground hover:text-foreground transition-colors font-mono"

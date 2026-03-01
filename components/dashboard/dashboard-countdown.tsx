@@ -72,13 +72,13 @@ export function DashboardCountdown({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className={compact ? "flex items-center gap-2" : "flex items-center gap-3 sm:gap-4"}>
+      <div className={compact ? "flex items-center gap-2" : "flex items-center gap-1.5 sm:gap-3 md:gap-4"}>
         {segments.map((seg, i) => (
-          <div key={seg.label} className={compact ? "flex items-center gap-2" : "flex items-center gap-3 sm:gap-4"}>
+          <div key={seg.label} className={compact ? "flex items-center gap-2" : "flex items-center gap-1.5 sm:gap-3 md:gap-4"}>
             <div className="flex flex-col items-center">
               <span className={compact
                 ? "font-mono text-2xl tabular-nums tracking-tight text-foreground"
-                : "font-mono text-4xl sm:text-5xl tabular-nums tracking-tight text-foreground"
+                : "font-mono text-2xl sm:text-4xl lg:text-5xl tabular-nums tracking-tight text-foreground"
               }>
                 {seg.value}
               </span>
@@ -92,7 +92,7 @@ export function DashboardCountdown({ compact = false }: { compact?: boolean }) {
             {i < segments.length - 1 && (
               <span className={compact
                 ? "text-lg text-muted-foreground/30 font-light -mt-3"
-                : "text-2xl sm:text-3xl text-muted-foreground/30 font-light -mt-4"
+                : "text-xl sm:text-2xl md:text-3xl text-muted-foreground/30 font-light -mt-4"
               }>
                 :
               </span>
