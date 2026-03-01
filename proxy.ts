@@ -26,7 +26,7 @@ export const proxy = clerkMiddleware(async (auth, request) => {
   }
 
   // Redirect unauthenticated users from app routes to landing page
-  const appRoutes = ["/dashboard", "/projects", "/members", "/settings", "/hackathon", "/invite"];
+  const appRoutes = ["/dashboard", "/projects", "/members", "/streamers", "/settings", "/hackathon", "/invite"];
   if (!userId && appRoutes.some((r) => request.nextUrl.pathname.startsWith(r))) {
     return NextResponse.redirect(new URL("/", request.url));
   }

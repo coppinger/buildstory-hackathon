@@ -8,6 +8,7 @@ import {
   adminAuditLog,
   mentorApplications,
   sponsorshipInquiries,
+  twitchCategories,
 } from "@/lib/db/schema";
 import { eq, and, gte, count, desc, sql, isNotNull } from "drizzle-orm";
 import { HACKATHON_SLUG } from "@/lib/constants";
@@ -336,4 +337,13 @@ export async function getSponsorInquiryStats() {
   ]);
 
   return { total, pending, contacted, accepted, declined };
+}
+
+// --- Twitch Category Queries ---
+
+export async function getTwitchCategories() {
+  return db
+    .select()
+    .from(twitchCategories)
+    .orderBy(desc(twitchCategories.createdAt));
 }

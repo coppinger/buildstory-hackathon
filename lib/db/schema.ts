@@ -396,6 +396,32 @@ export const mentorApplicationsRelations = relations(
   })
 );
 
+// --- Twitch Categories ---
+
+export const twitchCategories = pgTable("twitch_categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  twitchId: text("twitch_id").notNull().unique(),
+  name: text("name").notNull(),
+  boxArtUrl: text("box_art_url"),
+  addedBy: uuid("added_by")
+    .notNull()
+    .references(() => profiles.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type TwitchCategory = typeof twitchCategories.$inferSelect;
+export type NewTwitchCategory = typeof twitchCategories.$inferInsert;
+
+export const twitchCategoriesRelations = relations(
+  twitchCategories,
+  ({ one }) => ({
+    addedByProfile: one(profiles, {
+      fields: [twitchCategories.addedBy],
+      references: [profiles.id],
+    }),
+  })
+);
+
 // --- Sponsorship Inquiries ---
 
 export const sponsorshipInquiryStatusEnum = pgEnum(
