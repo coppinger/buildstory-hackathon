@@ -8,6 +8,10 @@ import { createLinearIssue } from "@/lib/linear";
 type ActionResult = { success: true } | { success: false; error: string };
 
 const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+
+// In-memory rate limiting. Note: In serverless environments (Vercel), this Map
+// resets per instance, so it provides best-effort spam prevention rather than
+// guaranteed rate limiting. It still blocks rapid sequential submissions.
 const lastSubmission = new Map<string, number>();
 
 export async function submitFeedback(data: {
@@ -25,7 +29,7 @@ export async function submitFeedback(data: {
     const minutes = Math.floor(remainingSeconds / 60);
     const seconds = remainingSeconds % 60;
     const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-    return { success: false, error: `Please wait ${timeStr} before submitting again.` };
+    return { success: false, error: `You're submitting feedback too quickly. Please wait ${timeStr}.` };
   }
 
   const title = data.title.trim();
