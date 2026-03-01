@@ -1,3 +1,4 @@
+import { type NextRequest } from "next/server";
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import { eq } from "drizzle-orm";
 import * as Sentry from "@sentry/nextjs";
@@ -5,7 +6,7 @@ import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
 import { deleteProfileCascade } from "@/lib/db/delete-profile";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const evt = await verifyWebhook(request);
 
