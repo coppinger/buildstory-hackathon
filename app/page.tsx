@@ -40,7 +40,6 @@ export default async function Home() {
   return (
     <div className="relative min-h-screen">
       <Header />
-
       {/* Hero */}
       <section className="flex flex-col items-center px-6 pt-32 md:pt-48 pb-48 md:pb-96 gap-10 text-center border-b border-border overflow-hidden">
         {/* Label */}

@@ -58,7 +58,7 @@ export async function getHackathonProjects() {
           members: {
             with: {
               profile: {
-                columns: { id: true, displayName: true, username: true },
+                columns: { id: true, displayName: true, username: true, avatarUrl: true },
               },
             },
           },
@@ -239,7 +239,7 @@ export async function getPendingInvitesForUser(profileId: string) {
         columns: { id: true, name: true, slug: true },
       },
       sender: {
-        columns: { displayName: true, username: true },
+        columns: { displayName: true, username: true, avatarUrl: true },
       },
     },
     orderBy: [desc(teamInvites.createdAt)],
@@ -262,7 +262,7 @@ export async function getProjectPendingInvites(projectId: string) {
     ),
     with: {
       recipient: {
-        columns: { id: true, displayName: true, username: true },
+        columns: { id: true, displayName: true, username: true, avatarUrl: true },
       },
     },
     orderBy: [desc(teamInvites.createdAt)],
@@ -280,12 +280,12 @@ export async function getInviteByToken(token: string) {
       project: {
         with: {
           profile: {
-            columns: { id: true, displayName: true, username: true },
+            columns: { id: true, displayName: true, username: true, avatarUrl: true },
           },
         },
       },
       sender: {
-        columns: { displayName: true, username: true },
+        columns: { displayName: true, username: true, avatarUrl: true },
       },
     },
   });

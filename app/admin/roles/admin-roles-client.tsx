@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { setUserRole, searchProfilesByName } from "./actions";
 
 interface ElevatedUser {
@@ -14,6 +15,7 @@ interface ElevatedUser {
   clerkId: string;
   displayName: string;
   username: string | null;
+  avatarUrl: string | null;
   role: "user" | "moderator" | "admin";
   isSuperAdmin: boolean;
 }
@@ -22,6 +24,7 @@ interface SearchResult {
   id: string;
   displayName: string;
   username: string | null;
+  avatarUrl: string | null;
   role: "user" | "moderator" | "admin";
   clerkId: string;
 }
@@ -119,11 +122,11 @@ export function AdminRolesClient({
                 key={user.id}
                 className="flex items-center gap-3 p-3 border border-border rounded-md"
               >
-                <div className="size-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {user.displayName[0]?.toUpperCase() ?? "?"}
-                  </span>
-                </div>
+                <UserAvatar
+                  avatarUrl={user.avatarUrl}
+                  displayName={user.displayName}
+                  size="xs"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
                     {user.displayName}
@@ -202,11 +205,11 @@ export function AdminRolesClient({
                 key={user.id}
                 className="flex items-center gap-3 p-3 border border-border rounded-md"
               >
-                <div className="size-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {user.displayName[0]?.toUpperCase() ?? "?"}
-                  </span>
-                </div>
+                <UserAvatar
+                  avatarUrl={user.avatarUrl}
+                  displayName={user.displayName}
+                  size="xs"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
                     {user.displayName}

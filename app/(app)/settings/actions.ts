@@ -13,6 +13,52 @@ type ActionResult =
   | { success: true }
   | { success: false; error: string };
 
+export async function syncAvatarUrl(data: {
+  avatarUrl: string | null;
+}): Promise<ActionResult> {
+  try {
+    const { userId } = await auth();
+    if (!userId) return { success: false, error: "Not authenticated" };
+
+    const profile = await ensureProfile(userId);
+    if (!profile) return { success: false, error: "Profile not found" };
+
+    // Validate URL is from Clerk's image CDN (or null for removal)
+    if (data.avatarUrl !== null) {
+      try {
+        const parsed = new URL(data.avatarUrl);
+        if (
+          parsed.protocol !== "https:" ||
+          (!parsed.hostname.endsWith(".clerk.com") &&
+            !parsed.hostname.endsWith(".clerk.dev"))
+        ) {
+          return { success: false, error: "Invalid avatar URL" };
+        }
+      } catch {
+        return { success: false, error: "Invalid avatar URL" };
+      }
+    }
+
+    await db
+      .update(profiles)
+      .set({ avatarUrl: data.avatarUrl })
+      .where(eq(profiles.id, profile.id));
+
+    revalidatePath("/settings");
+    revalidatePath("/members");
+    if (profile.username) {
+      revalidatePath(`/members/${profile.username}`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "server-action", action: "syncAvatarUrl" },
+    });
+    return { success: false, error: "Failed to sync avatar" };
+  }
+}
+
 const USERNAME_REGEX = /^[a-z0-9][a-z0-9_-]{1,28}[a-z0-9]$/;
 
 function validateUrl(url: string | null): string | null {

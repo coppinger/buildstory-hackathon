@@ -77,6 +77,7 @@ export const profiles = pgTable("profiles", {
   clerkId: text("clerk_id").unique().notNull(),
   username: text("username").unique(),
   displayName: text("display_name").notNull(),
+  avatarUrl: text("avatar_url"),
   bio: text("bio"),
   websiteUrl: text("website_url"),
   twitterHandle: text("twitter_handle"),

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { getHackathonProfiles } from "@/lib/queries";
 import { getCountryByCode, formatLocation } from "@/lib/countries";
 import { getRegionName } from "@/lib/regions";
@@ -37,9 +38,11 @@ export default async function ProfilesPage() {
             const inner = (
               <div className="border border-border p-6 flex flex-col gap-3 h-full hover:border-foreground/20 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-medium text-foreground shrink-0">
-                    {profile.displayName.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar
+                    avatarUrl={profile.avatarUrl}
+                    displayName={profile.displayName}
+                    size="sm"
+                  />
                   <div className="min-w-0">
                     <p className="text-foreground font-medium truncate">
                       {profile.displayName}
