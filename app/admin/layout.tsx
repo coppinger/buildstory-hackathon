@@ -29,7 +29,7 @@ export default async function AdminLayout({
               Admin
             </span>
           </div>
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-12">
             <Link
               href="/admin/dashboard"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -67,6 +67,12 @@ export default async function AdminLayout({
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Audit Log
+                </Link>
+                <Link
+                  href="/admin/draw"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Draw
                 </Link>
               </>
             )}
