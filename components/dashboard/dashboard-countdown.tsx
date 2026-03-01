@@ -42,8 +42,9 @@ export function DashboardCountdown({ compact = false }: { compact?: boolean }) {
   const [state, setState] = useState<ReturnType<typeof getState> | null>(null);
 
   useEffect(() => {
-    setState(getState());
-    const interval = setInterval(() => setState(getState()), 1000);
+    const tick = () => setState(getState());
+    tick();
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, []);
 
