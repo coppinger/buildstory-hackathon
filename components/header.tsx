@@ -23,7 +23,6 @@ export function Header() {
             priority
           />
         </Link>
-
         <nav className="hidden items-center gap-8 lg:gap-16 md:flex">
           {navItems.map((item) => (
             <a

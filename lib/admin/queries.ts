@@ -131,6 +131,7 @@ export interface AdminUser {
   clerkId: string;
   username: string | null;
   displayName: string;
+  avatarUrl: string | null;
   country: string | null;
   role: "user" | "moderator" | "admin";
   bannedAt: Date | null;
@@ -146,6 +147,7 @@ export async function getAdminUserList(): Promise<AdminUser[]> {
       clerkId: profiles.clerkId,
       username: profiles.username,
       displayName: profiles.displayName,
+      avatarUrl: profiles.avatarUrl,
       country: profiles.country,
       role: profiles.role,
       bannedAt: profiles.bannedAt,

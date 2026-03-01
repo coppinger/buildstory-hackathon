@@ -16,6 +16,7 @@ export default async function AdminRolesPage() {
       clerkId: profiles.clerkId,
       displayName: profiles.displayName,
       username: profiles.username,
+      avatarUrl: profiles.avatarUrl,
       role: profiles.role,
     })
     .from(profiles)
