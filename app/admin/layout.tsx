@@ -68,6 +68,12 @@ export default async function AdminLayout({
                 >
                   Audit Log
                 </Link>
+                <Link
+                  href="/admin/draw"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Draw
+                </Link>
               </>
             )}
             <Link
