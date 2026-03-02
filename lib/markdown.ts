@@ -29,6 +29,26 @@ function isAllowedUrl(raw: string): boolean {
 export function renderMarkdown(text: string): string {
   let html = escapeHtml(text);
 
+  // Extract links into placeholders so formatting regexes don't corrupt URLs
+  // (e.g. *test* inside a query string becoming <em>test</em>)
+  const links: string[] = [];
+  html = html.replace(/\[(.+?)\]\((.+?)\)/g, (_match, linkText, url) => {
+    const decoded = url
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+    let replacement: string;
+    if (isAllowedUrl(decoded)) {
+      replacement = `<a href="${url}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
+    } else {
+      replacement = `[${linkText}](${url})`;
+    }
+    links.push(replacement);
+    return `\x00LINK${links.length - 1}\x00`;
+  });
+
   // Bold: **text** or __text__
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/__(.+?)__/g, "<strong>$1</strong>");
@@ -40,19 +60,8 @@ export function renderMarkdown(text: string): string {
   // Strikethrough: ~~text~~
   html = html.replace(/~~(.+?)~~/g, "<s>$1</s>");
 
-  // Links: [text](url) — only http/https allowed
-  html = html.replace(/\[(.+?)\]\((.+?)\)/g, (_match, linkText, url) => {
-    const decoded = url
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'");
-    if (isAllowedUrl(decoded)) {
-      return `<a href="${url}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
-    }
-    return `[${linkText}](${url})`;
-  });
+  // Restore links from placeholders
+  html = html.replace(/\x00LINK(\d+)\x00/g, (_match, index) => links[Number(index)]);
 
   // Collapse 2+ consecutive line breaks into a single one, then convert to <br />
   html = html.replace(/\n{2,}/g, "\n");

@@ -34,6 +34,12 @@ describe("renderMarkdown", () => {
     );
   });
 
+  it("does not corrupt formatting markers inside URLs", () => {
+    const output = renderMarkdown("[link](https://example.com?q=*test*)");
+    expect(output).toContain('href="https://example.com?q=*test*"');
+    expect(output).not.toContain("<em>");
+  });
+
   it("renders line breaks", () => {
     expect(renderMarkdown("hello\nworld")).toBe("hello<br />world");
   });
