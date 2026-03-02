@@ -32,7 +32,7 @@ export async function addTwitchCategory(data: {
     const actor = await getActorProfile(userId);
     if (!actor) return { success: false, error: "Actor profile not found" };
 
-    await db
+    const [inserted] = await db
       .insert(twitchCategories)
       .values({
         twitchId: data.twitchId,
@@ -40,17 +40,20 @@ export async function addTwitchCategory(data: {
         boxArtUrl: data.boxArtUrl,
         addedBy: actor.id,
       })
-      .onConflictDoNothing();
+      .onConflictDoNothing()
+      .returning({ id: twitchCategories.id });
 
-    await db.insert(adminAuditLog).values({
-      actorProfileId: actor.id,
-      action: "add_twitch_category",
-      targetProfileId: null,
-      metadata: JSON.stringify({
-        twitchId: data.twitchId,
-        name: data.name,
-      }),
-    });
+    if (inserted) {
+      await db.insert(adminAuditLog).values({
+        actorProfileId: actor.id,
+        action: "add_twitch_category",
+        targetProfileId: null,
+        metadata: JSON.stringify({
+          twitchId: data.twitchId,
+          name: data.name,
+        }),
+      });
+    }
 
     revalidatePath("/admin/streamers");
     return { success: true };
