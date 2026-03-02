@@ -1,11 +1,17 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, desc } from "drizzle-orm";
 import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
-import { events, eventRegistrations, profiles } from "@/lib/db/schema";
+import {
+  events,
+  eventRegistrations,
+  profiles,
+  prizeDraws,
+} from "@/lib/db/schema";
 import { isAdmin } from "@/lib/admin";
+import { ensureProfile } from "@/lib/db/ensure-profile";
 import { HACKATHON_SLUG } from "@/lib/constants";
 
 export interface DrawWinner {
@@ -118,6 +124,25 @@ export async function drawWinners(count: number): Promise<ActionResult> {
     }));
 
     const allUsernames = eligible.map((e) => e.username!);
+    const drawnAt = new Date();
+    const algorithmName = "mulberry32 + Fisher-Yates shuffle";
+
+    // Persist the draw result — ensureProfile guarantees row exists
+    // (handles super-admins who may not have a profile yet)
+    const profile = await ensureProfile(userId);
+    if (!profile) {
+      return { success: false, error: "Could not resolve admin profile" };
+    }
+
+    await db.insert(prizeDraws).values({
+      seed,
+      winners: winners,
+      winnerCount: count,
+      totalEligible: eligible.length,
+      algorithm: algorithmName,
+      drawnBy: profile.id,
+      drawnAt,
+    });
 
     return {
       success: true,
@@ -126,8 +151,8 @@ export async function drawWinners(count: number): Promise<ActionResult> {
         totalEligible: eligible.length,
         winners,
         allUsernames,
-        drawnAt: new Date().toISOString(),
-        algorithm: "mulberry32 + Fisher-Yates shuffle",
+        drawnAt: drawnAt.toISOString(),
+        algorithm: algorithmName,
       },
     };
   } catch (error) {
@@ -136,5 +161,52 @@ export async function drawWinners(count: number): Promise<ActionResult> {
       extra: { count },
     });
     return { success: false, error: "Failed to draw winners" };
+  }
+}
+
+export interface DrawHistoryEntry {
+  id: string;
+  seed: string;
+  winners: DrawWinner[];
+  winnerCount: number;
+  totalEligible: number;
+  algorithm: string;
+  drawnAt: string;
+  drawnByName: string;
+}
+
+export async function getDrawHistory(): Promise<DrawHistoryEntry[]> {
+  try {
+    const { userId } = await auth();
+    if (!userId || !(await isAdmin(userId))) {
+      return [];
+    }
+
+    const rows = await db
+      .select({
+        id: prizeDraws.id,
+        seed: prizeDraws.seed,
+        winners: prizeDraws.winners,
+        winnerCount: prizeDraws.winnerCount,
+        totalEligible: prizeDraws.totalEligible,
+        algorithm: prizeDraws.algorithm,
+        drawnAt: prizeDraws.drawnAt,
+        drawnByName: profiles.displayName,
+      })
+      .from(prizeDraws)
+      .innerJoin(profiles, eq(prizeDraws.drawnBy, profiles.id))
+      .orderBy(desc(prizeDraws.drawnAt))
+      .limit(50);
+
+    return rows.map((row) => ({
+      ...row,
+      winners: row.winners as DrawWinner[],
+      drawnAt: row.drawnAt.toISOString(),
+    }));
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "server-action", action: "getDrawHistory" },
+    });
+    return [];
   }
 }
