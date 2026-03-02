@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/icon";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { PaginatedList } from "@/components/paginated-list";
+import { SearchSortBar } from "@/components/search-sort-bar";
 import { getHackathonProfiles } from "@/lib/queries";
-import { loadPaginationParams, DEFAULT_PAGE_SIZE } from "@/lib/search-params";
+import { loadSearchSortParams, DEFAULT_PAGE_SIZE } from "@/lib/search-params";
 import { getCountryByCode, formatLocation } from "@/lib/countries";
 import { getRegionName } from "@/lib/regions";
 
@@ -25,12 +27,19 @@ export default async function ProfilesPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { page } = await loadPaginationParams(searchParams);
-  const result = await getHackathonProfiles({ page, pageSize: DEFAULT_PAGE_SIZE });
+  const { page, q, sort } = await loadSearchSortParams(searchParams);
+  const result = await getHackathonProfiles({
+    page,
+    pageSize: DEFAULT_PAGE_SIZE,
+    search: q || undefined,
+    sort,
+  });
 
   if (!("items" in result)) return null;
 
   const { items: entries, ...pagination } = result;
+
+  const isSearching = !!q;
 
   return (
     <div className="p-6 md:p-8 lg:p-12 w-full">
@@ -39,13 +48,20 @@ export default async function ProfilesPage({
         Discover builders participating in Hackathon 00.
       </p>
 
+      <SearchSortBar placeholder="Search by name or username..." />
+
       {entries.length === 0 ? (
-        <p className="mt-12 text-muted-foreground text-center">
-          No participants registered yet.
-        </p>
+        <div className="mt-12 text-center">
+          <Icon name="search_off" size="8" className="text-muted-foreground/50 mx-auto mb-3" />
+          <p className="text-muted-foreground">
+            {isSearching
+              ? `No members found matching "${q}".`
+              : "No participants registered yet."}
+          </p>
+        </div>
       ) : (
         <PaginatedList {...pagination}>
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {entries.map(({ profile, teamPreference }) => {
               const inner = (
                 <div className="border border-border p-6 flex flex-col gap-3 h-full hover:border-foreground/20 transition-colors">

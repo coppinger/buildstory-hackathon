@@ -91,6 +91,7 @@ export const profiles = pgTable("profiles", {
   experienceLevel: experienceLevelEnum("experience_level"),
   role: userRoleEnum("role").default("user").notNull(),
   allowInvites: boolean("allow_invites").default(true).notNull(),
+  discordCardDismissed: boolean("discord_card_dismissed").default(false).notNull(),
   bannedAt: timestamp("banned_at"),
   bannedBy: uuid("banned_by"),
   banReason: text("ban_reason"),

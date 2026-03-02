@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import Image from "next/image";
 
-const SEED_COUNT = 12;
+const BATCH_SIZE = 20;
 
 function getInitials(name: string) {
   if (!name) return "?";
@@ -26,10 +27,10 @@ const colors = [
 ];
 
 function getActivityIcon(type: string) {
-  if (type === "signup") return "→";
-  if (type === "project") return "◆";
-  if (type === "team_join") return "⬡";
-  return "→";
+  if (type === "signup") return "\u2192";
+  if (type === "project") return "\u25C6";
+  if (type === "team_join") return "\u2B21";
+  return "\u2192";
 }
 
 function formatAction(type: string, detail: string | null) {
@@ -43,6 +44,7 @@ interface SerializedActivity {
   type: "signup" | "project" | "team_join";
   displayName: string;
   username: string | null;
+  avatarUrl: string | null;
   detail: string | null;
   timestamp: string;
 }
@@ -52,6 +54,7 @@ interface FeedItem {
   type: "signup" | "project" | "team_join";
   name: string;
   handle: string;
+  avatarUrl: string | null;
   action: string;
 }
 
@@ -60,17 +63,18 @@ interface DashboardActivityFeedProps {
 }
 
 export function DashboardActivityFeed({ activities }: DashboardActivityFeedProps) {
-  const nextIndexRef = useRef(SEED_COUNT);
+  const nextIndexRef = useRef(BATCH_SIZE);
   const [items, setItems] = useState<FeedItem[]>(() => {
     if (activities.length === 0) return [];
     return activities
-      .slice(0, SEED_COUNT)
+      .slice(0, BATCH_SIZE)
       .reverse()
       .map((a, i) => ({
         id: i,
         type: a.type,
         name: a.displayName,
         handle: a.username ? `@${a.username}` : "",
+        avatarUrl: a.avatarUrl,
         action: formatAction(a.type, a.detail),
       }));
   });
@@ -84,9 +88,10 @@ export function DashboardActivityFeed({ activities }: DashboardActivityFeedProps
         type: activity.type,
         name: activity.displayName,
         handle: activity.username ? `@${activity.username}` : "",
+        avatarUrl: activity.avatarUrl,
         action: formatAction(activity.type, activity.detail),
       };
-      return [newItem, ...prev].slice(0, 12);
+      return [newItem, ...prev].slice(0, BATCH_SIZE);
     });
     nextIndexRef.current += 1;
   }, [activities]);
@@ -120,13 +125,13 @@ export function DashboardActivityFeed({ activities }: DashboardActivityFeedProps
               <motion.div
                 key={item.id}
                 layout
-                initial={{ opacity: 0, y: -40, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
+                initial={{ opacity: 0, y: -20, filter: "blur(8px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{
-                  opacity: { duration: 0.3 },
-                  y: { type: "spring", stiffness: 300, damping: 28 },
-                  scale: { duration: 0.2 },
-                  layout: { type: "spring", stiffness: 300, damping: 28 },
+                  opacity: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] },
+                  y: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] },
+                  filter: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] },
+                  layout: { type: "spring", stiffness: 200, damping: 28 },
                 }}
                 className="flex items-center gap-3 px-3 py-2.5"
               >
@@ -136,11 +141,22 @@ export function DashboardActivityFeed({ activities }: DashboardActivityFeedProps
                 </span>
 
                 {/* Avatar */}
-                <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-medium ${colors[i % colors.length]}`}
-                >
-                  {getInitials(item.name)}
-                </div>
+                {item.avatarUrl ? (
+                  <Image
+                    src={item.avatarUrl}
+                    alt={item.name}
+                    width={32}
+                    height={32}
+                    unoptimized
+                    className="h-8 w-8 shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-medium ${colors[i % colors.length]}`}
+                  >
+                    {getInitials(item.name)}
+                  </div>
+                )}
 
                 {/* Info */}
                 <div className="min-w-0 flex-1">

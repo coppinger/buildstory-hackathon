@@ -1,0 +1,1 @@
+ALTER TABLE "profiles" ADD COLUMN "discord_card_dismissed" boolean DEFAULT false NOT NULL;

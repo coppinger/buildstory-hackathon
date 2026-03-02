@@ -14,13 +14,11 @@ import { Button } from "@/components/ui/button";
 import { DashboardCountdown } from "@/components/dashboard/dashboard-countdown";
 import { DashboardActivityFeed } from "@/components/dashboard/dashboard-activity-feed";
 import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card";
+import { DashboardStreamsCard } from "@/components/dashboard/dashboard-streams-card";
+import { DiscordCard } from "@/components/dashboard/discord-card";
 import { getPublicStats, getPublicActivityFeed } from "@/lib/queries";
-import {
-  HACKATHON_SLUG,
-  DISCORD_INVITE_URL,
-  SPONSOR_CREDITS_URL,
-  DOCS_URL,
-} from "@/lib/constants";
+import { HACKATHON_SLUG } from "@/lib/constants";
+import { getEventStatusLabel } from "@/lib/events";
 
 async function getHackathonData() {
   const event = await db.query.events.findFirst({
@@ -35,12 +33,16 @@ async function getHackathonData() {
 
 async function getUserDashboardData(eventId: string) {
   const { userId } = await auth();
-  if (!userId) return { isRegistered: false, project: null };
+  if (!userId)
+    return { isRegistered: false, project: null, discordCardDismissed: false };
 
   const profile = await db.query.profiles.findFirst({
     where: eq(profiles.clerkId, userId),
   });
-  if (!profile) return { isRegistered: false, project: null };
+  if (!profile)
+    return { isRegistered: false, project: null, discordCardDismissed: false };
+
+  const discordCardDismissed = profile.discordCardDismissed;
 
   const reg = await db.query.eventRegistrations.findFirst({
     where: and(
@@ -48,7 +50,8 @@ async function getUserDashboardData(eventId: string) {
       eq(eventRegistrations.profileId, profile.id)
     ),
   });
-  if (!reg) return { isRegistered: false, project: null };
+  if (!reg)
+    return { isRegistered: false, project: null, discordCardDismissed };
 
   // Get the user's project linked to this hackathon
   const userProject = await db.query.projects.findFirst({
@@ -64,7 +67,7 @@ async function getUserDashboardData(eventId: string) {
     ? userProject
     : null;
 
-  return { isRegistered: true, project: hackathonProject };
+  return { isRegistered: true, project: hackathonProject, discordCardDismissed };
 }
 
 export default async function DashboardPage() {
@@ -82,16 +85,18 @@ export default async function DashboardPage() {
     ? {
       name: data.event.name,
       description: data.event.description,
+      statusLabel: getEventStatusLabel(data.event),
     }
     : {
       name: "Hackathon 00",
       description:
         "A one-week, fully remote AI building event. Build something real, share your process, and connect with builders worldwide.",
+      statusLabel: "Upcoming Event",
     };
 
-  const { isRegistered, project } = data
+  const { isRegistered, project, discordCardDismissed } = data
     ? await getUserDashboardData(data.event.id)
-    : { isRegistered: false, project: null };
+    : { isRegistered: false, project: null, discordCardDismissed: false };
 
   return (
     <div className="p-6 md:p-8 lg:p-12 w-full space-y-6 grid lg:grid-cols-12 gap-6 md:gap-12">
@@ -100,7 +105,7 @@ export default async function DashboardPage() {
           <div className="flex flex-col gap-6">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                upcoming event
+                {hackathon.statusLabel}
               </p>
               <h1 className="mt-2 font-heading text-3xl md:text-5xl text-foreground">
                 {hackathon.name}
@@ -168,108 +173,17 @@ export default async function DashboardPage() {
         {/* Your Project — shown only if registered */}
         {isRegistered && <DashboardProjectCard project={project} />}
 
-        {/* Bottom section: remaining cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Live Streams */}
-          <Card className="w-full">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
-              Live Streams
-            </p>
-            <a
-              href="https://twitch.tv/thecoppinger"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 border border-[#9146FF]/60 bg-[#9146FF]/5 p-3 hover:bg-[#9146FF]/10 transition-colors group"
-            >
-              <span className="relative flex h-2.5 w-2.5 shrink-0">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#9146FF] opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#9146FF]" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground truncate group-hover:text-[#9146FF] transition-colors">
-                  thecoppinger
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  Building this app, right now!
-                </p>
-              </div>
-              <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#9146FF] shrink-0" fill="currentColor">
-                <path d="M11.64 5.93h1.43v4.28h-1.43m3.93-4.28H17v4.28h-1.43M7 2L3.43 5.57v12.86h4.28V22l3.58-3.57h2.85L20.57 12V2m-1.43 9.29l-2.85 2.85h-2.86l-2.5 2.5v-2.5H7.71V3.43h11.43Z" />
-              </svg>
-              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 text-muted-foreground group-hover:text-[#9146FF] transition-colors shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 12L12 4M12 4H5M12 4v7" />
-              </svg>
-            </a>
-          </Card>
-
-          {/* Resources */}
-          <Card className="w-full">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
-              Resources
-            </p>
-            <div className="flex flex-col gap-2">
-              <a
-                href={SPONSOR_CREDITS_URL}
-                className="text-sm text-foreground hover:text-buildstory-600 transition-colors flex items-center justify-between group"
-              >
-                <span>Sponsor credits</span>
-                <span className="text-muted-foreground group-hover:text-buildstory-600 transition-colors">
-                  →
-                </span>
-              </a>
-              <a
-                href={DOCS_URL}
-                className="text-sm text-foreground hover:text-buildstory-600 transition-colors flex items-center justify-between group"
-              >
-                <span>Documentation</span>
-                <span className="text-muted-foreground group-hover:text-buildstory-600 transition-colors">
-                  →
-                </span>
-              </a>
-              <a
-                href="https://doitlive.club"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-foreground hover:text-buildstory-600 transition-colors flex items-center justify-between group"
-              >
-                <span>Streaming guide</span>
-                <span className="text-muted-foreground group-hover:text-buildstory-600 transition-colors">
-                  →
-                </span>
-              </a>
-            </div>
-          </Card>
-        </div>
+        {/* Live Streams */}
+        <DashboardStreamsCard />
       </div>
       <aside className="col-span-12 xl:col-span-4 w-full flex flex-col gap-6">
         {/* Discord */}
-        <Card className="w-full">
-          <div className="flex items-start gap-4">
-            <img
-              src="/discord.svg"
-              alt=""
-              className="w-5 h-5 mt-0.5 brightness-0 invert"
-            />
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground">
-                Buildstory Discord
-              </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Find teammates, get help, and share your progress.
-              </p>
-              <Button variant="outline" size="sm" className="mt-3 bg-[#5F66EB] text-white" asChild>
-                <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer">
-                  Join the Discord
-                </a>
-              </Button>
-            </div>
-          </div>
-        </Card>
+        {!discordCardDismissed && <DiscordCard />}
 
         {/* Activity Feed */}
         <Card className="w-full relative overflow-hidden flex flex-col flex-1 max-h-96">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-            Activity
+            Recent Activity
           </p>
           <DashboardActivityFeed activities={serializedActivities} />
         </Card>
