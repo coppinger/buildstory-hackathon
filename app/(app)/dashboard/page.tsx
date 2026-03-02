@@ -19,6 +19,7 @@ import {
   HACKATHON_SLUG,
   DISCORD_INVITE_URL,
 } from "@/lib/constants";
+import { getEventStatusLabel } from "@/lib/events";
 
 async function getHackathonData() {
   const event = await db.query.events.findFirst({
@@ -80,11 +81,13 @@ export default async function DashboardPage() {
     ? {
       name: data.event.name,
       description: data.event.description,
+      statusLabel: getEventStatusLabel(data.event),
     }
     : {
       name: "Hackathon 00",
       description:
         "A one-week, fully remote AI building event. Build something real, share your process, and connect with builders worldwide.",
+      statusLabel: "Upcoming Event",
     };
 
   const { isRegistered, project } = data
@@ -98,7 +101,7 @@ export default async function DashboardPage() {
           <div className="flex flex-col gap-6">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                upcoming event
+                {hackathon.statusLabel}
               </p>
               <h1 className="mt-2 font-heading text-3xl md:text-5xl text-foreground">
                 {hackathon.name}
