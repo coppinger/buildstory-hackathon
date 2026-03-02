@@ -7,7 +7,7 @@ import {
   sponsorshipInquiries,
   twitchCategories,
 } from "./schema";
-import { USERNAME_REGEX } from "@/lib/constants";
+import { USERNAME_REGEX, SLUG_REGEX } from "@/lib/constants";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -105,7 +105,7 @@ export const projectInsertSchema = createInsertSchema(projects, {
       .trim()
       .toLowerCase()
       .max(100)
-      .regex(/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/, "Invalid project URL format"),
+      .regex(SLUG_REGEX, "Invalid project URL format"),
   description: (s) => s.min(1, "Description is required").max(2000),
   goalText: (s) => s.max(1000),
   githubUrl: () => sanitizedUrlField(2000),

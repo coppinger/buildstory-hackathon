@@ -19,6 +19,12 @@ import { createProjectSchema, parseInput } from "@/lib/db/validations";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
+const eventProjectSchema = createProjectSchema.pick({
+  name: true,
+  description: true,
+  githubUrl: true,
+});
+
 async function getProfileId(): Promise<string> {
   const { userId } = await auth();
   if (!userId) throw new Error("Not authenticated");
@@ -94,7 +100,6 @@ export async function createProject(
     const profileId = await getProfileId();
     await requireRegistration(eventId, profileId);
 
-    const eventProjectSchema = createProjectSchema.pick({
     const parsed = parseInput(eventProjectSchema, {
       name: formData.get("name") as string,
       description: (formData.get("description") as string) || null,

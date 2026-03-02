@@ -16,6 +16,7 @@ import {
 import { notifySignup, notifyProject } from "@/lib/discord";
 import { checkSignupMilestone, checkProjectMilestone } from "@/lib/milestones";
 import { isUniqueViolation } from "@/lib/db/errors";
+import { SLUG_REGEX } from "@/lib/constants";
 import {
   completeRegistrationSchema,
   createProjectSchema,
@@ -284,7 +285,7 @@ export async function checkProjectSlugAvailability(
 ): Promise<ActionResult<{ available: boolean }>> {
   try {
     const trimmed = slug.trim().toLowerCase();
-    if (!trimmed || trimmed.length < 2 || !/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(trimmed)) {
+    if (!trimmed || trimmed.length < 2 || !SLUG_REGEX.test(trimmed)) {
       return { success: true, data: { available: false } };
     }
 
