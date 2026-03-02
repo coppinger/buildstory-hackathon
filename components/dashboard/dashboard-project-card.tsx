@@ -62,7 +62,7 @@ export function DashboardProjectCard({
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
               your project
             </p>
-            <h2 className="mt-2 font-heading text-lg text-foreground">
+            <h2 className="mt-2 font-heading text-lg text-foreground break-words">
               {project.slug ? (
                 <Link
                   href={`/projects/${project.slug}`}

@@ -286,7 +286,7 @@ export function AdminMentorsClient({
                     <p className="text-xs text-muted-foreground mb-1">
                       Background
                     </p>
-                    <p className="text-foreground">
+                    <p className="text-foreground break-words">
                       {isLong && !isExpanded
                         ? `${app.background.slice(0, TRUNCATE_LENGTH)}...`
                         : app.background}
@@ -305,7 +305,7 @@ export function AdminMentorsClient({
                     <p className="text-xs text-muted-foreground mb-1">
                       Availability
                     </p>
-                    <p className="text-foreground">{app.availability}</p>
+                    <p className="text-foreground break-words">{app.availability}</p>
                   </div>
                 </div>
 
