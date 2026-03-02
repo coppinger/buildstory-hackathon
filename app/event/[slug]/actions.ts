@@ -95,10 +95,6 @@ export async function createProject(
     await requireRegistration(eventId, profileId);
 
     const eventProjectSchema = createProjectSchema.pick({
-      name: true,
-      description: true,
-      githubUrl: true,
-    });
     const parsed = parseInput(eventProjectSchema, {
       name: formData.get("name") as string,
       description: (formData.get("description") as string) || null,
