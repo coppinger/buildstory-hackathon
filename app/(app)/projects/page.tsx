@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/icon";
 import { PaginatedList } from "@/components/paginated-list";
 import { SearchSortBar } from "@/components/search-sort-bar";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { stripMarkdown } from "@/lib/markdown";
 import { getHackathonProjects, getUserHackathonProjects } from "@/lib/queries";
 import { loadSearchSortParams, DEFAULT_PAGE_SIZE } from "@/lib/search-params";
 import { db } from "@/lib/db";
@@ -55,7 +56,7 @@ function ProjectCard({ project, pinned = false }: { project: HackathonProject; p
 
       {project.description && (
         <p className="text-sm text-muted-foreground line-clamp-3">
-          {project.description}
+          {stripMarkdown(project.description)}
         </p>
       )}
 

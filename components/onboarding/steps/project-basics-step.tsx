@@ -175,6 +175,7 @@ export function ProjectBasicsStep({
           rows={3}
           className="mt-1.5 bg-white/5 border-neutral-700 text-white placeholder:text-neutral-600 resize-none"
         />
+        <p className="text-xs text-muted-foreground mt-1">Simple markdown formatting supported</p>
       </div>
     </div>
   );

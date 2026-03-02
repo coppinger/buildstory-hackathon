@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DISCORD_INVITE_URL } from "@/lib/constants";
+import { stripMarkdown } from "@/lib/markdown";
 import type { Project } from "@/lib/db/schema";
 
 const startingPointLabels: Record<string, string> = {
@@ -85,7 +86,7 @@ export function DashboardProjectCard({
 
         {project.description && (
           <p className="text-sm text-muted-foreground line-clamp-2">
-            {project.description}
+            {stripMarkdown(project.description)}
           </p>
         )}
 

@@ -413,6 +413,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
             placeholder="Tell others about yourself..."
             rows={3}
           />
+          <p className="text-xs text-muted-foreground mt-1">Simple markdown formatting supported</p>
         </div>
       </section>
 

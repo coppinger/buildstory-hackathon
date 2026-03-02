@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { getProfileByUsername } from "@/lib/queries";
+import { MarkdownText } from "@/components/ui/markdown-text";
+import { stripMarkdown } from "@/lib/markdown";
 import { getCountryByCode, formatLocation } from "@/lib/countries";
 import { getRegionName } from "@/lib/regions";
 
@@ -85,9 +87,10 @@ export default async function ProfileDetailPage({
       </div>
 
       {profile.bio && (
-        <p className="mt-6 text-base text-muted-foreground leading-relaxed break-words">
-          {profile.bio}
-        </p>
+        <MarkdownText
+          text={profile.bio}
+          className="mt-6 text-base text-muted-foreground leading-relaxed break-words"
+        />
       )}
 
       {/* Social links */}
@@ -170,7 +173,7 @@ export default async function ProfileDetailPage({
                   </div>
                   {project.description && (
                     <p className="text-sm text-muted-foreground line-clamp-2">
-                      {project.description}
+                      {stripMarkdown(project.description)}
                     </p>
                   )}
                   {project.eventProjects.length > 0 && (

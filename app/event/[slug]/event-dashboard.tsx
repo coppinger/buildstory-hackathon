@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Icon } from "@/components/ui/icon";
 import { GitHubIcon } from "@/components/icons";
+import { stripMarkdown } from "@/lib/markdown";
 import {
   registerForEvent,
   createProject,
@@ -136,7 +137,7 @@ function EnteredProjects({
               </p>
               {project.description && (
                 <p className="mt-1 text-sm text-neutral-500 line-clamp-1">
-                  {project.description}
+                  {stripMarkdown(project.description)}
                 </p>
               )}
             </div>
@@ -227,7 +228,7 @@ function SelectProject({
               </p>
               {project.description && (
                 <p className="mt-1 text-sm text-neutral-500 line-clamp-1">
-                  {project.description}
+                  {stripMarkdown(project.description)}
                 </p>
               )}
             </div>
