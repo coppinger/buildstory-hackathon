@@ -30,6 +30,13 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
 
+  // Second factor (2FA) state
+  type SecondFactorStrategy = "totp" | "phone_code" | "email_code" | "backup_code";
+  const [needsSecondFactor, setNeedsSecondFactor] = useState(false);
+  const [secondFactorStrategy, setSecondFactorStrategy] = useState<SecondFactorStrategy | null>(null);
+  const [code, setCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
+
   function validateField(field: "email" | "password", value: string) {
     if (field === "email") {
       if (!value.trim()) return "Email is required.";
@@ -98,6 +105,30 @@ export default function SignInPage() {
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         router.push("/dashboard");
+      } else if (result.status === "needs_second_factor") {
+        const factors = result.supportedSecondFactors;
+        // Pick best strategy: prefer totp > phone_code > email_code
+        const strategy =
+          (factors?.find((f) => f.strategy === "totp")?.strategy ??
+          factors?.find((f) => f.strategy === "phone_code")?.strategy ??
+          factors?.find((f) => f.strategy === "email_code")?.strategy) as SecondFactorStrategy | undefined;
+
+        if (!strategy) {
+          setError("Your account requires a verification method that isn't supported here. Please contact support.");
+          return;
+        }
+
+        if (strategy === "email_code" || strategy === "phone_code") {
+          try {
+            await signIn.prepareSecondFactor({ strategy });
+          } catch {
+            setError("Unable to send verification code. Please try again.");
+            return;
+          }
+        }
+
+        setSecondFactorStrategy(strategy);
+        setNeedsSecondFactor(true);
       }
     } catch (err: unknown) {
       const clerkErr = err as { errors?: { message: string }[] };
@@ -108,6 +139,141 @@ export default function SignInPage() {
       setLoading(false);
     }
   }
+
+  async function handleSecondFactor(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isLoaded) return;
+
+    setVerifying(true);
+    setError("");
+
+    try {
+      const result = await signIn.attemptSecondFactor({
+        strategy: secondFactorStrategy!,
+        code,
+      });
+
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        router.push("/dashboard");
+      }
+    } catch (err: unknown) {
+      const clerkErr = err as { errors?: { message: string }[] };
+      setError(
+        clerkErr.errors?.[0]?.message ?? "Invalid code. Please try again."
+      );
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  // --- Second factor verification screen ---
+
+  if (needsSecondFactor) {
+    const title =
+      secondFactorStrategy === "totp"
+        ? "Enter authenticator code"
+        : secondFactorStrategy === "phone_code"
+          ? "Check your phone"
+          : secondFactorStrategy === "backup_code"
+            ? "Enter backup code"
+            : "Check your email";
+
+    const description =
+      secondFactorStrategy === "totp"
+        ? "Enter the 6-digit code from your authenticator app"
+        : secondFactorStrategy === "phone_code"
+          ? "We sent a verification code to your phone"
+          : secondFactorStrategy === "backup_code"
+            ? "Enter one of your backup codes"
+            : "We sent a verification code to your email";
+
+    const isBackupCode = secondFactorStrategy === "backup_code";
+
+    return (
+      <Card className="w-full max-w-md bg-transparent shadow-none border-none">
+        <CardHeader className="text-center">
+          <CardTitle className="font-heading text-4xl text-white">
+            {title}
+          </CardTitle>
+          <CardDescription className="text-base text-neutral-400">
+            {description}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSecondFactor} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="code" className="text-base text-neutral-300">
+                {isBackupCode ? "Backup code" : "Verification code"}
+              </Label>
+              <Input
+                id="code"
+                type="text"
+                inputMode={isBackupCode ? "text" : "numeric"}
+                autoComplete="one-time-code"
+                autoFocus
+                placeholder={isBackupCode ? "Enter backup code" : "123456"}
+                maxLength={isBackupCode ? 24 : 6}
+                value={code}
+                onChange={(e) =>
+                  setCode(
+                    isBackupCode
+                      ? e.target.value
+                      : e.target.value.replace(/\D/g, "").slice(0, 6)
+                  )
+                }
+                required
+                className="bg-neutral-900 border-border text-white placeholder:text-neutral-500 h-11 font-mono text-center text-lg md:text-lg tracking-widest"
+              />
+            </div>
+
+            {error && <p className="text-base text-destructive">{error}</p>}
+
+            <Button
+              type="submit"
+              disabled={verifying || (!isBackupCode && code.length !== 6) || !code.trim()}
+              className="bg-buildstory-500 text-black hover:bg-buildstory-400 h-11 font-medium w-full text-base"
+            >
+              {verifying && <Icon name="progress_activity" className="animate-spin" size="4" />}
+              Verify
+            </Button>
+          </form>
+
+          <p className="mt-6 text-center text-base text-neutral-400">
+            <button
+              onClick={() => {
+                // signIn.create() on the next submit will start a fresh attempt
+                setNeedsSecondFactor(false);
+                setSecondFactorStrategy(null);
+                setCode("");
+                setError("");
+              }}
+              className="text-buildstory-400 hover:text-buildstory-500 cursor-pointer"
+            >
+              Back to sign in
+            </button>
+            {secondFactorStrategy !== "backup_code" && (
+              <>
+                <span className="mx-2 text-neutral-600">&middot;</span>
+                <button
+                  onClick={() => {
+                    setSecondFactorStrategy("backup_code");
+                    setCode("");
+                    setError("");
+                  }}
+                  className="text-buildstory-400 hover:text-buildstory-500 cursor-pointer"
+                >
+                  Use a backup code
+                </button>
+              </>
+            )}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // --- Sign-in form ---
 
   return (
     <Card className="w-full max-w-md bg-transparent shadow-none border-none">
