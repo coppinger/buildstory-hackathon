@@ -72,7 +72,11 @@ export async function getAppAccessToken(): Promise<string> {
 export function extractTwitchUsername(url: string): string | null {
   try {
     const parsed = new URL(url);
-    if (!parsed.hostname.includes("twitch.tv")) return null;
+    if (
+      parsed.hostname !== "twitch.tv" &&
+      parsed.hostname !== "www.twitch.tv"
+    )
+      return null;
     // Handle paths like /username or /username/
     const parts = parsed.pathname.split("/").filter(Boolean);
     return parts[0]?.toLowerCase() ?? null;
