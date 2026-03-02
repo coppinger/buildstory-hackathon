@@ -8,6 +8,14 @@ import { NeonDbError } from "@neondatabase/serverless";
 import { db } from "@/lib/db";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { projects, events, eventProjects, projectMembers, teamInvites } from "@/lib/db/schema";
+import {
+  tooLong,
+  MAX_PROJECT_NAME,
+  MAX_PROJECT_SLUG,
+  MAX_PROJECT_DESCRIPTION,
+  MAX_GOAL_TEXT,
+  MAX_URL,
+} from "@/lib/validation";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -62,8 +70,26 @@ export async function createProject(data: {
     if (!data.name.trim()) {
       return { success: false, error: "Project name is required" };
     }
+    if (tooLong(data.name, MAX_PROJECT_NAME)) {
+      return { success: false, error: `Project name must be ${MAX_PROJECT_NAME} characters or less` };
+    }
     if (!data.description.trim()) {
       return { success: false, error: "Description is required" };
+    }
+    if (tooLong(data.description, MAX_PROJECT_DESCRIPTION)) {
+      return { success: false, error: `Description must be ${MAX_PROJECT_DESCRIPTION} characters or less` };
+    }
+    if (tooLong(data.slug, MAX_PROJECT_SLUG)) {
+      return { success: false, error: `Project URL slug must be ${MAX_PROJECT_SLUG} characters or less` };
+    }
+    if (tooLong(data.goalText, MAX_GOAL_TEXT)) {
+      return { success: false, error: `Goal must be ${MAX_GOAL_TEXT} characters or less` };
+    }
+    if (tooLong(data.repoUrl, MAX_URL)) {
+      return { success: false, error: `Repository URL is too long` };
+    }
+    if (tooLong(data.liveUrl, MAX_URL)) {
+      return { success: false, error: `Live URL is too long` };
     }
 
     const trimmedSlug = data.slug.trim().toLowerCase();
@@ -139,8 +165,26 @@ export async function updateProject(data: {
     if (!data.name.trim()) {
       return { success: false, error: "Project name is required" };
     }
+    if (tooLong(data.name, MAX_PROJECT_NAME)) {
+      return { success: false, error: `Project name must be ${MAX_PROJECT_NAME} characters or less` };
+    }
     if (!data.description.trim()) {
       return { success: false, error: "Description is required" };
+    }
+    if (tooLong(data.description, MAX_PROJECT_DESCRIPTION)) {
+      return { success: false, error: `Description must be ${MAX_PROJECT_DESCRIPTION} characters or less` };
+    }
+    if (tooLong(data.slug, MAX_PROJECT_SLUG)) {
+      return { success: false, error: `Project URL slug must be ${MAX_PROJECT_SLUG} characters or less` };
+    }
+    if (tooLong(data.goalText, MAX_GOAL_TEXT)) {
+      return { success: false, error: `Goal must be ${MAX_GOAL_TEXT} characters or less` };
+    }
+    if (tooLong(data.repoUrl, MAX_URL)) {
+      return { success: false, error: `Repository URL is too long` };
+    }
+    if (tooLong(data.liveUrl, MAX_URL)) {
+      return { success: false, error: `Live URL is too long` };
     }
 
     const trimmedSlug = data.slug.trim().toLowerCase();

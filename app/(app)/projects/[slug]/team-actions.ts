@@ -15,6 +15,7 @@ import {
   projectMembers,
 } from "@/lib/db/schema";
 import { getSenderPendingInviteCount } from "@/lib/queries";
+import { tooLong, MAX_SEARCH_QUERY } from "@/lib/validation";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -60,6 +61,11 @@ export async function sendDirectInvite(data: {
     if (!project) return { success: false, error: "Project not found" };
     if (project.profileId !== profileId) {
       return { success: false, error: "You do not own this project" };
+    }
+
+    // Validate username length (USERNAME_REGEX caps at 30 chars)
+    if (tooLong(data.recipientUsername, 30)) {
+      return { success: false, error: "User not found" };
     }
 
     // Lookup recipient
@@ -414,6 +420,9 @@ export async function searchUsersForInvite(data: {
 
     const trimmed = data.query.trim();
     if (trimmed.length < 2) {
+      return { success: true, data: [] };
+    }
+    if (tooLong(trimmed, MAX_SEARCH_QUERY)) {
       return { success: true, data: [] };
     }
 

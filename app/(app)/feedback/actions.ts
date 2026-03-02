@@ -4,6 +4,11 @@ import { auth } from "@clerk/nextjs/server";
 import * as Sentry from "@sentry/nextjs";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { createLinearIssue } from "@/lib/linear";
+import {
+  tooLong,
+  MAX_FEEDBACK_TITLE,
+  MAX_FEEDBACK_DESCRIPTION,
+} from "@/lib/validation";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -38,8 +43,14 @@ export async function submitFeedback(data: {
   if (!title) {
     return { success: false, error: "Title is required" };
   }
+  if (tooLong(title, MAX_FEEDBACK_TITLE)) {
+    return { success: false, error: `Title must be ${MAX_FEEDBACK_TITLE} characters or less` };
+  }
   if (!description) {
     return { success: false, error: "Description is required" };
+  }
+  if (tooLong(description, MAX_FEEDBACK_DESCRIPTION)) {
+    return { success: false, error: `Description must be ${MAX_FEEDBACK_DESCRIPTION} characters or less` };
   }
 
   try {

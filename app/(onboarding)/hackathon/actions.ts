@@ -17,6 +17,18 @@ import {
 import { notifySignup, notifyProject } from "@/lib/discord";
 import { checkSignupMilestone, checkProjectMilestone } from "@/lib/milestones";
 import { USERNAME_REGEX } from "@/lib/constants";
+import {
+  tooLong,
+  MAX_DISPLAY_NAME,
+  MAX_COUNTRY,
+  MAX_REGION,
+  MAX_PROJECT_NAME,
+  MAX_PROJECT_SLUG,
+  MAX_PROJECT_DESCRIPTION,
+  MAX_GOAL_TEXT,
+  MAX_URL,
+  MAX_SEARCH_QUERY,
+} from "@/lib/validation";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -108,6 +120,15 @@ export async function completeRegistration(data: {
     if (!data.displayName.trim()) {
       return { success: false, error: "Display name is required" };
     }
+    if (tooLong(data.displayName, MAX_DISPLAY_NAME)) {
+      return { success: false, error: `Display name must be ${MAX_DISPLAY_NAME} characters or less` };
+    }
+    if (tooLong(data.country, MAX_COUNTRY)) {
+      return { success: false, error: "Invalid country code" };
+    }
+    if (tooLong(data.region, MAX_REGION)) {
+      return { success: false, error: "Invalid region code" };
+    }
 
     const event = await db.query.events.findFirst({
       where: eq(events.id, data.eventId),
@@ -173,8 +194,23 @@ export async function createOnboardingProject(data: {
     if (!data.name.trim()) {
       return { success: false, error: "Project name is required" };
     }
+    if (tooLong(data.name, MAX_PROJECT_NAME)) {
+      return { success: false, error: `Project name must be ${MAX_PROJECT_NAME} characters or less` };
+    }
     if (!data.description.trim()) {
       return { success: false, error: "Description is required" };
+    }
+    if (tooLong(data.description, MAX_PROJECT_DESCRIPTION)) {
+      return { success: false, error: `Description must be ${MAX_PROJECT_DESCRIPTION} characters or less` };
+    }
+    if (tooLong(data.slug, MAX_PROJECT_SLUG)) {
+      return { success: false, error: `Project URL slug must be ${MAX_PROJECT_SLUG} characters or less` };
+    }
+    if (tooLong(data.goalText, MAX_GOAL_TEXT)) {
+      return { success: false, error: `Goal must be ${MAX_GOAL_TEXT} characters or less` };
+    }
+    if (tooLong(data.repoUrl, MAX_URL)) {
+      return { success: false, error: `Repository URL is too long` };
     }
 
     const trimmedSlug = data.slug.trim().toLowerCase();
@@ -231,6 +267,9 @@ export async function searchUsers(
     if (trimmed.length < 2) {
       return { success: true, data: [] };
     }
+    if (tooLong(trimmed, MAX_SEARCH_QUERY)) {
+      return { success: true, data: [] };
+    }
 
     const results = await db
       .select({
@@ -267,6 +306,9 @@ export async function searchProjects(
     if (trimmed.length < 2) {
       return { success: true, data: [] };
     }
+    if (tooLong(trimmed, MAX_SEARCH_QUERY)) {
+      return { success: true, data: [] };
+    }
 
     const conditions = [ilike(projects.name, `%${trimmed}%`)];
     if (profileId) {
@@ -298,6 +340,9 @@ export async function checkProjectSlugAvailability(
   try {
     const trimmed = slug.trim().toLowerCase();
     if (!trimmed || trimmed.length < 2) {
+      return { success: true, data: { available: false } };
+    }
+    if (tooLong(trimmed, MAX_PROJECT_SLUG)) {
       return { success: true, data: { available: false } };
     }
 

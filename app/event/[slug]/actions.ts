@@ -15,6 +15,12 @@ import {
 } from "@/lib/db/schema";
 import { notifySignup, notifyProject } from "@/lib/discord";
 import { checkSignupMilestone, checkProjectMilestone } from "@/lib/milestones";
+import {
+  tooLong,
+  MAX_PROJECT_NAME,
+  MAX_PROJECT_DESCRIPTION,
+  MAX_URL,
+} from "@/lib/validation";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -112,6 +118,15 @@ export async function createProject(
 
     if (!name?.trim()) {
       return { success: false, error: "Project name is required" };
+    }
+    if (tooLong(name, MAX_PROJECT_NAME)) {
+      return { success: false, error: `Project name must be ${MAX_PROJECT_NAME} characters or less` };
+    }
+    if (tooLong(description, MAX_PROJECT_DESCRIPTION)) {
+      return { success: false, error: `Description must be ${MAX_PROJECT_DESCRIPTION} characters or less` };
+    }
+    if (tooLong(formData.get("githubUrl") as string, MAX_URL)) {
+      return { success: false, error: `GitHub URL is too long` };
     }
 
     const [project] = await db

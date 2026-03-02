@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { profiles, adminAuditLog } from "@/lib/db/schema";
 import { isModerator, isAdmin, isSuperAdmin } from "@/lib/admin";
 import { deleteProfileCascade } from "@/lib/db/delete-profile";
+import { tooLong, MAX_BAN_REASON } from "@/lib/validation";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -139,6 +140,10 @@ export async function banUser(data: {
     // Prevent self-ban
     if (actor.id === data.profileId) {
       return { success: false, error: "Cannot ban yourself" };
+    }
+
+    if (tooLong(data.reason, MAX_BAN_REASON)) {
+      return { success: false, error: `Ban reason must be ${MAX_BAN_REASON} characters or less` };
     }
 
     await db

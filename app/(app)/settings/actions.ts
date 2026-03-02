@@ -8,6 +8,15 @@ import { NeonDbError } from "@neondatabase/serverless";
 import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
 import { ensureProfile } from "@/lib/db/ensure-profile";
+import {
+  tooLong,
+  MAX_DISPLAY_NAME,
+  MAX_BIO,
+  MAX_SOCIAL_HANDLE,
+  MAX_URL,
+  MAX_COUNTRY,
+  MAX_REGION,
+} from "@/lib/validation";
 
 type ActionResult =
   | { success: true }
@@ -110,6 +119,9 @@ export async function updateProfile(data: {
     if (!trimmedDisplayName) {
       return { success: false, error: "Display name is required" };
     }
+    if (tooLong(trimmedDisplayName, MAX_DISPLAY_NAME)) {
+      return { success: false, error: `Display name must be ${MAX_DISPLAY_NAME} characters or less` };
+    }
 
     const trimmedUsername = data.username.trim().toLowerCase();
     if (!USERNAME_REGEX.test(trimmedUsername)) {
@@ -118,6 +130,32 @@ export async function updateProfile(data: {
         error:
           "Username must be 3-30 characters, start and end with a letter or number, and contain only lowercase letters, numbers, hyphens, and underscores",
       };
+    }
+
+    // Length limits on optional fields
+    if (tooLong(data.bio, MAX_BIO)) {
+      return { success: false, error: `Bio must be ${MAX_BIO} characters or less` };
+    }
+    if (tooLong(data.twitterHandle, MAX_SOCIAL_HANDLE)) {
+      return { success: false, error: `Twitter handle is too long` };
+    }
+    if (tooLong(data.githubHandle, MAX_SOCIAL_HANDLE)) {
+      return { success: false, error: `GitHub handle is too long` };
+    }
+    if (tooLong(data.websiteUrl, MAX_URL)) {
+      return { success: false, error: `Website URL is too long` };
+    }
+    if (tooLong(data.twitchUrl, MAX_URL)) {
+      return { success: false, error: `Twitch URL is too long` };
+    }
+    if (tooLong(data.streamUrl, MAX_URL)) {
+      return { success: false, error: `Stream URL is too long` };
+    }
+    if (tooLong(data.country, MAX_COUNTRY)) {
+      return { success: false, error: `Invalid country code` };
+    }
+    if (tooLong(data.region, MAX_REGION)) {
+      return { success: false, error: `Invalid region code` };
     }
 
     // Check username uniqueness — allow the current user to keep their own username

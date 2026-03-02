@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { twitchCategories, profiles, adminAuditLog } from "@/lib/db/schema";
 import { isAdmin } from "@/lib/admin";
 import { searchCategories } from "@/lib/twitch";
+import { tooLong, MAX_SEARCH_QUERY, MAX_URL } from "@/lib/validation";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -27,6 +28,16 @@ export async function addTwitchCategory(data: {
     const { userId } = await auth();
     if (!userId || !(await isAdmin(userId))) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    if (tooLong(data.twitchId, MAX_SEARCH_QUERY)) {
+      return { success: false, error: "Invalid Twitch ID" };
+    }
+    if (tooLong(data.name, 200)) {
+      return { success: false, error: "Category name is too long" };
+    }
+    if (tooLong(data.boxArtUrl, MAX_URL)) {
+      return { success: false, error: "Box art URL is too long" };
     }
 
     const actor = await getActorProfile(userId);
@@ -113,6 +124,10 @@ export async function searchTwitchCategories(data: { query: string }) {
     const { userId } = await auth();
     if (!userId || !(await isAdmin(userId))) {
       return { success: false as const, error: "Unauthorized" };
+    }
+
+    if (tooLong(data.query, MAX_SEARCH_QUERY)) {
+      return { success: true as const, categories: [] };
     }
 
     const results = await searchCategories(data.query);
