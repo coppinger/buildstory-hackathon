@@ -229,19 +229,25 @@ describe("updateProfile", () => {
   it("returns error for invalid website URL", async () => {
     const data = buildProfileData({ websiteUrl: "not-a-url" });
     const result = await updateProfile(data);
-    expect(result).toEqual({ success: false, error: "Invalid website URL" });
+    expect(result).toEqual({ success: false, error: "Invalid URL" });
   });
 
   it("returns error for invalid Twitch URL", async () => {
     const data = buildProfileData({ twitchUrl: "ftp://bad" });
     const result = await updateProfile(data);
-    expect(result).toEqual({ success: false, error: "Invalid Twitch URL" });
+    expect(result).toEqual({
+      success: false,
+      error: "URL must use http or https",
+    });
   });
 
   it("returns error for invalid stream URL", async () => {
     const data = buildProfileData({ streamUrl: "javascript:alert(1)" });
     const result = await updateProfile(data);
-    expect(result).toEqual({ success: false, error: "Invalid stream URL" });
+    expect(result).toEqual({
+      success: false,
+      error: "URL must use http or https",
+    });
   });
 
   it("strips @ prefix from Twitter handle", async () => {

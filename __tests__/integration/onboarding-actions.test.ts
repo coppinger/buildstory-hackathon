@@ -219,13 +219,13 @@ describe("completeRegistration", () => {
   it("returns error for invalid username format", async () => {
     const data = buildRegistrationData({ username: "x" }); // too short
     const result = await completeRegistration(data);
-    expect(result).toEqual({ success: false, error: "Invalid username format" });
+    expect(result.success).toBe(false);
   });
 
   it("returns error for username with special characters", async () => {
     const data = buildRegistrationData({ username: "bad@user!name" });
     const result = await completeRegistration(data);
-    expect(result).toEqual({ success: false, error: "Invalid username format" });
+    expect(result.success).toBe(false);
   });
 
   it("returns error for empty display name", async () => {

@@ -7,6 +7,7 @@ import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
 import { profiles, adminAuditLog } from "@/lib/db/schema";
 import { isAdmin, isSuperAdmin } from "@/lib/admin";
+import { searchQuerySchema, parseInput } from "@/lib/db/validations";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -74,9 +75,11 @@ export async function setUserRole(data: {
 
 export async function searchProfilesByName(query: string) {
   try {
-    if (!query || query.length < 2) return [];
+    const parsed = parseInput(searchQuerySchema, { query });
+    if (!parsed.success) return [];
+    if (parsed.data.query.length < 2) return [];
 
-    const pattern = `%${query}%`;
+    const pattern = `%${parsed.data.query}%`;
 
     const results = await db
       .select({

@@ -5,7 +5,6 @@ import { auth } from "@clerk/nextjs/server";
 import { eq, and, or, ilike, isNull, isNotNull, notInArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
-import { NeonDbError } from "@neondatabase/serverless";
 import { db } from "@/lib/db";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import {
@@ -15,6 +14,8 @@ import {
   projectMembers,
 } from "@/lib/db/schema";
 import { getSenderPendingInviteCount } from "@/lib/queries";
+import { isUniqueViolation } from "@/lib/db/errors";
+import { searchQuerySchema, parseInput } from "@/lib/db/validations";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -28,16 +29,6 @@ async function getProfileId(): Promise<string> {
   if (!profile) throw new Error("Profile creation failed");
 
   return profile.id;
-}
-
-function isUniqueViolation(error: unknown, constraintName: string): boolean {
-  const cause =
-    error instanceof Error && error.cause instanceof NeonDbError
-      ? error.cause
-      : error instanceof NeonDbError
-        ? error
-        : null;
-  return cause?.code === "23505" && cause?.constraint === constraintName;
 }
 
 function escapeIlike(str: string): string {
@@ -412,7 +403,9 @@ export async function searchUsersForInvite(data: {
       return { success: false, error: "You do not own this project" };
     }
 
-    const trimmed = data.query.trim();
+    const parsed = parseInput(searchQuerySchema, { query: data.query });
+    if (!parsed.success) return { success: true, data: [] };
+    const trimmed = parsed.data.query;
     if (trimmed.length < 2) {
       return { success: true, data: [] };
     }

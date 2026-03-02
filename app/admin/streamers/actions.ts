@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { twitchCategories, profiles, adminAuditLog } from "@/lib/db/schema";
 import { isAdmin } from "@/lib/admin";
 import { searchCategories } from "@/lib/twitch";
+import { addTwitchCategorySchema, searchQuerySchema, parseInput } from "@/lib/db/validations";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -32,12 +33,20 @@ export async function addTwitchCategory(data: {
     const actor = await getActorProfile(userId);
     if (!actor) return { success: false, error: "Actor profile not found" };
 
+    const parsed = parseInput(addTwitchCategorySchema, {
+      twitchId: data.twitchId,
+      name: data.name,
+      boxArtUrl: data.boxArtUrl,
+    });
+    if (!parsed.success) return parsed;
+    const v = parsed.data;
+
     const [inserted] = await db
       .insert(twitchCategories)
       .values({
-        twitchId: data.twitchId,
-        name: data.name,
-        boxArtUrl: data.boxArtUrl,
+        twitchId: v.twitchId,
+        name: v.name,
+        boxArtUrl: v.boxArtUrl,
         addedBy: actor.id,
       })
       .onConflictDoNothing()
@@ -49,8 +58,8 @@ export async function addTwitchCategory(data: {
         action: "add_twitch_category",
         targetProfileId: null,
         metadata: JSON.stringify({
-          twitchId: data.twitchId,
-          name: data.name,
+          twitchId: v.twitchId,
+          name: v.name,
         }),
       });
     }
@@ -115,7 +124,10 @@ export async function searchTwitchCategories(data: { query: string }) {
       return { success: false as const, error: "Unauthorized" };
     }
 
-    const results = await searchCategories(data.query);
+    const parsed = parseInput(searchQuerySchema, { query: data.query });
+    if (!parsed.success) return { success: false as const, error: parsed.error };
+
+    const results = await searchCategories(parsed.data.query);
     return { success: true as const, categories: results };
   } catch (error) {
     Sentry.captureException(error, {

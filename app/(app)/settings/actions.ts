@@ -4,10 +4,11 @@ import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
-import { NeonDbError } from "@neondatabase/serverless";
 import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
 import { ensureProfile } from "@/lib/db/ensure-profile";
+import { isUniqueViolation } from "@/lib/db/errors";
+import { updateProfileSchema, parseInput } from "@/lib/db/validations";
 
 type ActionResult =
   | { success: true }
@@ -59,31 +60,6 @@ export async function syncAvatarUrl(data: {
   }
 }
 
-const USERNAME_REGEX = /^[a-z0-9][a-z0-9_-]{1,28}[a-z0-9]$/;
-
-function validateUrl(url: string | null): string | null {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url.trim());
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-      return null;
-    }
-    return parsed.href;
-  } catch {
-    return null;
-  }
-}
-
-function isUniqueViolation(error: unknown, constraintName: string): boolean {
-  const cause =
-    error instanceof Error && error.cause instanceof NeonDbError
-      ? error.cause
-      : error instanceof NeonDbError
-        ? error
-        : null;
-  return cause?.code === "23505" && cause?.constraint === constraintName;
-}
-
 export async function updateProfile(data: {
   displayName: string;
   username: string;
@@ -105,24 +81,25 @@ export async function updateProfile(data: {
     const profile = await ensureProfile(userId);
     if (!profile) return { success: false, error: "Profile not found" };
 
-    // Validate required fields
-    const trimmedDisplayName = data.displayName.trim();
-    if (!trimmedDisplayName) {
-      return { success: false, error: "Display name is required" };
-    }
-
-    const trimmedUsername = data.username.trim().toLowerCase();
-    if (!USERNAME_REGEX.test(trimmedUsername)) {
-      return {
-        success: false,
-        error:
-          "Username must be 3-30 characters, start and end with a letter or number, and contain only lowercase letters, numbers, hyphens, and underscores",
-      };
-    }
+    const parsed = parseInput(updateProfileSchema, {
+      displayName: data.displayName,
+      username: data.username,
+      bio: data.bio || null,
+      websiteUrl: data.websiteUrl || null,
+      twitterHandle: data.twitterHandle || null,
+      githubHandle: data.githubHandle || null,
+      twitchUrl: data.twitchUrl || null,
+      streamUrl: data.streamUrl || null,
+      country: data.country || null,
+      region: data.region || null,
+      experienceLevel: data.experienceLevel,
+    });
+    if (!parsed.success) return parsed;
+    const v = parsed.data;
 
     // Check username uniqueness — allow the current user to keep their own username
     const existingWithUsername = await db.query.profiles.findFirst({
-      where: eq(profiles.username, trimmedUsername),
+      where: eq(profiles.username, v.username!),
       columns: { id: true },
     });
 
@@ -130,29 +107,13 @@ export async function updateProfile(data: {
       return { success: false, error: "Username is already taken" };
     }
 
-    // Validate URLs
-    const websiteUrl = data.websiteUrl?.trim() ? validateUrl(data.websiteUrl) : null;
-    if (data.websiteUrl?.trim() && !websiteUrl) {
-      return { success: false, error: "Invalid website URL" };
-    }
-
-    const twitchUrl = data.twitchUrl?.trim() ? validateUrl(data.twitchUrl) : null;
-    if (data.twitchUrl?.trim() && !twitchUrl) {
-      return { success: false, error: "Invalid Twitch URL" };
-    }
-
-    const streamUrl = data.streamUrl?.trim() ? validateUrl(data.streamUrl) : null;
-    if (data.streamUrl?.trim() && !streamUrl) {
-      return { success: false, error: "Invalid stream URL" };
-    }
-
-    // Clean social handles
-    let twitterHandle = data.twitterHandle?.trim() || null;
+    // Clean social handles (post-parse)
+    let twitterHandle = v.twitterHandle || null;
     if (twitterHandle) {
       twitterHandle = twitterHandle.replace(/^@/, "");
     }
 
-    let githubHandle = data.githubHandle?.trim() || null;
+    let githubHandle = v.githubHandle || null;
     if (githubHandle) {
       githubHandle = githubHandle
         .replace(/^https?:\/\/(www\.)?github\.com\//, "")
@@ -162,24 +123,24 @@ export async function updateProfile(data: {
     await db
       .update(profiles)
       .set({
-        displayName: trimmedDisplayName,
-        username: trimmedUsername,
-        bio: data.bio?.trim() || null,
-        websiteUrl,
+        displayName: v.displayName,
+        username: v.username,
+        bio: v.bio || null,
+        websiteUrl: v.websiteUrl || null,
         twitterHandle,
         githubHandle,
-        twitchUrl,
-        streamUrl,
-        country: data.country?.toUpperCase() || null,
-        region: data.region?.trim() || null,
-        experienceLevel: data.experienceLevel,
+        twitchUrl: v.twitchUrl || null,
+        streamUrl: v.streamUrl || null,
+        country: v.country?.toUpperCase() || null,
+        region: v.region || null,
+        experienceLevel: v.experienceLevel,
         ...(data.allowInvites !== undefined && { allowInvites: data.allowInvites }),
       })
       .where(eq(profiles.id, profile.id));
 
     revalidatePath("/settings");
-    revalidatePath(`/members/${trimmedUsername}`);
-    if (profile.username && profile.username !== trimmedUsername) {
+    revalidatePath(`/members/${v.username}`);
+    if (profile.username && profile.username !== v.username) {
       revalidatePath(`/members/${profile.username}`);
     }
 

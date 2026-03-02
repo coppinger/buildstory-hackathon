@@ -15,8 +15,15 @@ import {
 } from "@/lib/db/schema";
 import { notifySignup, notifyProject } from "@/lib/discord";
 import { checkSignupMilestone, checkProjectMilestone } from "@/lib/milestones";
+import { createProjectSchema, parseInput } from "@/lib/db/validations";
 
 type ActionResult = { success: true } | { success: false; error: string };
+
+const eventProjectSchema = createProjectSchema.pick({
+  name: true,
+  description: true,
+  githubUrl: true,
+});
 
 async function getProfileId(): Promise<string> {
   const { userId } = await auth();
@@ -37,19 +44,6 @@ async function requireRegistration(eventId: string, profileId: string) {
   });
   if (!reg) throw new Error("You must register for this event first");
   return reg;
-}
-
-function validateUrl(url: string | null): string | null {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url.trim());
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-      return null;
-    }
-    return parsed.href;
-  } catch {
-    return null;
-  }
 }
 
 export async function registerForEvent(
@@ -106,21 +100,21 @@ export async function createProject(
     const profileId = await getProfileId();
     await requireRegistration(eventId, profileId);
 
-    const name = formData.get("name") as string;
-    const description = (formData.get("description") as string) || null;
-    const githubUrl = validateUrl(formData.get("githubUrl") as string);
-
-    if (!name?.trim()) {
-      return { success: false, error: "Project name is required" };
-    }
+    const parsed = parseInput(eventProjectSchema, {
+      name: formData.get("name") as string,
+      description: (formData.get("description") as string) || null,
+      githubUrl: (formData.get("githubUrl") as string) || null,
+    });
+    if (!parsed.success) return parsed;
+    const v = parsed.data;
 
     const [project] = await db
       .insert(projects)
       .values({
         profileId,
-        name: name.trim(),
-        description: description?.trim(),
-        githubUrl,
+        name: v.name,
+        description: v.description,
+        githubUrl: v.githubUrl || null,
       })
       .returning();
 
@@ -133,7 +127,7 @@ export async function createProject(
       where: eq(profiles.id, profileId),
       columns: { displayName: true },
     });
-    notifyProject(profile?.displayName ?? "Someone", name.trim());
+    notifyProject(profile?.displayName ?? "Someone", v.name);
     checkProjectMilestone(eventId);
 
     const event = await db.query.events.findFirst({

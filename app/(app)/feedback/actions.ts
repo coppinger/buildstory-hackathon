@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import * as Sentry from "@sentry/nextjs";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { createLinearIssue } from "@/lib/linear";
+import { feedbackSchema, parseInput } from "@/lib/db/validations";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -32,15 +33,9 @@ export async function submitFeedback(data: {
     return { success: false, error: `You're submitting feedback too quickly. Please wait ${timeStr}.` };
   }
 
-  const title = data.title.trim();
-  const description = data.description.trim();
-
-  if (!title) {
-    return { success: false, error: "Title is required" };
-  }
-  if (!description) {
-    return { success: false, error: "Description is required" };
-  }
+  const parsed = parseInput(feedbackSchema, data);
+  if (!parsed.success) return parsed;
+  const { title, description } = parsed.data;
 
   try {
     const profile = await ensureProfile(userId);
