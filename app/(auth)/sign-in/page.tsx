@@ -32,8 +32,10 @@ export default function SignInPage() {
 
   // Second factor (2FA) state
   type SecondFactorStrategy = "totp" | "phone_code" | "email_code" | "backup_code";
+  type SupportedFactor = { strategy: string; phoneNumberId?: string; emailAddressId?: string };
   const [needsSecondFactor, setNeedsSecondFactor] = useState(false);
   const [secondFactorStrategy, setSecondFactorStrategy] = useState<SecondFactorStrategy | null>(null);
+  const [supportedFactors, setSupportedFactors] = useState<SupportedFactor[]>([]);
   const [code, setCode] = useState("");
   const [verifying, setVerifying] = useState(false);
 
@@ -108,25 +110,37 @@ export default function SignInPage() {
       } else if (result.status === "needs_second_factor") {
         const factors = result.supportedSecondFactors;
         // Pick best strategy: prefer totp > phone_code > email_code
-        const strategy =
-          (factors?.find((f) => f.strategy === "totp")?.strategy ??
-          factors?.find((f) => f.strategy === "phone_code")?.strategy ??
-          factors?.find((f) => f.strategy === "email_code")?.strategy) as SecondFactorStrategy | undefined;
+        const factor =
+          factors?.find((f) => f.strategy === "totp") ??
+          factors?.find((f) => f.strategy === "phone_code") ??
+          factors?.find((f) => f.strategy === "email_code");
 
-        if (!strategy) {
+        if (!factor) {
           setError("Your account requires a verification method that isn't supported here. Please contact support.");
           return;
         }
 
-        if (strategy === "email_code" || strategy === "phone_code") {
+        const strategy = factor.strategy as SecondFactorStrategy;
+
+        if (strategy === "phone_code") {
           try {
-            await signIn.prepareSecondFactor({ strategy });
+            const phoneFactor = factor as { strategy: "phone_code"; phoneNumberId: string };
+            await signIn.prepareSecondFactor({ strategy, phoneNumberId: phoneFactor.phoneNumberId });
+          } catch {
+            setError("Unable to send verification code. Please try again.");
+            return;
+          }
+        } else if (strategy === "email_code") {
+          try {
+            const emailFactor = factor as { strategy: "email_code"; emailAddressId: string };
+            await signIn.prepareSecondFactor({ strategy, emailAddressId: emailFactor.emailAddressId });
           } catch {
             setError("Unable to send verification code. Please try again.");
             return;
           }
         }
 
+        setSupportedFactors(factors ?? []);
         setSecondFactorStrategy(strategy);
         setNeedsSecondFactor(true);
       }
@@ -156,6 +170,8 @@ export default function SignInPage() {
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         router.push("/dashboard");
+      } else {
+        setError("Verification could not be completed. Please try again.");
       }
     } catch (err: unknown) {
       const clerkErr = err as { errors?: { message: string }[] };
@@ -245,6 +261,7 @@ export default function SignInPage() {
                 // signIn.create() on the next submit will start a fresh attempt
                 setNeedsSecondFactor(false);
                 setSecondFactorStrategy(null);
+                setSupportedFactors([]);
                 setCode("");
                 setError("");
               }}
@@ -252,7 +269,7 @@ export default function SignInPage() {
             >
               Back to sign in
             </button>
-            {secondFactorStrategy !== "backup_code" && (
+            {secondFactorStrategy !== "backup_code" && supportedFactors.some((f) => f.strategy === "backup_code") && (
               <>
                 <span className="mx-2 text-neutral-600">&middot;</span>
                 <button
