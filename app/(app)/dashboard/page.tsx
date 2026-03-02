@@ -14,10 +14,10 @@ import { Button } from "@/components/ui/button";
 import { DashboardCountdown } from "@/components/dashboard/dashboard-countdown";
 import { DashboardActivityFeed } from "@/components/dashboard/dashboard-activity-feed";
 import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card";
+import { DiscordCard } from "@/components/dashboard/discord-card";
 import { getPublicStats, getPublicActivityFeed } from "@/lib/queries";
 import {
   HACKATHON_SLUG,
-  DISCORD_INVITE_URL,
   SPONSOR_CREDITS_URL,
   DOCS_URL,
 } from "@/lib/constants";
@@ -35,12 +35,16 @@ async function getHackathonData() {
 
 async function getUserDashboardData(eventId: string) {
   const { userId } = await auth();
-  if (!userId) return { isRegistered: false, project: null };
+  if (!userId)
+    return { isRegistered: false, project: null, discordCardDismissed: false };
 
   const profile = await db.query.profiles.findFirst({
     where: eq(profiles.clerkId, userId),
   });
-  if (!profile) return { isRegistered: false, project: null };
+  if (!profile)
+    return { isRegistered: false, project: null, discordCardDismissed: false };
+
+  const discordCardDismissed = profile.discordCardDismissed;
 
   const reg = await db.query.eventRegistrations.findFirst({
     where: and(
@@ -48,7 +52,8 @@ async function getUserDashboardData(eventId: string) {
       eq(eventRegistrations.profileId, profile.id)
     ),
   });
-  if (!reg) return { isRegistered: false, project: null };
+  if (!reg)
+    return { isRegistered: false, project: null, discordCardDismissed };
 
   // Get the user's project linked to this hackathon
   const userProject = await db.query.projects.findFirst({
@@ -64,7 +69,7 @@ async function getUserDashboardData(eventId: string) {
     ? userProject
     : null;
 
-  return { isRegistered: true, project: hackathonProject };
+  return { isRegistered: true, project: hackathonProject, discordCardDismissed };
 }
 
 export default async function DashboardPage() {
@@ -89,9 +94,9 @@ export default async function DashboardPage() {
         "A one-week, fully remote AI building event. Build something real, share your process, and connect with builders worldwide.",
     };
 
-  const { isRegistered, project } = data
+  const { isRegistered, project, discordCardDismissed } = data
     ? await getUserDashboardData(data.event.id)
-    : { isRegistered: false, project: null };
+    : { isRegistered: false, project: null, discordCardDismissed: false };
 
   return (
     <div className="p-6 md:p-8 lg:p-12 w-full space-y-6 grid lg:grid-cols-12 gap-6 md:gap-12">
@@ -243,28 +248,7 @@ export default async function DashboardPage() {
       </div>
       <aside className="col-span-12 xl:col-span-4 w-full flex flex-col gap-6">
         {/* Discord */}
-        <Card className="w-full">
-          <div className="flex items-start gap-4">
-            <img
-              src="/discord.svg"
-              alt=""
-              className="w-5 h-5 mt-0.5 brightness-0 invert"
-            />
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground">
-                Buildstory Discord
-              </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Find teammates, get help, and share your progress.
-              </p>
-              <Button variant="outline" size="sm" className="mt-3 bg-[#5F66EB] text-white" asChild>
-                <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer">
-                  Join the Discord
-                </a>
-              </Button>
-            </div>
-          </div>
-        </Card>
+        {!discordCardDismissed && <DiscordCard />}
 
         {/* Activity Feed */}
         <Card className="w-full relative overflow-hidden flex flex-col flex-1 max-h-96">
