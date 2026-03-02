@@ -3,23 +3,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { eq, and, isNull } from "drizzle-orm";
 import * as Sentry from "@sentry/nextjs";
-import { NeonDbError } from "@neondatabase/serverless";
 import { db } from "@/lib/db";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { profiles } from "@/lib/db/schema";
-import { USERNAME_REGEX } from "@/lib/constants";
+import { isUniqueViolation } from "@/lib/db/errors";
+import { usernameSchema, parseInput } from "@/lib/db/validations";
 
 type ActionResult = { success: true } | { success: false; error: string };
-
-function isUniqueViolation(error: unknown, constraintName: string): boolean {
-  const cause =
-    error instanceof Error && error.cause instanceof NeonDbError
-      ? error.cause
-      : error instanceof NeonDbError
-        ? error
-        : null;
-  return cause?.code === "23505" && cause?.constraint === constraintName;
-}
 
 export async function setUsernameAfterSignUp(
   username: string
@@ -31,10 +21,9 @@ export async function setUsernameAfterSignUp(
     const profile = await ensureProfile(userId);
     if (!profile) return { success: false, error: "Profile creation failed" };
 
-    const trimmed = username.trim().toLowerCase();
-    if (!USERNAME_REGEX.test(trimmed)) {
-      return { success: false, error: "Invalid username format" };
-    }
+    const parsed = parseInput(usernameSchema, { username });
+    if (!parsed.success) return { success: false, error: "Invalid username format" };
+    const trimmed = parsed.data.username!;
 
     // Only set username if not already claimed (prevents use as a backdoor
     // to bypass normal username-change flows in settings)

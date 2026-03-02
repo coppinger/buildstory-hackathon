@@ -229,7 +229,7 @@ describe("submitMentorApplication", () => {
     const result = await submitMentorApplication(data);
     expect(result).toEqual({
       success: false,
-      error: "Website URL must start with http:// or https://",
+      error: "Invalid URL",
     });
   });
 

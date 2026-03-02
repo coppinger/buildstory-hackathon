@@ -4,7 +4,6 @@ import { auth } from "@clerk/nextjs/server";
 import { eq, and, ilike, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
-import { NeonDbError } from "@neondatabase/serverless";
 import { db } from "@/lib/db";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import {
@@ -16,7 +15,14 @@ import {
 } from "@/lib/db/schema";
 import { notifySignup, notifyProject } from "@/lib/discord";
 import { checkSignupMilestone, checkProjectMilestone } from "@/lib/milestones";
-import { USERNAME_REGEX } from "@/lib/constants";
+import { isUniqueViolation } from "@/lib/db/errors";
+import {
+  completeRegistrationSchema,
+  createProjectSchema,
+  usernameSchema,
+  searchQuerySchema,
+  parseInput,
+} from "@/lib/db/validations";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -32,46 +38,21 @@ async function getProfileId(): Promise<string> {
   return profile.id;
 }
 
-function validateUrl(url: string | null): string | null {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url.trim());
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-      return null;
-    }
-    return parsed.href;
-  } catch {
-    return null;
-  }
-}
-
-function isUniqueViolation(error: unknown, constraintName: string): boolean {
-  // Drizzle ORM wraps DB errors in DrizzleQueryError with the original on .cause
-  const cause =
-    error instanceof Error && error.cause instanceof NeonDbError
-      ? error.cause
-      : error instanceof NeonDbError
-        ? error
-        : null;
-  return cause?.code === "23505" && cause?.constraint === constraintName;
-}
-
 // NOTE: Intentionally unauthenticated — called from the public sign-up page.
 // Username availability is non-sensitive (usernames are public on profile pages).
 export async function checkUsernameAvailability(
   username: string
 ): Promise<ActionResult<{ available: boolean }>> {
   try {
-    const trimmed = username.trim().toLowerCase();
-    if (!USERNAME_REGEX.test(trimmed)) {
-      return {
-        success: true,
-        data: { available: false },
-      };
+    const parsed = parseInput(usernameSchema, {
+      username,
+    });
+    if (!parsed.success) {
+      return { success: true, data: { available: false } };
     }
 
     const existing = await db.query.profiles.findFirst({
-      where: eq(profiles.username, trimmed),
+      where: eq(profiles.username, parsed.data.username!),
       columns: { id: true },
     });
 
@@ -101,13 +82,14 @@ export async function completeRegistration(data: {
   try {
     const profileId = await getProfileId();
 
-    const trimmedUsername = data.username.trim().toLowerCase();
-    if (!USERNAME_REGEX.test(trimmedUsername)) {
-      return { success: false, error: "Invalid username format" };
-    }
-    if (!data.displayName.trim()) {
-      return { success: false, error: "Display name is required" };
-    }
+    const parsed = parseInput(completeRegistrationSchema, {
+      displayName: data.displayName,
+      username: data.username,
+      country: data.country || null,
+      region: data.region || null,
+    });
+    if (!parsed.success) return parsed;
+    const v = parsed.data;
 
     const event = await db.query.events.findFirst({
       where: eq(events.id, data.eventId),
@@ -121,10 +103,10 @@ export async function completeRegistration(data: {
     await db
       .update(profiles)
       .set({
-        displayName: data.displayName.trim(),
-        username: trimmedUsername,
-        country: data.country?.toUpperCase() || null,
-        region: data.region?.trim() || null,
+        displayName: v.displayName,
+        username: v.username,
+        country: v.country?.toUpperCase() || null,
+        region: v.region || null,
         experienceLevel: data.experienceLevel,
       })
       .where(eq(profiles.id, profileId));
@@ -140,7 +122,7 @@ export async function completeRegistration(data: {
       })
       .onConflictDoNothing();
 
-    notifySignup(data.displayName.trim());
+    notifySignup(v.displayName);
     checkSignupMilestone(data.eventId);
 
     revalidatePath("/dashboard");
@@ -170,27 +152,28 @@ export async function createOnboardingProject(data: {
   try {
     const profileId = await getProfileId();
 
-    if (!data.name.trim()) {
-      return { success: false, error: "Project name is required" };
-    }
-    if (!data.description.trim()) {
-      return { success: false, error: "Description is required" };
-    }
-
-    const trimmedSlug = data.slug.trim().toLowerCase();
-
-    const githubUrl = validateUrl(data.repoUrl);
+    const parsed = parseInput(createProjectSchema, {
+      name: data.name,
+      slug: data.slug || null,
+      description: data.description,
+      startingPoint: data.startingPoint,
+      goalText: data.goalText || null,
+      githubUrl: data.repoUrl || null,
+      liveUrl: null,
+    });
+    if (!parsed.success) return parsed;
+    const v = parsed.data;
 
     const [project] = await db
       .insert(projects)
       .values({
         profileId,
-        name: data.name.trim(),
-        slug: trimmedSlug || null,
-        description: data.description.trim(),
-        startingPoint: data.startingPoint,
-        goalText: data.goalText.trim() || null,
-        githubUrl,
+        name: v.name,
+        slug: v.slug || null,
+        description: v.description,
+        startingPoint: v.startingPoint,
+        goalText: v.goalText || null,
+        githubUrl: v.githubUrl || null,
       })
       .returning();
 
@@ -204,7 +187,7 @@ export async function createOnboardingProject(data: {
       where: eq(profiles.id, profileId),
       columns: { displayName: true },
     });
-    notifyProject(profile?.displayName ?? "Someone", data.name.trim());
+    notifyProject(profile?.displayName ?? "Someone", v.name);
     checkProjectMilestone(data.eventId);
 
     revalidatePath("/dashboard");
@@ -227,7 +210,9 @@ export async function searchUsers(
   try {
     await getProfileId(); // auth check
 
-    const trimmed = query.trim();
+    const parsed = parseInput(searchQuerySchema, { query });
+    if (!parsed.success) return { success: true, data: [] };
+    const trimmed = parsed.data.query;
     if (trimmed.length < 2) {
       return { success: true, data: [] };
     }
@@ -263,7 +248,9 @@ export async function searchProjects(
   try {
     await getProfileId(); // auth check
 
-    const trimmed = query.trim();
+    const parsed = parseInput(searchQuerySchema, { query });
+    if (!parsed.success) return { success: true, data: [] };
+    const trimmed = parsed.data.query;
     if (trimmed.length < 2) {
       return { success: true, data: [] };
     }
@@ -297,7 +284,7 @@ export async function checkProjectSlugAvailability(
 ): Promise<ActionResult<{ available: boolean }>> {
   try {
     const trimmed = slug.trim().toLowerCase();
-    if (!trimmed || trimmed.length < 2) {
+    if (!trimmed || trimmed.length < 2 || !/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(trimmed)) {
       return { success: true, data: { available: false } };
     }
 

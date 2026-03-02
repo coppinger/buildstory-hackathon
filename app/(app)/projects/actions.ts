@@ -4,10 +4,11 @@ import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
-import { NeonDbError } from "@neondatabase/serverless";
 import { db } from "@/lib/db";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { projects, events, eventProjects, projectMembers, teamInvites } from "@/lib/db/schema";
+import { isUniqueViolation } from "@/lib/db/errors";
+import { createProjectSchema, parseInput } from "@/lib/db/validations";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -23,29 +24,6 @@ async function getProfileId(): Promise<string> {
   return profile.id;
 }
 
-function validateUrl(url: string | null): string | null {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url.trim());
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-      return null;
-    }
-    return parsed.href;
-  } catch {
-    return null;
-  }
-}
-
-function isUniqueViolation(error: unknown, constraintName: string): boolean {
-  const cause =
-    error instanceof Error && error.cause instanceof NeonDbError
-      ? error.cause
-      : error instanceof NeonDbError
-        ? error
-        : null;
-  return cause?.code === "23505" && cause?.constraint === constraintName;
-}
-
 export async function createProject(data: {
   name: string;
   slug: string;
@@ -59,28 +37,29 @@ export async function createProject(data: {
   try {
     const profileId = await getProfileId();
 
-    if (!data.name.trim()) {
-      return { success: false, error: "Project name is required" };
-    }
-    if (!data.description.trim()) {
-      return { success: false, error: "Description is required" };
-    }
-
-    const trimmedSlug = data.slug.trim().toLowerCase();
-    const githubUrl = validateUrl(data.repoUrl);
-    const liveUrl = validateUrl(data.liveUrl);
+    const parsed = parseInput(createProjectSchema, {
+      name: data.name,
+      slug: data.slug || null,
+      description: data.description,
+      startingPoint: data.startingPoint,
+      goalText: data.goalText || null,
+      githubUrl: data.repoUrl || null,
+      liveUrl: data.liveUrl || null,
+    });
+    if (!parsed.success) return parsed;
+    const v = parsed.data;
 
     const [project] = await db
       .insert(projects)
       .values({
         profileId,
-        name: data.name.trim(),
-        slug: trimmedSlug || null,
-        description: data.description.trim(),
-        startingPoint: data.startingPoint,
-        goalText: data.goalText.trim() || null,
-        githubUrl,
-        liveUrl,
+        name: v.name,
+        slug: v.slug || null,
+        description: v.description,
+        startingPoint: v.startingPoint,
+        goalText: v.goalText || null,
+        githubUrl: v.githubUrl || null,
+        liveUrl: v.liveUrl || null,
       })
       .returning();
 
@@ -136,27 +115,28 @@ export async function updateProject(data: {
       return { success: false, error: "You do not own this project" };
     }
 
-    if (!data.name.trim()) {
-      return { success: false, error: "Project name is required" };
-    }
-    if (!data.description.trim()) {
-      return { success: false, error: "Description is required" };
-    }
-
-    const trimmedSlug = data.slug.trim().toLowerCase();
-    const githubUrl = validateUrl(data.repoUrl);
-    const liveUrl = validateUrl(data.liveUrl);
+    const parsed = parseInput(createProjectSchema, {
+      name: data.name,
+      slug: data.slug || null,
+      description: data.description,
+      startingPoint: data.startingPoint,
+      goalText: data.goalText || null,
+      githubUrl: data.repoUrl || null,
+      liveUrl: data.liveUrl || null,
+    });
+    if (!parsed.success) return parsed;
+    const v = parsed.data;
 
     const [updated] = await db
       .update(projects)
       .set({
-        name: data.name.trim(),
-        slug: trimmedSlug || null,
-        description: data.description.trim(),
-        startingPoint: data.startingPoint,
-        goalText: data.goalText.trim() || null,
-        githubUrl,
-        liveUrl,
+        name: v.name,
+        slug: v.slug || null,
+        description: v.description,
+        startingPoint: v.startingPoint,
+        goalText: v.goalText || null,
+        githubUrl: v.githubUrl || null,
+        liveUrl: v.liveUrl || null,
       })
       .where(eq(projects.id, data.projectId))
       .returning();

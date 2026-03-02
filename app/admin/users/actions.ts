@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { profiles, adminAuditLog } from "@/lib/db/schema";
 import { isModerator, isAdmin, isSuperAdmin } from "@/lib/admin";
 import { deleteProfileCascade } from "@/lib/db/delete-profile";
+import { banReasonSchema, parseInput } from "@/lib/db/validations";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -141,12 +142,15 @@ export async function banUser(data: {
       return { success: false, error: "Cannot ban yourself" };
     }
 
+    const parsed = parseInput(banReasonSchema, { reason: data.reason });
+    if (!parsed.success) return parsed;
+
     await db
       .update(profiles)
       .set({
         bannedAt: new Date(),
         bannedBy: actor.id,
-        banReason: data.reason?.trim() || null,
+        banReason: parsed.data.reason?.trim() || null,
       })
       .where(eq(profiles.id, data.profileId));
 
