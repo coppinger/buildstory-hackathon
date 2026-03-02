@@ -271,7 +271,7 @@ export function AdminSponsorsClient({
                     <p className="text-xs text-muted-foreground mb-1">
                       Offer
                     </p>
-                    <p className="text-foreground">
+                    <p className="text-foreground break-words">
                       {isLong && !isExpanded
                         ? `${inq.offerDescription.slice(0, TRUNCATE_LENGTH)}...`
                         : inq.offerDescription}
@@ -291,7 +291,7 @@ export function AdminSponsorsClient({
                       <p className="text-xs text-muted-foreground mb-1">
                         Notes
                       </p>
-                      <p className="text-foreground">{inq.additionalNotes}</p>
+                      <p className="text-foreground break-words">{inq.additionalNotes}</p>
                     </div>
                   )}
                 </div>

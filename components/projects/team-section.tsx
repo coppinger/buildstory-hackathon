@@ -227,7 +227,7 @@ function MemberRow({
       />
       <div>
         <div className="flex items-center gap-2">
-          <p className="text-foreground font-medium">{profile.displayName}</p>
+          <p className="text-foreground font-medium break-words">{profile.displayName}</p>
           {badge && (
             <Badge variant="secondary" className="text-xs">
               {badge}

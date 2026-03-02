@@ -69,7 +69,7 @@ export default async function ProjectDetailPage({
         )}
       </div>
 
-      <h1 className="mt-6 font-heading text-4xl text-foreground">
+      <h1 className="mt-6 font-heading text-4xl text-foreground break-words">
         {project.name}
       </h1>
 
@@ -87,7 +87,7 @@ export default async function ProjectDetailPage({
       </div>
 
       {project.description && (
-        <p className="mt-6 text-base text-muted-foreground leading-relaxed">
+        <p className="mt-6 text-base text-muted-foreground leading-relaxed break-words">
           {project.description}
         </p>
       )}
@@ -97,7 +97,7 @@ export default async function ProjectDetailPage({
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
             Goal
           </p>
-          <p className="text-foreground">{project.goalText}</p>
+          <p className="text-foreground break-words">{project.goalText}</p>
         </div>
       )}
 
