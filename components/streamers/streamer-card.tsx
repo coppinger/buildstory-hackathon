@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { TwitchIcon } from "@/components/icons";
-import type { LiveStreamer } from "@/app/api/streamers/route";
+import type { LiveStreamer } from "@/lib/streamers/types";
 
 function formatViewerCount(count: number): string {
   if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;

@@ -15,19 +15,7 @@ import {
   getLiveStreams,
   isTwitchConfigured,
 } from "@/lib/twitch";
-
-export interface LiveStreamer {
-  profileId: string;
-  displayName: string;
-  username: string | null;
-  avatarUrl: string | null;
-  twitchUsername: string;
-  streamTitle: string;
-  gameName: string;
-  viewerCount: number;
-  thumbnailUrl: string;
-  startedAt: string;
-}
+import type { LiveStreamer } from "@/lib/streamers/types";
 
 // In-memory cache -- effective only within a single serverless instance lifetime.
 // On Vercel, cold starts reset this. Acceptable since the Twitch API call is
