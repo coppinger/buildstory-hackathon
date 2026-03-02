@@ -39,6 +39,7 @@ export interface ActivityFeedItem {
   type: "signup" | "project" | "team_join";
   displayName: string;
   username: string | null;
+  avatarUrl: string | null;
   detail: string | null;
   timestamp: Date;
 }
@@ -460,6 +461,7 @@ export async function getPublicActivityFeed(
       .select({
         displayName: profiles.displayName,
         username: profiles.username,
+        avatarUrl: profiles.avatarUrl,
         timestamp: eventRegistrations.registeredAt,
       })
       .from(eventRegistrations)
@@ -473,6 +475,7 @@ export async function getPublicActivityFeed(
       .select({
         displayName: profiles.displayName,
         username: profiles.username,
+        avatarUrl: profiles.avatarUrl,
         projectName: projects.name,
         timestamp: eventProjects.submittedAt,
       })
@@ -489,6 +492,7 @@ export async function getPublicActivityFeed(
       .select({
         displayName: profiles.displayName,
         username: profiles.username,
+        avatarUrl: profiles.avatarUrl,
         projectName: projects.name,
         timestamp: projectMembers.joinedAt,
       })
@@ -514,6 +518,7 @@ export async function getPublicActivityFeed(
       type: "signup" as const,
       displayName: r.displayName,
       username: r.username,
+      avatarUrl: r.avatarUrl,
       detail: null,
       timestamp: r.timestamp,
     })),
@@ -521,6 +526,7 @@ export async function getPublicActivityFeed(
       type: "project" as const,
       displayName: r.displayName,
       username: r.username,
+      avatarUrl: r.avatarUrl,
       detail: r.projectName,
       timestamp: r.timestamp,
     })),
@@ -528,6 +534,7 @@ export async function getPublicActivityFeed(
       type: "team_join" as const,
       displayName: r.displayName,
       username: r.username,
+      avatarUrl: r.avatarUrl,
       detail: r.projectName,
       timestamp: r.timestamp,
     })),

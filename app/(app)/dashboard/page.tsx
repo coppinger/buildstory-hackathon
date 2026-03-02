@@ -201,7 +201,7 @@ export default async function DashboardPage() {
         {/* Activity Feed */}
         <Card className="w-full relative overflow-hidden flex flex-col flex-1 max-h-96">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-            Activity
+            Recent Activity
           </p>
           <DashboardActivityFeed activities={serializedActivities} />
         </Card>
