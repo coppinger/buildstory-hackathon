@@ -29,7 +29,7 @@ export async function AppTopbar() {
     <header className="border-b border-border">
       <div className="max-w-8xl mx-auto h-18 flex items-center border-border">
         {/* Logo area — matches sidebar column width on md+ */}
-        <div className="px-4 md:px-16 md:max-w-58 lg:max-w-63 md:w-full md:border-r border-border h-full flex items-center gap-3">
+        <div className="px-4 md:px-12 md:max-w-58 lg:max-w-64 md:w-full md:border-r border-border h-full flex items-center gap-3">
           <MobileSidebar />
           <Link href="/">
             <Image

@@ -47,7 +47,7 @@ export function AppSidebar() {
   }, []);
 
   return (
-    <aside className="hidden md:block px-16 w-58 lg:w-63 shrink-0 border-r border-border min-h-full">
+    <aside className="hidden md:block px-12 w-58 lg:w-64 shrink-0 border-r border-border min-h-full">
       <div className="sticky top-0 flex flex-col min-h-screen py-8">
         <nav className="flex flex-col gap-4 lg:gap-6">
           {navItems.map(({ label, href }) => {
@@ -69,7 +69,7 @@ export function AppSidebar() {
                     {label}
                   </p>
                   {isLiveStreams && liveCount > 0 && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-xs text-[#6441a5] mt-0.5">
                       {liveCount} {liveCount === 1 ? "stream" : "streams"} live right now
                     </p>
                   )}
@@ -79,7 +79,7 @@ export function AppSidebar() {
           })}
         </nav>
 
-        <div className="flex items-center gap-4 mt-6">
+        <div className="flex items-center gap-6 mt-8">
           <a
             href="https://x.com/buildstory"
             target="_blank"
@@ -87,7 +87,7 @@ export function AppSidebar() {
             className="text-muted-foreground hover:text-foreground transition-colors"
             aria-label="X (Twitter)"
           >
-            <XIcon className="w-5 h-5" />
+            <XIcon className="w-4 h-4" />
           </a>
           <a
             href="https://twitch.tv/buildstory"
@@ -96,7 +96,7 @@ export function AppSidebar() {
             className="text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Twitch"
           >
-            <TwitchIcon className="w-5 h-5" />
+            <TwitchIcon className="w-4 h-4" />
           </a>
           <a
             href={DISCORD_INVITE_URL}
@@ -105,7 +105,7 @@ export function AppSidebar() {
             className="text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Discord"
           >
-            <DiscordIcon className="w-5 h-5" />
+            <DiscordIcon className="w-4 h-4" />
           </a>
         </div>
       </div>
