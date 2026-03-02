@@ -50,7 +50,7 @@ export default async function ProjectsPage({
                 className="border border-border p-6 flex flex-col gap-3 h-full"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <h2 className="font-heading text-lg text-foreground">
+                  <h2 className="font-heading text-lg text-foreground break-words">
                     {project.slug ? (
                       <Link
                         href={`/projects/${project.slug}`}

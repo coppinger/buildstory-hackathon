@@ -51,7 +51,7 @@ export default async function ProfileDetailPage({
           size="md"
         />
         <div className="flex-1">
-          <h1 className="font-heading text-3xl text-foreground">
+          <h1 className="font-heading text-3xl text-foreground break-words">
             {profile.displayName}
           </h1>
           {profile.username && (
@@ -159,7 +159,7 @@ export default async function ProfileDetailPage({
               const card = (
                 <div className="border border-border p-5 flex flex-col gap-2 hover:border-foreground/20 transition-colors">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-heading text-lg text-foreground">
+                    <h3 className="font-heading text-lg text-foreground break-words">
                       {project.name}
                     </h3>
                     {project.startingPoint && (

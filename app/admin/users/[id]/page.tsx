@@ -45,7 +45,7 @@ export default async function AdminUserDetailPage({
           </Button>
         </Link>
         <div>
-          <h1 className="font-heading text-3xl">{user.displayName}</h1>
+          <h1 className="font-heading text-3xl break-words">{user.displayName}</h1>
           <p className="text-sm text-muted-foreground">
             {user.username ? `@${user.username}` : "No username"}
           </p>
@@ -124,7 +124,7 @@ export default async function AdminUserDetailPage({
             {user.bio && (
               <div className="sm:col-span-2">
                 <p className="text-xs text-muted-foreground mb-1">Bio</p>
-                <p className="text-sm">{user.bio}</p>
+                <p className="text-sm break-words">{user.bio}</p>
               </div>
             )}
           </div>
@@ -190,7 +190,7 @@ export default async function AdminUserDetailPage({
                     </p>
                   )}
                   {user.banReason && (
-                    <p className="text-sm mt-2">
+                    <p className="text-sm mt-2 break-words">
                       Reason: {user.banReason}
                     </p>
                   )}
