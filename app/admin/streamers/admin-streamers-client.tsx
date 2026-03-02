@@ -32,10 +32,12 @@ export function AdminStreamersClient({
   categories: SerializedCategory[];
 }) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isSearching, startSearchTransition] = useTransition();
+  const [isMutating, startMutateTransition] = useTransition();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [actionError, setActionError] = useState<string | null>(null);
+  const isPending = isSearching || isMutating;
 
   const existingTwitchIds = new Set(categories.map((c) => c.twitchId));
 
@@ -43,7 +45,7 @@ export function AdminStreamersClient({
     if (!searchQuery.trim()) return;
     setActionError(null);
 
-    startTransition(async () => {
+    startSearchTransition(async () => {
       const result = await searchTwitchCategories({ query: searchQuery });
       if (!result.success) {
         setActionError(result.error);
@@ -55,7 +57,7 @@ export function AdminStreamersClient({
 
   function handleAdd(result: SearchResult) {
     setActionError(null);
-    startTransition(async () => {
+    startMutateTransition(async () => {
       const res = await addTwitchCategory({
         twitchId: result.id,
         name: result.name,
@@ -72,7 +74,7 @@ export function AdminStreamersClient({
 
   function handleRemove(categoryId: string) {
     setActionError(null);
-    startTransition(async () => {
+    startMutateTransition(async () => {
       const res = await removeTwitchCategory({ categoryId });
       if (!res.success) {
         setActionError(res.error);
@@ -116,7 +118,7 @@ export function AdminStreamersClient({
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           />
           <Button onClick={handleSearch} disabled={isPending}>
-            {isPending ? "Searching..." : "Search"}
+            {isSearching ? "Searching..." : "Search"}
           </Button>
         </div>
 
