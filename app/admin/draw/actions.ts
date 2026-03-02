@@ -11,6 +11,7 @@ import {
   prizeDraws,
 } from "@/lib/db/schema";
 import { isAdmin } from "@/lib/admin";
+import { ensureProfile } from "@/lib/db/ensure-profile";
 import { HACKATHON_SLUG } from "@/lib/constants";
 
 export interface DrawWinner {
@@ -126,23 +127,22 @@ export async function drawWinners(count: number): Promise<ActionResult> {
     const drawnAt = new Date();
     const algorithmName = "mulberry32 + Fisher-Yates shuffle";
 
-    // Persist the draw result
-    const profile = await db.query.profiles.findFirst({
-      where: eq(profiles.clerkId, userId),
-      columns: { id: true },
-    });
-
-    if (profile) {
-      await db.insert(prizeDraws).values({
-        seed,
-        winners: winners,
-        winnerCount: count,
-        totalEligible: eligible.length,
-        algorithm: algorithmName,
-        drawnBy: profile.id,
-        drawnAt,
-      });
+    // Persist the draw result — ensureProfile guarantees row exists
+    // (handles super-admins who may not have a profile yet)
+    const profile = await ensureProfile(userId);
+    if (!profile) {
+      return { success: false, error: "Could not resolve admin profile" };
     }
+
+    await db.insert(prizeDraws).values({
+      seed,
+      winners: winners,
+      winnerCount: count,
+      totalEligible: eligible.length,
+      algorithm: algorithmName,
+      drawnBy: profile.id,
+      drawnAt,
+    });
 
     return {
       success: true,
