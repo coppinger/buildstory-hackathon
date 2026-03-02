@@ -4,6 +4,7 @@ import { Icon } from "@/components/ui/icon";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { PaginatedList } from "@/components/paginated-list";
 import { SearchSortBar } from "@/components/search-sort-bar";
+import { stripMarkdown } from "@/lib/markdown";
 import { getHackathonProfiles } from "@/lib/queries";
 import { loadSearchSortParams, DEFAULT_PAGE_SIZE } from "@/lib/search-params";
 import { getCountryByCode, formatLocation } from "@/lib/countries";
@@ -85,7 +86,7 @@ export default async function ProfilesPage({
 
                   {profile.bio && (
                     <p className="text-sm text-muted-foreground line-clamp-2">
-                      {profile.bio}
+                      {stripMarkdown(profile.bio)}
                     </p>
                   )}
 
