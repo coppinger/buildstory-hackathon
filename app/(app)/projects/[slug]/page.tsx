@@ -7,6 +7,7 @@ import { getProjectBySlug, getProjectPendingInvites } from "@/lib/queries";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
 import { TeamSection } from "@/components/projects/team-section";
+import { MarkdownText } from "@/components/ui/markdown-text";
 
 const startingPointLabels: Record<string, string> = {
   new: "Starting from scratch",
@@ -87,9 +88,10 @@ export default async function ProjectDetailPage({
       </div>
 
       {project.description && (
-        <p className="mt-6 text-base text-muted-foreground leading-relaxed break-words">
-          {project.description}
-        </p>
+        <MarkdownText
+          text={project.description}
+          className="mt-6 text-base text-muted-foreground leading-relaxed break-words"
+        />
       )}
 
       {project.goalText && (
@@ -97,7 +99,7 @@ export default async function ProjectDetailPage({
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
             Goal
           </p>
-          <p className="text-foreground break-words">{project.goalText}</p>
+          <MarkdownText text={project.goalText} className="text-foreground break-words" />
         </div>
       )}
 

@@ -277,6 +277,7 @@ export function ProjectForm({ mode, project, eventId, onSuccess }: ProjectFormPr
           rows={3}
           className="mt-1.5 resize-none"
         />
+        <p className="text-xs text-muted-foreground mt-1">Simple markdown formatting supported</p>
       </div>
 
       {/* Starting point */}
@@ -327,6 +328,7 @@ export function ProjectForm({ mode, project, eventId, onSuccess }: ProjectFormPr
           rows={2}
           className="mt-1.5 resize-none"
         />
+        <p className="text-xs text-muted-foreground mt-1">Simple markdown formatting supported</p>
       </div>
 
       {/* GitHub URL */}
