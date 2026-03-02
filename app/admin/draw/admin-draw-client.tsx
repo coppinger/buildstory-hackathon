@@ -3,7 +3,12 @@
 import { useState, useTransition, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
-import { drawWinners, type DrawResult, type DrawWinner } from "./actions";
+import {
+  drawWinners,
+  type DrawResult,
+  type DrawWinner,
+  type DrawHistoryEntry,
+} from "./actions";
 import { BlurFade } from "@/components/blur-fade";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -222,7 +227,11 @@ function TransparencyPanel({
   );
 }
 
-export function AdminDrawClient() {
+export function AdminDrawClient({
+  initialHistory,
+}: {
+  initialHistory: DrawHistoryEntry[];
+}) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [count, setCount] = useState(1);
   const [result, setResult] = useState<DrawResult | null>(null);
@@ -230,6 +239,7 @@ export function AdminDrawClient() {
   const [revealedCount, setRevealedCount] = useState(0);
   const [isPending, startTransition] = useTransition();
   const revealedRef = useRef(0);
+  const [history, setHistory] = useState<DrawHistoryEntry[]>(initialHistory);
 
   const handleDraw = () => {
     setError(null);
@@ -244,6 +254,21 @@ export function AdminDrawClient() {
       }
 
       setResult(res.data);
+
+      // Prepend to local history
+      setHistory((prev) => [
+        {
+          id: res.data.seed,
+          seed: res.data.seed,
+          winners: res.data.winners,
+          winnerCount: res.data.winners.length,
+          totalEligible: res.data.totalEligible,
+          algorithm: res.data.algorithm,
+          drawnAt: res.data.drawnAt,
+          drawnByName: "You",
+        },
+        ...prev,
+      ]);
 
       // Brief delay for transparency panel to animate in
       await new Promise((r) => setTimeout(r, 1500));
@@ -422,6 +447,98 @@ export function AdminDrawClient() {
         </BlurFade>
       )}
 
+      {/* Previous Draws Log */}
+      {history.length > 0 && (
+        <div className="space-y-4 border-t border-border pt-6">
+          <div>
+            <h2 className="text-lg font-heading font-semibold tracking-tight">
+              Previous Draws
+            </h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {history.length} draw{history.length !== 1 ? "s" : ""} on record
+            </p>
+          </div>
+          <div className="space-y-3">
+            {history.map((entry) => (
+              <DrawHistoryCard key={entry.id} entry={entry} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function DrawHistoryCard({ entry }: { entry: DrawHistoryEntry }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <Card className="bg-card/30">
+      <CardHeader
+        className="cursor-pointer py-3"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-400">
+              <Icon name="casino" size="4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium">
+                {entry.winnerCount} winner{entry.winnerCount !== 1 ? "s" : ""}{" "}
+                <span className="text-muted-foreground font-normal">
+                  drawn from {entry.totalEligible}
+                </span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {new Date(entry.drawnAt).toLocaleString()} &middot;{" "}
+                {entry.drawnByName}
+              </p>
+            </div>
+          </div>
+          <Icon
+            name={expanded ? "expand_less" : "expand_more"}
+            size="4"
+            className="text-muted-foreground shrink-0"
+          />
+        </div>
+      </CardHeader>
+      {expanded && (
+        <CardContent className="space-y-3 pt-0">
+          <div className="grid gap-2 sm:grid-cols-2">
+            {entry.winners.map((winner) => (
+              <div
+                key={winner.username}
+                className="flex items-center gap-2 text-sm"
+              >
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-400 font-semibold text-xs">
+                  {getInitials(winner.displayName)}
+                </div>
+                <div className="min-w-0">
+                  <span className="font-medium truncate block">
+                    {winner.displayName}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    @{winner.username}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="space-y-1.5 text-xs text-muted-foreground border-t border-border pt-3">
+            <div className="flex justify-between">
+              <span>Seed</span>
+              <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-foreground">
+                {entry.seed}
+              </code>
+            </div>
+            <div className="flex justify-between">
+              <span>Algorithm</span>
+              <span className="font-mono">{entry.algorithm}</span>
+            </div>
+          </div>
+        </CardContent>
+      )}
+    </Card>
   );
 }

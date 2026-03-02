@@ -2,6 +2,8 @@ import { relations } from "drizzle-orm";
 import {
   boolean,
   index,
+  integer,
+  jsonb,
   pgEnum,
   pgTable,
   serial,
@@ -459,3 +461,29 @@ export const sponsorshipInquiriesRelations = relations(
     }),
   })
 );
+
+// --- Prize Draws ---
+
+export const prizeDraws = pgTable("prize_draws", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  seed: text("seed").notNull(),
+  winners: jsonb("winners").notNull(),
+  winnerCount: integer("winner_count").notNull(),
+  totalEligible: integer("total_eligible").notNull(),
+  algorithm: text("algorithm").notNull(),
+  drawnBy: uuid("drawn_by")
+    .notNull()
+    .references(() => profiles.id),
+  drawnAt: timestamp("drawn_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type PrizeDraw = typeof prizeDraws.$inferSelect;
+export type NewPrizeDraw = typeof prizeDraws.$inferInsert;
+
+export const prizeDrawsRelations = relations(prizeDraws, ({ one }) => ({
+  actor: one(profiles, {
+    fields: [prizeDraws.drawnBy],
+    references: [profiles.id],
+  }),
+}));
