@@ -33,7 +33,7 @@ export async function addTwitchCategory(data: {
     if (tooLong(data.twitchId, MAX_SEARCH_QUERY)) {
       return { success: false, error: "Invalid Twitch ID" };
     }
-    if (tooLong(data.name, 200)) {
+    if (tooLong(data.name, MAX_TWITCH_CATEGORY_NAME)) {
       return { success: false, error: "Category name is too long" };
     }
     if (tooLong(data.boxArtUrl, MAX_URL)) {
