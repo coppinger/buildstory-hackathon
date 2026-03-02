@@ -54,7 +54,8 @@ export function renderMarkdown(text: string): string {
     return `[${linkText}](${url})`;
   });
 
-  // Line breaks
+  // Collapse 2+ consecutive line breaks into a single one, then convert to <br />
+  html = html.replace(/\n{2,}/g, "\n");
   html = html.replace(/\n/g, "<br />");
 
   return html;
