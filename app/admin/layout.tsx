@@ -74,6 +74,12 @@ export default async function AdminLayout({
                 >
                   Draw
                 </Link>
+                <Link
+                  href="/admin/streamers"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Streamers
+                </Link>
               </>
             )}
             <Link
