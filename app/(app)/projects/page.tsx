@@ -188,24 +188,37 @@ export default async function ProjectsPage({
 
       <SearchSortBar placeholder="Search projects by name..." />
 
-      {projects.length === 0 ? (
-        <div className="mt-12 text-center">
-          <Icon name="search_off" size="8" className="text-muted-foreground/50 mx-auto mb-3" />
-          <p className="text-muted-foreground">
-            {isSearching
-              ? `No projects found matching "${q}".`
-              : "No projects submitted yet."}
-          </p>
-        </div>
-      ) : (
-        <PaginatedList {...pagination}>
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
-        </PaginatedList>
-      )}
+      {(() => {
+        const pinnedIds = new Set(pinnedProjects.map((p) => p.id));
+        const filteredProjects = projects.filter((p) => !pinnedIds.has(p.id));
+
+        if (filteredProjects.length === 0 && pinnedProjects.length === 0) {
+          return (
+            <div className="mt-12 text-center">
+              <Icon name="search_off" size="8" className="text-muted-foreground/50 mx-auto mb-3" />
+              <p className="text-muted-foreground">
+                {isSearching
+                  ? `No projects found matching "${q}".`
+                  : "No projects submitted yet."}
+              </p>
+            </div>
+          );
+        }
+
+        if (filteredProjects.length === 0) {
+          return null;
+        }
+
+        return (
+          <PaginatedList {...pagination}>
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+          </PaginatedList>
+        );
+      })()}
     </div>
   );
 }

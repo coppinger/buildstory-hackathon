@@ -79,7 +79,7 @@ export function AppSidebar() {
           })}
         </nav>
 
-        <div className="flex items-center gap-4 mt-6">
+        <div className="flex items-center gap-4 mt-auto">
           <a
             href="https://x.com/buildstory"
             target="_blank"
