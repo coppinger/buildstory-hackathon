@@ -11,20 +11,33 @@ import {
 import {
   eq,
   and,
+  or,
   count,
   sql,
   desc,
+  asc,
+  ilike,
   inArray,
   isNotNull,
   isNull,
   aliasedTable,
 } from "drizzle-orm";
 import { HACKATHON_SLUG } from "@/lib/constants";
-import { DEFAULT_PAGE_SIZE } from "@/lib/search-params";
+import { DEFAULT_PAGE_SIZE, type SortOrder } from "@/lib/search-params";
+
+/** Escape ILIKE wildcard characters so user input is matched literally. */
+function escapeIlike(value: string): string {
+  return value.replace(/[%_\\]/g, "\\$&");
+}
 
 export interface PaginationParams {
   page: number;
   pageSize?: number;
+}
+
+export interface SearchSortParams extends PaginationParams {
+  search?: string;
+  sort?: SortOrder;
 }
 
 export interface PaginatedResult<T> {
@@ -61,23 +74,13 @@ function isProfileVisible(profile: {
 }
 
 export async function getHackathonProjects(
-  pagination?: PaginationParams
+  params?: SearchSortParams
 ) {
   const eventId = await getHackathonEventId();
-  if (!eventId) {
-    return pagination
-      ? { items: [], totalCount: 0, page: 1, pageSize: pagination.pageSize ?? DEFAULT_PAGE_SIZE, totalPages: 1 }
-      : [];
-  }
+  if (!params) {
+    // Non-paginated path (backward compat)
+    if (!eventId) return [];
 
-  const visibilityFilter = and(
-    eq(eventProjects.eventId, eventId),
-    isNull(profiles.bannedAt),
-    isNull(profiles.hiddenAt)
-  );
-
-  if (!pagination) {
-    // Non-paginated: use relational query for backward compat
     const entries = await db.query.eventProjects.findMany({
       where: eq(eventProjects.eventId, eventId),
       with: {
@@ -102,8 +105,20 @@ export async function getHackathonProjects(
       .map((ep) => ep.project);
   }
 
-  // Paginated: push filtering + pagination into the DB
-  const pageSize = pagination.pageSize ?? DEFAULT_PAGE_SIZE;
+  const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
+  const emptyResult = { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
+
+  if (!eventId) return emptyResult;
+
+  const search = params.search?.trim();
+  const sortDir = params.sort === "oldest" ? asc : desc;
+
+  const visibilityFilter = and(
+    eq(eventProjects.eventId, eventId),
+    isNull(profiles.bannedAt),
+    isNull(profiles.hiddenAt),
+    search ? ilike(projects.name, `%${escapeIlike(search)}%`) : undefined
+  );
 
   // 1. Get total count of visible projects
   const [{ totalCount }] = await db
@@ -114,11 +129,9 @@ export async function getHackathonProjects(
     .where(visibilityFilter);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-  const page = Math.max(1, Math.min(pagination.page, totalPages));
+  const page = Math.max(1, Math.min(params.page, totalPages));
 
-  if (totalCount === 0) {
-    return { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
-  }
+  if (totalCount === 0) return emptyResult;
 
   // 2. Get the paginated project IDs
   const paginatedIds = await db
@@ -127,7 +140,7 @@ export async function getHackathonProjects(
     .innerJoin(projects, eq(eventProjects.projectId, projects.id))
     .innerJoin(profiles, eq(projects.profileId, profiles.id))
     .where(visibilityFilter)
-    .orderBy(desc(eventProjects.submittedAt))
+    .orderBy(sortDir(eventProjects.submittedAt))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
@@ -155,6 +168,61 @@ export async function getHackathonProjects(
   return { items, totalCount, page, pageSize, totalPages };
 }
 
+/** Get all hackathon projects owned by or joined by a specific profile */
+export async function getUserHackathonProjects(profileId: string) {
+  const eventId = await getHackathonEventId();
+  if (!eventId) return [];
+
+  // Get projects owned by the user that are linked to the hackathon
+  const ownedEntries = await db
+    .select({ projectId: eventProjects.projectId })
+    .from(eventProjects)
+    .innerJoin(projects, eq(eventProjects.projectId, projects.id))
+    .where(
+      and(
+        eq(eventProjects.eventId, eventId),
+        eq(projects.profileId, profileId)
+      )
+    );
+
+  // Get projects the user is a member of that are linked to the hackathon
+  const memberEntries = await db
+    .select({ projectId: eventProjects.projectId })
+    .from(eventProjects)
+    .innerJoin(projectMembers, eq(eventProjects.projectId, projectMembers.projectId))
+    .where(
+      and(
+        eq(eventProjects.eventId, eventId),
+        eq(projectMembers.profileId, profileId)
+      )
+    );
+
+  const allIds = [
+    ...new Set([
+      ...ownedEntries.map((r) => r.projectId),
+      ...memberEntries.map((r) => r.projectId),
+    ]),
+  ];
+
+  if (allIds.length === 0) return [];
+
+  const hydrated = await db.query.projects.findMany({
+    where: inArray(projects.id, allIds),
+    with: {
+      profile: true,
+      members: {
+        with: {
+          profile: {
+            columns: { id: true, displayName: true, username: true, avatarUrl: true },
+          },
+        },
+      },
+    },
+  });
+
+  return hydrated;
+}
+
 export async function getProjectBySlug(slug: string) {
   const project = await db.query.projects.findFirst({
     where: eq(projects.slug, slug),
@@ -179,23 +247,13 @@ export async function getProjectBySlug(slug: string) {
 }
 
 export async function getHackathonProfiles(
-  pagination?: PaginationParams
+  params?: SearchSortParams
 ) {
   const eventId = await getHackathonEventId();
-  if (!eventId) {
-    return pagination
-      ? { items: [], totalCount: 0, page: 1, pageSize: pagination.pageSize ?? DEFAULT_PAGE_SIZE, totalPages: 1 }
-      : [];
-  }
+  if (!params) {
+    // Non-paginated path (backward compat)
+    if (!eventId) return [];
 
-  const visibilityFilter = and(
-    eq(eventRegistrations.eventId, eventId),
-    isNull(profiles.bannedAt),
-    isNull(profiles.hiddenAt)
-  );
-
-  if (!pagination) {
-    // Non-paginated: use relational query for backward compat
     const registrations = await db.query.eventRegistrations.findMany({
       where: eq(eventRegistrations.eventId, eventId),
       with: { profile: true },
@@ -207,8 +265,25 @@ export async function getHackathonProfiles(
       .map((r) => ({ profile: r.profile, teamPreference: r.teamPreference }));
   }
 
-  // Paginated: push filtering + pagination into the DB
-  const pageSize = pagination.pageSize ?? DEFAULT_PAGE_SIZE;
+  const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
+  const emptyResult = { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
+
+  if (!eventId) return emptyResult;
+
+  const search = params.search?.trim();
+  const sortDir = params.sort === "oldest" ? asc : desc;
+
+  const visibilityFilter = and(
+    eq(eventRegistrations.eventId, eventId),
+    isNull(profiles.bannedAt),
+    isNull(profiles.hiddenAt),
+    search
+      ? or(
+          ilike(profiles.displayName, `%${escapeIlike(search)}%`),
+          ilike(profiles.username, `%${escapeIlike(search)}%`)
+        )
+      : undefined
+  );
 
   const [{ totalCount }] = await db
     .select({ totalCount: count() })
@@ -217,11 +292,9 @@ export async function getHackathonProfiles(
     .where(visibilityFilter);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-  const page = Math.max(1, Math.min(pagination.page, totalPages));
+  const page = Math.max(1, Math.min(params.page, totalPages));
 
-  if (totalCount === 0) {
-    return { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
-  }
+  if (totalCount === 0) return emptyResult;
 
   const rows = await db
     .select({
@@ -231,7 +304,7 @@ export async function getHackathonProfiles(
     .from(eventRegistrations)
     .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
     .where(visibilityFilter)
-    .orderBy(desc(eventRegistrations.registeredAt))
+    .orderBy(sortDir(eventRegistrations.registeredAt))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
