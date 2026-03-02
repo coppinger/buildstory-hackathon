@@ -48,7 +48,7 @@ export function AppSidebar() {
 
   return (
     <aside className="hidden md:block px-16 w-58 lg:w-63 shrink-0 border-r border-border min-h-full">
-      <div className="sticky top-0 flex flex-col justify-between min-h-screen py-8">
+      <div className="sticky top-0 flex flex-col min-h-screen py-8">
         <nav className="flex flex-col gap-4 lg:gap-6">
           {navItems.map(({ label, href }) => {
             const isActive =
@@ -57,27 +57,29 @@ export function AppSidebar() {
 
             return (
               <Link key={href} href={href}>
-                <p
-                  className={cn(
-                    "text-lg lg:text-xl font-medium transition-colors flex items-center gap-2",
-                    isActive
-                      ? "font-semibold text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {label}
+                <div>
+                  <p
+                    className={cn(
+                      "text-lg lg:text-xl font-medium transition-colors",
+                      isActive
+                        ? "font-semibold text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {label}
+                  </p>
                   {isLiveStreams && liveCount > 0 && (
-                    <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-xs font-semibold text-white rounded-full bg-[#9146FF]">
-                      {liveCount}
-                    </span>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {liveCount} {liveCount === 1 ? "stream" : "streams"} live right now
+                    </p>
                   )}
-                </p>
+                </div>
               </Link>
             );
           })}
         </nav>
 
-        <div className="flex items-center gap-4 pb-4">
+        <div className="flex items-center gap-4 mt-6">
           <a
             href="https://x.com/buildstory"
             target="_blank"

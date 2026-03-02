@@ -12,11 +12,6 @@ import { loadSearchSortParams, DEFAULT_PAGE_SIZE } from "@/lib/search-params";
 import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
 
-const startingPointLabels: Record<string, string> = {
-  new: "New",
-  existing: "Existing",
-};
-
 type HackathonProject = Awaited<ReturnType<typeof getUserHackathonProjects>>[number];
 
 function ProjectCard({ project, pinned = false }: { project: HackathonProject; pinned?: boolean }) {
@@ -48,10 +43,12 @@ function ProjectCard({ project, pinned = false }: { project: HackathonProject; p
               Yours
             </Badge>
           )}
-          {project.startingPoint && (
-            <Badge variant="outline">
-              {startingPointLabels[project.startingPoint] ?? project.startingPoint}
-            </Badge>
+          {pinned && project.slug && (
+            <Button variant="ghost" size="xs" asChild>
+              <Link href={`/projects/${project.slug}/edit`}>
+                <Icon name="edit" size="4" />
+              </Link>
+            </Button>
           )}
         </div>
       </div>
