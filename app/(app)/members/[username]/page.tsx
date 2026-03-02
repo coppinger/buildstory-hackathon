@@ -85,7 +85,7 @@ export default async function ProfileDetailPage({
       </div>
 
       {profile.bio && (
-        <p className="mt-6 text-base text-muted-foreground leading-relaxed">
+        <p className="mt-6 text-base text-muted-foreground leading-relaxed break-words">
           {profile.bio}
         </p>
       )}
