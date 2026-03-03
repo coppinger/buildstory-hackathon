@@ -1,11 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-
-export const metadata: Metadata = {
-  title: "Members",
-  description: "Discover builders participating in Hackathon 00.",
-};
 import { Icon } from "@/components/ui/icon";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { PaginatedList } from "@/components/paginated-list";
@@ -15,6 +10,11 @@ import { getHackathonProfiles } from "@/lib/queries";
 import { loadSearchSortParams, DEFAULT_PAGE_SIZE } from "@/lib/search-params";
 import { getCountryByCode, formatLocation } from "@/lib/countries";
 import { getRegionName } from "@/lib/regions";
+
+export const metadata: Metadata = {
+  title: "Members",
+  description: "Discover builders participating in Hackathon 00.",
+};
 
 const experienceLabels: Record<string, string> = {
   getting_started: "Getting started",

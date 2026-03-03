@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
-
-export const metadata: Metadata = {
-  title: "Edit Project",
-};
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { getProjectBySlug } from "@/lib/queries";
 import { ProjectForm } from "@/components/projects/project-form";
+
+export const metadata: Metadata = {
+  title: "Edit Project",
+};
 
 export default async function EditProjectPage({
   params,

@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
-
-export const metadata: Metadata = {
-  title: "Register for Hackathon 00",
-};
 import { redirect } from "next/navigation";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { events, eventRegistrations } from "@/lib/db/schema";
 import { HackathonOnboarding } from "./hackathon-onboarding";
+
+export const metadata: Metadata = {
+  title: "Register for Hackathon 00",
+};
 
 const HACKATHON_SLUG = "hackathon-00";
 

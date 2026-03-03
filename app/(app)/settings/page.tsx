@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { ensureProfile } from "@/lib/db/ensure-profile";
+import { ProfileForm } from "@/components/settings/profile-form";
 
 export const metadata: Metadata = {
   title: "Settings",
 };
-import { redirect } from "next/navigation";
-import { ensureProfile } from "@/lib/db/ensure-profile";
-import { ProfileForm } from "@/components/settings/profile-form";
 
 export default async function SettingsPage() {
   const { userId } = await auth();

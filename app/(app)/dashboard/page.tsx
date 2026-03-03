@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
-
-export const metadata: Metadata = {
-  title: "Dashboard",
-};
 import { eq, and } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/lib/db";
@@ -24,6 +20,10 @@ import { DiscordCard } from "@/components/dashboard/discord-card";
 import { getPublicStats, getPublicActivityFeed } from "@/lib/queries";
 import { HACKATHON_SLUG } from "@/lib/constants";
 import { getEventStatusLabel } from "@/lib/events";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 
 async function getHackathonData() {
   const event = await db.query.events.findFirst({

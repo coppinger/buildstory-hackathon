@@ -2,11 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
-
-export const metadata: Metadata = {
-  title: "Projects",
-  description: "See what people are building for Hackathon 00.",
-};
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -18,6 +13,11 @@ import { getHackathonProjects, getUserHackathonProjects } from "@/lib/queries";
 import { loadSearchSortParams, DEFAULT_PAGE_SIZE } from "@/lib/search-params";
 import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
+
+export const metadata: Metadata = {
+  title: "Projects",
+  description: "See what people are building for Hackathon 00.",
+};
 
 type HackathonProject = Awaited<ReturnType<typeof getUserHackathonProjects>>[number];
 

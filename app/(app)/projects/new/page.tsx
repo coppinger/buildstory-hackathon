@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
-
-export const metadata: Metadata = {
-  title: "New Project",
-};
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
@@ -11,6 +7,10 @@ import { db } from "@/lib/db";
 import { events } from "@/lib/db/schema";
 import { HACKATHON_SLUG } from "@/lib/constants";
 import { ProjectForm } from "@/components/projects/project-form";
+
+export const metadata: Metadata = {
+  title: "New Project",
+};
 
 export default async function NewProjectPage() {
   const { userId } = await auth();
