@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
@@ -13,6 +14,20 @@ import {
 import { Header } from "@/components/header";
 import { BlurFade } from "@/components/blur-fade";
 import { EventDashboard } from "./event-dashboard";
+import { ogMeta, notFoundMeta } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const event = await db.query.events.findFirst({
+    where: eq(events.slug, slug),
+  });
+  if (!event) return notFoundMeta;
+  return ogMeta(event.name, event.description);
+}
 
 export default async function EventPage({
   params,

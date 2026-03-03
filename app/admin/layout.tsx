@@ -1,8 +1,17 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { getAdminSession } from "@/lib/admin/get-admin-session";
+
+export const metadata: Metadata = {
+  title: {
+    default: "Admin",
+    template: "%s | Admin | Buildstory",
+  },
+  robots: { index: false },
+};
 
 export default async function AdminLayout({
   children,

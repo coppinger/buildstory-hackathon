@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
+
+export const metadata: Metadata = {
+  title: "Edit Project",
+};
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { ensureProfile } from "@/lib/db/ensure-profile";

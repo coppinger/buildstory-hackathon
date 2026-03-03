@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
+
+export const metadata: Metadata = {
+  title: "Projects",
+  description: "See what people are building for Hackathon 00.",
+};
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";

@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
+
+export const metadata: Metadata = {
+  title: "Register for Hackathon 00",
+};
 import { redirect } from "next/navigation";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";

@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 import { eq, and } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/lib/db";

@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
+
+export const metadata: Metadata = {
+  title: "New Project",
+};
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import Link from "next/link";

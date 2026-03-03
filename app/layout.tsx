@@ -35,7 +35,10 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Buildstory",
-    title: "Buildstory — Show, don't tell.",
+    title: {
+      default: "Buildstory — Show, don't tell.",
+      template: "%s | Buildstory",
+    },
     description:
       "The community platform for AI builders. Show what you've built, earn credibility, and connect with builders who ship.",
     images: [
@@ -49,7 +52,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Buildstory — Show, don't tell.",
+    title: {
+      default: "Buildstory — Show, don't tell.",
+      template: "%s | Buildstory",
+    },
     description:
       "The community platform for AI builders. Show what you've built, earn credibility, and connect with builders who ship.",
     images: ["/cover.png"],

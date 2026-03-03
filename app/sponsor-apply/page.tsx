@@ -1,13 +1,12 @@
-import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { SponsorApplyForm } from "./sponsor-apply-form";
+import { ogMeta } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-  title: "Become a Sponsor | Buildstory",
-  description:
-    "Support builders during Hackathon 00 with tool credits, resources, and more.",
-};
+export const metadata = ogMeta(
+  "Become a Sponsor",
+  "Support builders during Hackathon 00 with tool credits, resources, and more.",
+);
 
 export default function SponsorApplyPage() {
   return (

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
@@ -8,6 +9,18 @@ import { ensureProfile } from "@/lib/db/ensure-profile";
 import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
 import { TeamSection } from "@/components/projects/team-section";
 import { MarkdownText } from "@/components/ui/markdown-text";
+import { ogMeta, notFoundMeta } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const project = await getProjectBySlug(slug);
+  if (!project) return notFoundMeta;
+  return ogMeta(project.name, project.description);
+}
 
 const startingPointLabels: Record<string, string> = {
   new: "Starting from scratch",
