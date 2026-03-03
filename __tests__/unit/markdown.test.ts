@@ -44,9 +44,13 @@ describe("renderMarkdown", () => {
     expect(renderMarkdown("hello\nworld")).toBe("hello<br />world");
   });
 
-  it("collapses multiple consecutive line breaks into one", () => {
-    expect(renderMarkdown("hello\n\n\nworld")).toBe("hello<br />world");
-    expect(renderMarkdown("a\n\n\n\n\nb")).toBe("a<br />b");
+  it("converts double line breaks to double br for paragraph spacing", () => {
+    expect(renderMarkdown("hello\n\nworld")).toBe("hello<br /><br />world");
+  });
+
+  it("collapses 3+ consecutive line breaks into double br", () => {
+    expect(renderMarkdown("hello\n\n\nworld")).toBe("hello<br /><br />world");
+    expect(renderMarkdown("a\n\n\n\n\nb")).toBe("a<br /><br />b");
   });
 
   it("handles combined formatting", () => {
