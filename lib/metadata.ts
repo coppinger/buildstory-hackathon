@@ -13,8 +13,8 @@ export function truncateForMeta(text: string, maxLength = 160): string {
   return (lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated) + "...";
 }
 
-/** Not-found metadata for dynamic routes. */
-export const notFoundMeta: Metadata = { title: "Not Found" };
+/** Not-found metadata — shared by not-found pages and generateMetadata fallbacks. */
+export const notFoundMeta: Metadata = { title: "Page Not Found" };
 
 /**
  * Build a Metadata object with title, description, and matching OG/Twitter fields.

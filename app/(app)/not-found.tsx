@@ -1,10 +1,8 @@
-import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { notFoundMeta } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-  title: "Page Not Found",
-};
+export const metadata = notFoundMeta;
 
 export default function NotFound() {
   return (
