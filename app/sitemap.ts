@@ -2,6 +2,34 @@ import type { MetadataRoute } from "next";
 
 export const revalidate = 3600;
 
+async function collectAllPages(
+  fetcher: (params: { page: number; pageSize: number }) => Promise<{ items: { slug?: string | null; profile?: { username: string | null } }[]; totalPages: number } | unknown>,
+  toUrl: (item: Record<string, unknown>) => string | null,
+): Promise<MetadataRoute.Sitemap> {
+  const routes: MetadataRoute.Sitemap = [];
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const result = await fetcher({ page, pageSize: 500 });
+    if (
+      typeof result !== "object" ||
+      result === null ||
+      !("items" in result) ||
+      !("totalPages" in result)
+    ) break;
+    const { items, totalPages: tp } = result as { items: Record<string, unknown>[]; totalPages: number };
+    for (const item of items) {
+      const url = toUrl(item);
+      if (url) {
+        routes.push({ url, changeFrequency: "weekly", priority: 0.6 });
+      }
+    }
+    totalPages = tp;
+    page++;
+  } while (page <= totalPages);
+  return routes;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = "https://buildstory.com";
 
@@ -16,43 +44,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       "@/lib/queries"
     );
 
-    const projectRoutes: MetadataRoute.Sitemap = [];
-    let projectPage = 1;
-    let projectTotalPages = 1;
-    do {
-      const result = await getHackathonProjects({ page: projectPage, pageSize: 500 });
-      if (!("items" in result)) break;
-      for (const p of result.items) {
-        if (p.slug) {
-          projectRoutes.push({
-            url: `${base}/projects/${p.slug}`,
-            changeFrequency: "weekly",
-            priority: 0.6,
-          });
-        }
-      }
-      projectTotalPages = result.totalPages;
-      projectPage++;
-    } while (projectPage <= projectTotalPages);
-
-    const profileRoutes: MetadataRoute.Sitemap = [];
-    let profilePage = 1;
-    let profileTotalPages = 1;
-    do {
-      const result = await getHackathonProfiles({ page: profilePage, pageSize: 500 });
-      if (!("items" in result)) break;
-      for (const e of result.items) {
-        if (e.profile.username) {
-          profileRoutes.push({
-            url: `${base}/members/${e.profile.username}`,
-            changeFrequency: "weekly",
-            priority: 0.6,
-          });
-        }
-      }
-      profileTotalPages = result.totalPages;
-      profilePage++;
-    } while (profilePage <= profileTotalPages);
+    const [projectRoutes, profileRoutes] = await Promise.all([
+      collectAllPages(getHackathonProjects, (p) => {
+        const slug = p.slug as string | null;
+        return slug ? `${base}/projects/${slug}` : null;
+      }),
+      collectAllPages(getHackathonProfiles, (e) => {
+        const profile = e.profile as { username: string | null } | undefined;
+        return profile?.username ? `${base}/members/${profile.username}` : null;
+      }),
+    ]);
 
     return [...staticRoutes, ...projectRoutes, ...profileRoutes];
   } catch (error) {

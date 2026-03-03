@@ -3,10 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: {
-    default: "Sign In",
-    template: "%s | Buildstory",
-  },
+  title: "Sign In",
 };
 
 export default function AuthLayout({
