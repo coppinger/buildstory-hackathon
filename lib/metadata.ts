@@ -29,5 +29,6 @@ export function ogMeta(title: string, rawDescription?: string | null): Metadata 
     title,
     description,
     openGraph: { title, description },
+    twitter: { title, description },
   };
 }
