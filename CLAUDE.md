@@ -38,6 +38,7 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 - **Testing**: Vitest (integration tests against real Neon DB)
 - **Pre-commit**: Husky + lint-staged -- runs ESLint on staged `.ts/.tsx/.js/.jsx` files before each commit (`.husky/pre-commit`). Config in `eslint.config.mjs` enforces: `no-console` (warn, allows `warn`/`error`), `prefer-const` (flag unreassigned `let`), `eqeqeq` with `== null` exception, `@next/next/no-img-element` off (local SVGs only)
 - **CI**: GitHub Actions -- three workflows: `lint.yml` (PR), `test.yml` (PR), `deploy.yml` (push to main)
+- **Local dev proxy**: Portless (`portless`, installed globally) -- replaces `localhost:PORT` with stable `http://bs.localhost:1355` URL. The `dev` script runs `portless bs next dev`, which auto-assigns a random port to Next.js and proxies through port 1355. Bypass with `PORTLESS=0 npm run dev` if needed.
 - **AI enrichment:** Anthropic API (future — build log processing)
 
 ## Development Workflow
@@ -72,7 +73,7 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 ## Commands
 
 ```
-npm run dev          # Start dev server (localhost:3000)
+npm run dev          # Start dev server (http://bs.localhost:1355 via portless)
 npm run build        # Production build
 npm run lint         # ESLint
 npm test             # Run integration tests (Vitest, hits real DB)
