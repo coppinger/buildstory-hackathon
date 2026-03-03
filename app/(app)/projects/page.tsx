@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
@@ -13,11 +12,12 @@ import { getHackathonProjects, getUserHackathonProjects } from "@/lib/queries";
 import { loadSearchSortParams, DEFAULT_PAGE_SIZE } from "@/lib/search-params";
 import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
+import { ogMeta } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-  title: "Projects",
-  description: "See what people are building for Hackathon 00.",
-};
+export const metadata = ogMeta(
+  "Projects",
+  "See what people are building for Hackathon 00.",
+);
 
 type HackathonProject = Awaited<ReturnType<typeof getUserHackathonProjects>>[number];
 

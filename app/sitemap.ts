@@ -49,8 +49,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const slug = p.slug as string | null;
         return slug ? `${base}/projects/${slug}` : null;
       }),
-      collectAllPages(getHackathonProfiles, (e) => {
-        const profile = e.profile as { username: string | null } | undefined;
+      collectAllPages(getHackathonProfiles, (entry) => {
+        const profile = entry.profile as { username: string | null } | undefined;
         return profile?.username ? `${base}/members/${profile.username}` : null;
       }),
     ]);
