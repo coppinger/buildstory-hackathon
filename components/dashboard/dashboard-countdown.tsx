@@ -42,10 +42,38 @@ export function DashboardCountdown({ compact = false }: { compact?: boolean }) {
   const [state, setState] = useState<ReturnType<typeof getState> | null>(null);
 
   useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
     const tick = () => setState(getState());
-    tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
+
+    const stop = () => {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+
+    const start = () => {
+      if (intervalId !== null || document.hidden) return;
+      tick();
+      intervalId = setInterval(tick, 1000);
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stop();
+        return;
+      }
+      start();
+    };
+
+    start();
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
 
   if (state?.phase === "ended") {

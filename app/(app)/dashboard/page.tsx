@@ -73,12 +73,15 @@ async function getUserDashboardData(eventId: string) {
 export default async function DashboardPage() {
   const [data, activityFeed] = await Promise.all([
     getHackathonData(),
-    getPublicActivityFeed(),
+    getPublicActivityFeed(24),
   ]);
 
-  const serializedActivities = activityFeed.map((a) => ({
-    ...a,
-    timestamp: a.timestamp.toISOString(),
+  const serializedActivities = activityFeed.map((activity) => ({
+    type: activity.type,
+    displayName: activity.displayName,
+    username: activity.username,
+    avatarUrl: activity.avatarUrl,
+    detail: activity.detail,
   }));
 
   const hackathon = data

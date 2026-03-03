@@ -1,53 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
 import { StreamerCard } from "./streamer-card";
-import type { LiveStreamer } from "@/app/api/streamers/route";
-
-const POLL_INTERVAL_MS = 60_000; // 60 seconds
+import { useLiveStreamers } from "@/lib/streamers/use-live-streamers";
 
 export function StreamersList() {
-  const [streamers, setStreamers] = useState<LiveStreamer[]>([]);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const hasLoadedOnce = useRef(false);
+  const { streamers, loading, initialError } = useLiveStreamers();
 
-  const fetchStreamers = useCallback(async () => {
-    try {
-      const res = await fetch("/api/streamers");
-      if (!res.ok) throw new Error("Failed to fetch");
-      const data = await res.json();
-      setStreamers(data.streamers);
-      setError(null);
-      hasLoadedOnce.current = true;
-    } catch {
-      // Only show error on initial load; keep stale data on subsequent failures
-      if (!hasLoadedOnce.current) {
-        setError("Failed to load live streamers");
-      }
-    } finally {
-      setInitialLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchStreamers();
-
-    const interval = setInterval(fetchStreamers, POLL_INTERVAL_MS);
-
-    function handleVisibility() {
-      if (!document.hidden) fetchStreamers();
-    }
-
-    document.addEventListener("visibilitychange", handleVisibility);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, [fetchStreamers]);
-
-  if (initialLoading) {
+  if (loading) {
     return (
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -70,9 +29,9 @@ export function StreamersList() {
     );
   }
 
-  if (error) {
+  if (initialError) {
     return (
-      <p className="mt-12 text-muted-foreground text-center">{error}</p>
+      <p className="mt-12 text-muted-foreground text-center">{initialError}</p>
     );
   }
 
