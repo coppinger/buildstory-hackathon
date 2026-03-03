@@ -1,9 +1,25 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getInviteByToken } from "@/lib/queries";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { AcceptInviteCard } from "@/components/projects/accept-invite-card";
+import { ogMeta, notFoundMeta } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}): Promise<Metadata> {
+  const { token } = await params;
+  const invite = await getInviteByToken(token);
+  if (!invite) return notFoundMeta;
+  return ogMeta(
+    `Join ${invite.project.name}`,
+    `${invite.sender.displayName} invited you to join ${invite.project.name} on Buildstory`,
+  );
+}
 
 export default async function InvitePage({
   params,

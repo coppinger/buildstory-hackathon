@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
@@ -10,6 +11,21 @@ import { MarkdownText } from "@/components/ui/markdown-text";
 import { stripMarkdown } from "@/lib/markdown";
 import { getCountryByCode, formatLocation } from "@/lib/countries";
 import { getRegionName } from "@/lib/regions";
+import { ogMeta, notFoundMeta } from "@/lib/metadata";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}): Promise<Metadata> {
+  const { username } = await params;
+  const profile = await getProfileByUsername(username);
+  if (!profile) return notFoundMeta;
+  const title = profile.username
+    ? `${profile.displayName} (@${profile.username})`
+    : profile.displayName;
+  return ogMeta(title, profile.bio ?? "Builder on Buildstory");
+}
 
 const experienceLabels: Record<string, string> = {
   getting_started: "Getting started",

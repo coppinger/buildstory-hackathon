@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { StreamersList } from "@/components/streamers/streamers-list";
+
+export const metadata: Metadata = {
+  title: "Streamers",
+};
 
 export default function StreamersPage() {
   return (

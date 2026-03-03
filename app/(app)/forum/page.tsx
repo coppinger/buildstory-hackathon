@@ -1,3 +1,9 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Forum",
+};
+
 export default function ForumPage() {
   return (
     <div className="p-6 md:p-8 lg:p-12">

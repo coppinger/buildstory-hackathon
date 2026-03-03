@@ -9,6 +9,12 @@ import { getHackathonProfiles } from "@/lib/queries";
 import { loadSearchSortParams, DEFAULT_PAGE_SIZE } from "@/lib/search-params";
 import { getCountryByCode, formatLocation } from "@/lib/countries";
 import { getRegionName } from "@/lib/regions";
+import { ogMeta } from "@/lib/metadata";
+
+export const metadata = ogMeta(
+  "Members",
+  "Discover builders participating in Hackathon 00.",
+);
 
 const experienceLabels: Record<string, string> = {
   getting_started: "Getting started",

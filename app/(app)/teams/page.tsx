@@ -1,3 +1,9 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Teams",
+};
+
 export default function TeamsPage() {
   return (
     <div className="p-6 md:p-8 lg:p-12">

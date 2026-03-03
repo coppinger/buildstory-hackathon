@@ -1,13 +1,12 @@
-import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { MentorApplyForm } from "./mentor-apply-form";
+import { ogMeta } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-  title: "Mentor Application | Buildstory",
-  description:
-    "Volunteer to mentor builders during Hackathon 00. Help participants get unstuck with design, technical, or growth guidance.",
-};
+export const metadata = ogMeta(
+  "Mentor Application",
+  "Volunteer to mentor builders during Hackathon 00. Help participants get unstuck with design, technical, or growth guidance.",
+);
 
 export default function MentorApplyPage() {
   return (
