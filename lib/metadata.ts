@@ -8,7 +8,7 @@ import { stripMarkdown } from "@/lib/markdown";
 export function truncateForMeta(text: string, maxLength = 160): string {
   const plain = stripMarkdown(text);
   if (plain.length <= maxLength) return plain;
-  const truncated = plain.slice(0, maxLength);
+  const truncated = plain.slice(0, maxLength - 3);
   const lastSpace = truncated.lastIndexOf(" ");
   return (lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated) + "...";
 }
