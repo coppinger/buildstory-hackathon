@@ -16,35 +16,47 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       "@/lib/queries"
     );
 
-    const [projectsResult, profilesResult] = await Promise.all([
-      getHackathonProjects({ page: 1, pageSize: 1000 }),
-      getHackathonProfiles({ page: 1, pageSize: 1000 }),
-    ]);
+    const projectRoutes: MetadataRoute.Sitemap = [];
+    let projectPage = 1;
+    let projectTotalPages = 1;
+    do {
+      const result = await getHackathonProjects({ page: projectPage, pageSize: 500 });
+      if (!("items" in result)) break;
+      for (const p of result.items) {
+        if (p.slug) {
+          projectRoutes.push({
+            url: `${base}/projects/${p.slug}`,
+            changeFrequency: "weekly",
+            priority: 0.6,
+          });
+        }
+      }
+      projectTotalPages = result.totalPages;
+      projectPage++;
+    } while (projectPage <= projectTotalPages);
 
-    const projectRoutes: MetadataRoute.Sitemap =
-      "items" in projectsResult
-        ? projectsResult.items
-            .filter((p) => p.slug)
-            .map((p) => ({
-              url: `${base}/projects/${p.slug}`,
-              changeFrequency: "weekly" as const,
-              priority: 0.6,
-            }))
-        : [];
-
-    const profileRoutes: MetadataRoute.Sitemap =
-      "items" in profilesResult
-        ? profilesResult.items
-            .filter((e) => e.profile.username)
-            .map((e) => ({
-              url: `${base}/members/${e.profile.username}`,
-              changeFrequency: "weekly" as const,
-              priority: 0.6,
-            }))
-        : [];
+    const profileRoutes: MetadataRoute.Sitemap = [];
+    let profilePage = 1;
+    let profileTotalPages = 1;
+    do {
+      const result = await getHackathonProfiles({ page: profilePage, pageSize: 500 });
+      if (!("items" in result)) break;
+      for (const e of result.items) {
+        if (e.profile.username) {
+          profileRoutes.push({
+            url: `${base}/members/${e.profile.username}`,
+            changeFrequency: "weekly",
+            priority: 0.6,
+          });
+        }
+      }
+      profileTotalPages = result.totalPages;
+      profilePage++;
+    } while (profilePage <= profileTotalPages);
 
     return [...staticRoutes, ...projectRoutes, ...profileRoutes];
-  } catch {
+  } catch (error) {
+    console.error("Sitemap generation failed, returning static routes only:", error);
     return staticRoutes;
   }
 }
