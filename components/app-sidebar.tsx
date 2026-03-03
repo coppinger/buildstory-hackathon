@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { XIcon, TwitchIcon, DiscordIcon } from "@/components/icons";
-import { DISCORD_INVITE_URL } from "@/lib/constants";
+import { DISCORD_INVITE_URL, TWITCH_URL, X_URL } from "@/lib/constants";
 import { useLiveStreamers } from "@/lib/streamers/use-live-streamers";
 
 const navItems = [
@@ -55,7 +55,7 @@ export function AppSidebar() {
 
         <div className="flex items-center gap-6 mt-8">
           <a
-            href="https://x.com/buildstory"
+            href={X_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -64,7 +64,7 @@ export function AppSidebar() {
             <XIcon className="w-4 h-4" />
           </a>
           <a
-            href="https://twitch.tv/buildstory"
+            href={TWITCH_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground hover:text-foreground transition-colors"
