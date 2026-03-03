@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "portless bs next dev",
+    "dev": "command -v portless >/dev/null 2>&1 && portless bs next dev || next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
