@@ -63,8 +63,8 @@ export function renderMarkdown(text: string): string {
   // Restore links from placeholders
   html = html.replace(/\x00LINK(\d+)\x00/g, (_match, index) => links[Number(index)]);
 
-  // Collapse 2+ consecutive line breaks into a single one, then convert to <br />
-  html = html.replace(/\n{2,}/g, "\n");
+  // Collapse 3+ consecutive line breaks into two, then convert to <br />
+  html = html.replace(/\n{3,}/g, "\n\n");
   html = html.replace(/\n/g, "<br />");
 
   return html;
