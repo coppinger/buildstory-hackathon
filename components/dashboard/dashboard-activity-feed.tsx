@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
-const BATCH_SIZE = 20;
+const MAX_ITEMS = 12;
+const ROTATE_INTERVAL_MS = 5000;
 
 function getInitials(name: string) {
   if (!name) return "?";
@@ -46,7 +46,6 @@ interface SerializedActivity {
   username: string | null;
   avatarUrl: string | null;
   detail: string | null;
-  timestamp: string;
 }
 
 interface FeedItem {
@@ -62,44 +61,72 @@ interface DashboardActivityFeedProps {
   activities: SerializedActivity[];
 }
 
+function toFeedItem(activity: SerializedActivity, id: number): FeedItem {
+  return {
+    id,
+    type: activity.type,
+    name: activity.displayName,
+    handle: activity.username ? `@${activity.username}` : "",
+    avatarUrl: activity.avatarUrl,
+    action: formatAction(activity.type, activity.detail),
+  };
+}
+
 export function DashboardActivityFeed({ activities }: DashboardActivityFeedProps) {
-  const nextIndexRef = useRef(BATCH_SIZE);
+  const nextIndexRef = useRef(Math.min(MAX_ITEMS, activities.length));
   const [items, setItems] = useState<FeedItem[]>(() => {
     if (activities.length === 0) return [];
     return activities
-      .slice(0, BATCH_SIZE)
+      .slice(0, MAX_ITEMS)
       .reverse()
-      .map((a, i) => ({
-        id: i,
-        type: a.type,
-        name: a.displayName,
-        handle: a.username ? `@${a.username}` : "",
-        avatarUrl: a.avatarUrl,
-        action: formatAction(a.type, a.detail),
-      }));
+      .map((activity, index) => toFeedItem(activity, index));
   });
 
   const addItem = useCallback(() => {
     if (activities.length === 0) return;
+
     const activity = activities[nextIndexRef.current % activities.length];
     setItems((prev) => {
-      const newItem: FeedItem = {
-        id: Date.now(),
-        type: activity.type,
-        name: activity.displayName,
-        handle: activity.username ? `@${activity.username}` : "",
-        avatarUrl: activity.avatarUrl,
-        action: formatAction(activity.type, activity.detail),
-      };
-      return [newItem, ...prev].slice(0, BATCH_SIZE);
+      const newItem = toFeedItem(activity, Date.now());
+      return [newItem, ...prev].slice(0, MAX_ITEMS);
     });
     nextIndexRef.current += 1;
   }, [activities]);
 
   useEffect(() => {
     if (activities.length === 0) return;
-    const interval = setInterval(addItem, 3000);
-    return () => clearInterval(interval);
+
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    const stop = () => {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+
+    const start = () => {
+      if (intervalId !== null || document.hidden) return;
+      intervalId = setInterval(addItem, ROTATE_INTERVAL_MS);
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stop();
+        return;
+      }
+
+      addItem();
+      start();
+    };
+
+    start();
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [addItem, activities.length]);
 
   if (activities.length === 0) {
@@ -120,59 +147,45 @@ export function DashboardActivityFeed({ activities }: DashboardActivityFeedProps
         <div className="pointer-events-none absolute inset-x-px bottom-0 z-10 h-16 bg-gradient-to-t from-neutral-950 to-transparent" />
       <div className="h-full overflow-hidden px-8">
         <div className="flex flex-col gap-0.5">
-          <AnimatePresence initial={false}>
-            {items.map((item, i) => (
-              <motion.div
-                key={item.id}
-                layout
-                initial={{ opacity: 0, y: -20, filter: "blur(8px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{
-                  opacity: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] },
-                  y: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] },
-                  filter: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] },
-                  layout: { type: "spring", stiffness: 200, damping: 28 },
-                }}
-                className="flex items-center gap-3 px-3 py-2.5"
-              >
-                {/* Activity icon */}
-                <span className="w-4 shrink-0 text-center text-sm text-buildstory-500">
-                  {getActivityIcon(item.type)}
-                </span>
+          {items.map((item, i) => (
+            <div key={item.id} className="flex items-center gap-3 px-3 py-2.5">
+              {/* Activity icon */}
+              <span className="w-4 shrink-0 text-center text-sm text-buildstory-500">
+                {getActivityIcon(item.type)}
+              </span>
 
-                {/* Avatar */}
-                {item.avatarUrl ? (
-                  <Image
-                    src={item.avatarUrl}
-                    alt={item.name}
-                    width={32}
-                    height={32}
-                    unoptimized
-                    className="h-8 w-8 shrink-0 rounded-full object-cover"
-                  />
-                ) : (
-                  <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-medium ${colors[i % colors.length]}`}
-                  >
-                    {getInitials(item.name)}
-                  </div>
-                )}
-
-                {/* Info */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="truncate text-sm font-medium text-foreground">
-                      {item.name}
-                    </span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {item.handle}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{item.action}</p>
+              {/* Avatar */}
+              {item.avatarUrl ? (
+                <Image
+                  src={item.avatarUrl}
+                  alt={item.name}
+                  width={32}
+                  height={32}
+                  sizes="32px"
+                  className="h-8 w-8 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-medium ${colors[i % colors.length]}`}
+                >
+                  {getInitials(item.name)}
                 </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+              )}
+
+              {/* Info */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="truncate text-sm font-medium text-foreground">
+                    {item.name}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {item.handle}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">{item.action}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

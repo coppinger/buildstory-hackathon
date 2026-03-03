@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { XIcon, TwitchIcon, DiscordIcon } from "@/components/icons";
 import { DISCORD_INVITE_URL } from "@/lib/constants";
+import { useLiveStreamers } from "@/lib/streamers/use-live-streamers";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
@@ -17,34 +17,8 @@ const navItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const [liveCount, setLiveCount] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchLiveCount() {
-      try {
-        const res = await fetch("/api/streamers");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!cancelled) {
-          setLiveCount(data.streamers?.length ?? 0);
-        }
-      } catch {
-        // Silently ignore -- badge just won't show
-      }
-    }
-
-    fetchLiveCount();
-
-    // Refresh every 60 seconds to match the API cache TTL
-    const interval = setInterval(fetchLiveCount, 60_000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, []);
+  const { streamers } = useLiveStreamers();
+  const liveCount = streamers.length;
 
   return (
     <aside className="hidden md:block px-12 w-58 lg:w-64 shrink-0 border-r border-border min-h-full">

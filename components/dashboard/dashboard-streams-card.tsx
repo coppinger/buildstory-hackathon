@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { TwitchIcon } from "@/components/icons";
-import type { LiveStreamer } from "@/app/api/streamers/route";
-
-const POLL_INTERVAL_MS = 60_000; // 60 seconds
+import { useLiveStreamers } from "@/lib/streamers/use-live-streamers";
 const MAX_DISPLAYED = 4;
 
 function DoItLiveLink() {
@@ -24,38 +21,7 @@ function DoItLiveLink() {
 }
 
 export function DashboardStreamsCard() {
-  const [streamers, setStreamers] = useState<LiveStreamer[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchStreamers = useCallback(async () => {
-    try {
-      const res = await fetch("/api/streamers");
-      if (!res.ok) throw new Error("Failed to fetch");
-      const data = await res.json();
-      setStreamers(Array.isArray(data.streamers) ? data.streamers : []);
-    } catch {
-      // Keep stale data on subsequent failures
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchStreamers();
-
-    const interval = setInterval(fetchStreamers, POLL_INTERVAL_MS);
-
-    function handleVisibility() {
-      if (!document.hidden) fetchStreamers();
-    }
-
-    document.addEventListener("visibilitychange", handleVisibility);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, [fetchStreamers]);
+  const { streamers, loading } = useLiveStreamers();
 
   const displayed = streamers.slice(0, MAX_DISPLAYED);
   const hasMore = streamers.length > MAX_DISPLAYED;
