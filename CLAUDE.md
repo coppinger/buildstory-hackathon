@@ -76,7 +76,9 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 npm run dev          # Start dev server (http://bs.localhost:1355 via portless)
 npm run build        # Production build
 npm run lint         # ESLint
-npm test             # Run integration tests (Vitest, hits real DB)
+npm test             # Run all tests (unit + integration)
+npm run test:unit    # Run unit tests only (no DB required)
+npm run test:integration  # Run integration tests only (needs DATABASE_URL)
 npm run test:watch   # Run tests in watch mode
 npm run db:generate  # Generate migrations from schema changes
 npm run db:migrate   # Run pending migrations against current DATABASE_URL
@@ -190,14 +192,19 @@ For database constraint violations, use the pattern in `app/(onboarding)/hackath
 
 ### Testing
 
-Integration tests in `__tests__/integration/` run against the real Neon database via Vitest. Tests mock Clerk auth (`vi.mock("@clerk/nextjs/server")`), `next/cache`, Sentry, Discord webhooks (`@/lib/discord`), and milestone checkers (`@/lib/milestones`) to prevent side effects and external calls during test runs. This allows tests to exercise server actions and DB helpers directly against a real test DB without triggering notifications. Each test file manages its own cleanup in `afterAll`. Config in `vitest.config.ts`.
+Tests are split into two directories:
+
+- **`__tests__/unit/`** -- Unit tests that don't require a database connection. Includes auth redirect contract tests, proxy middleware tests, and markdown rendering tests. These run in CI for all PRs, including from forks.
+- **`__tests__/integration/`** -- Integration tests that run against the real Neon database. Tests mock Clerk auth (`vi.mock("@clerk/nextjs/server")`), `next/cache`, Sentry, Discord webhooks (`@/lib/discord`), and milestone checkers (`@/lib/milestones`) to prevent side effects. Each test file manages its own cleanup in `afterAll`. These only run in CI for same-repo PRs (skipped for fork PRs since `DATABASE_URL` is not available).
+
+Config in `vitest.config.ts`.
 
 ### CI
 
 Three GitHub Actions workflows in `.github/workflows/`:
 
 - **`lint.yml`** -- runs on PRs to `main`. Lints only (fast feedback).
-- **`test.yml`** -- runs on PRs to `main`. Runs `db:migrate` against the dev/test Neon DB, then `npm test`. The migration step ensures the test database schema stays in sync with pending migrations before tests run. Tests hit the real Neon DB via `DATABASE_URL` stored in GitHub repo secrets.
+- **`test.yml`** -- runs on PRs to `main`. Two jobs: `unit-test` (always runs, no secrets needed — safe for fork PRs) and `integration-test` (only runs for same-repo PRs, migrates dev/test Neon DB then runs integration tests via `DATABASE_URL` secret).
 - **`deploy.yml`** -- runs on push to `main` (i.e., after PR merge). Runs lint + test in parallel, then a `deploy` job (gated on both passing) that migrates the **production** Neon DB (`PRODUCTION_DATABASE_URL`) and triggers a Vercel deploy hook (`VERCEL_DEPLOY_HOOK`). `vercel.json` disables Vercel's automatic git-triggered deploy on `main` so the build only starts after production migrations complete. Preview deployments on PR branches are unaffected.
 
 ## Environment Variables
