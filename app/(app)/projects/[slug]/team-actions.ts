@@ -110,6 +110,24 @@ export async function sendDirectInvite(data: {
       type: "direct",
     });
 
+    // Create a notification for the recipient (non-blocking)
+    try {
+      const { createNotification } = await import("@/lib/notifications/queries");
+      const senderProfile = await db.query.profiles.findFirst({
+        where: eq(profiles.id, profileId),
+        columns: { displayName: true },
+      });
+      await createNotification({
+        profileId: recipient.id,
+        type: "team_invite",
+        title: `${senderProfile?.displayName ?? "Someone"} invited you to join ${project.name}`,
+        href: project.slug ? `/projects/${project.slug}` : "/dashboard",
+        actorProfileId: profileId,
+      });
+    } catch {
+      // Non-blocking
+    }
+
     revalidatePath(`/projects/${project.slug}`);
     return { success: true };
   } catch (error) {

@@ -72,6 +72,23 @@ export const inviteStatusEnum = pgEnum("invite_status", [
 
 export const inviteTypeEnum = pgEnum("invite_type", ["direct", "link"]);
 
+export const featureBoardStatusEnum = pgEnum("feature_board_status", [
+  "inbox",
+  "exploring",
+  "next",
+  "now",
+  "shipped",
+  "closed",
+  "archived",
+]);
+
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "team_invite",
+  "mention",
+  "item_shipped",
+  "comment_reply",
+]);
+
 // --- Profiles ---
 
 export const profiles = pgTable("profiles", {
@@ -249,6 +266,10 @@ export const profilesRelations = relations(profiles, ({ many }) => ({
   sentInvites: many(teamInvites, { relationName: "inviteSender" }),
   receivedInvites: many(teamInvites, { relationName: "inviteRecipient" }),
   projectMemberships: many(projectMembers),
+  notifications: many(notifications, { relationName: "notificationRecipient" }),
+  featureBoardItems: many(featureBoardItems),
+  featureBoardUpvotes: many(featureBoardUpvotes),
+  featureBoardComments: many(featureBoardComments),
 }));
 
 export const eventsRelations = relations(events, ({ many }) => ({
@@ -488,3 +509,200 @@ export const prizeDrawsRelations = relations(prizeDraws, ({ one }) => ({
     references: [profiles.id],
   }),
 }));
+
+// --- Notifications ---
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    profileId: uuid("profile_id")
+      .notNull()
+      .references(() => profiles.id),
+    type: notificationTypeEnum("type").notNull(),
+    title: text("title").notNull(),
+    body: text("body"),
+    href: text("href"),
+    isRead: boolean("is_read").default(false).notNull(),
+    actorProfileId: uuid("actor_profile_id").references(() => profiles.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_notifications_profile_read").on(t.profileId, t.isRead),
+    index("idx_notifications_profile_created").on(t.profileId, t.createdAt),
+  ]
+);
+
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  profile: one(profiles, {
+    fields: [notifications.profileId],
+    references: [profiles.id],
+    relationName: "notificationRecipient",
+  }),
+  actor: one(profiles, {
+    fields: [notifications.actorProfileId],
+    references: [profiles.id],
+    relationName: "notificationActor",
+  }),
+}));
+
+// --- Feature Board ---
+
+export const featureBoardCategories = pgTable("feature_board_categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  color: text("color").notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  projectId: uuid("project_id"),
+});
+
+export type FeatureBoardCategory = typeof featureBoardCategories.$inferSelect;
+export type NewFeatureBoardCategory = typeof featureBoardCategories.$inferInsert;
+
+export const featureBoardItems = pgTable(
+  "feature_board_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    slug: text("slug").unique(),
+    description: text("description"),
+    status: featureBoardStatusEnum("status").default("inbox").notNull(),
+    categoryId: uuid("category_id").references(() => featureBoardCategories.id),
+    authorId: uuid("author_id")
+      .notNull()
+      .references(() => profiles.id),
+    projectId: uuid("project_id"),
+    upvoteCount: integer("upvote_count").default(0).notNull(),
+    commentCount: integer("comment_count").default(0).notNull(),
+    linearIssueId: text("linear_issue_id"),
+    linearIssueUrl: text("linear_issue_url"),
+    imageUrl: text("image_url"),
+    internalNotes: text("internal_notes"),
+    shippedAt: timestamp("shipped_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    index("idx_feature_board_items_status").on(t.status),
+    index("idx_feature_board_items_author").on(t.authorId),
+    index("idx_feature_board_items_project").on(t.projectId),
+    index("idx_feature_board_items_category").on(t.categoryId),
+  ]
+);
+
+export type FeatureBoardItem = typeof featureBoardItems.$inferSelect;
+export type NewFeatureBoardItem = typeof featureBoardItems.$inferInsert;
+
+export const featureBoardUpvotes = pgTable(
+  "feature_board_upvotes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    itemId: uuid("item_id")
+      .notNull()
+      .references(() => featureBoardItems.id, { onDelete: "cascade" }),
+    profileId: uuid("profile_id")
+      .notNull()
+      .references(() => profiles.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    unique().on(t.itemId, t.profileId),
+    index("idx_feature_board_upvotes_item").on(t.itemId),
+    index("idx_feature_board_upvotes_profile").on(t.profileId),
+  ]
+);
+
+export type FeatureBoardUpvote = typeof featureBoardUpvotes.$inferSelect;
+export type NewFeatureBoardUpvote = typeof featureBoardUpvotes.$inferInsert;
+
+export const featureBoardComments = pgTable(
+  "feature_board_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    itemId: uuid("item_id")
+      .notNull()
+      .references(() => featureBoardItems.id, { onDelete: "cascade" }),
+    authorId: uuid("author_id")
+      .notNull()
+      .references(() => profiles.id),
+    body: text("body").notNull(),
+    parentCommentId: uuid("parent_comment_id"),
+    isEdited: boolean("is_edited").default(false).notNull(),
+    deletedAt: timestamp("deleted_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    index("idx_feature_board_comments_item").on(t.itemId),
+    index("idx_feature_board_comments_author").on(t.authorId),
+  ]
+);
+
+export type FeatureBoardComment = typeof featureBoardComments.$inferSelect;
+export type NewFeatureBoardComment = typeof featureBoardComments.$inferInsert;
+
+export const featureBoardCategoriesRelations = relations(
+  featureBoardCategories,
+  ({ many }) => ({
+    items: many(featureBoardItems),
+  })
+);
+
+export const featureBoardItemsRelations = relations(
+  featureBoardItems,
+  ({ one, many }) => ({
+    category: one(featureBoardCategories, {
+      fields: [featureBoardItems.categoryId],
+      references: [featureBoardCategories.id],
+    }),
+    author: one(profiles, {
+      fields: [featureBoardItems.authorId],
+      references: [profiles.id],
+    }),
+    upvotes: many(featureBoardUpvotes),
+    comments: many(featureBoardComments),
+  })
+);
+
+export const featureBoardUpvotesRelations = relations(
+  featureBoardUpvotes,
+  ({ one }) => ({
+    item: one(featureBoardItems, {
+      fields: [featureBoardUpvotes.itemId],
+      references: [featureBoardItems.id],
+    }),
+    profile: one(profiles, {
+      fields: [featureBoardUpvotes.profileId],
+      references: [profiles.id],
+    }),
+  })
+);
+
+export const featureBoardCommentsRelations = relations(
+  featureBoardComments,
+  ({ one, many }) => ({
+    item: one(featureBoardItems, {
+      fields: [featureBoardComments.itemId],
+      references: [featureBoardItems.id],
+    }),
+    author: one(profiles, {
+      fields: [featureBoardComments.authorId],
+      references: [profiles.id],
+    }),
+    parent: one(featureBoardComments, {
+      fields: [featureBoardComments.parentCommentId],
+      references: [featureBoardComments.id],
+      relationName: "commentThread",
+    }),
+    replies: many(featureBoardComments, { relationName: "commentThread" }),
+  })
+);

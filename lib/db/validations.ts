@@ -6,6 +6,7 @@ import {
   mentorApplications,
   sponsorshipInquiries,
   twitchCategories,
+  featureBoardItems,
 } from "./schema";
 import { USERNAME_REGEX, SLUG_REGEX } from "@/lib/constants";
 
@@ -257,6 +258,37 @@ export const addTwitchCategorySchema = twitchCategoryInsertSchema.pick({
   boxArtUrl: true,
 });
 
+export const featureBoardItemInsertSchema = createInsertSchema(
+  featureBoardItems,
+  {
+    title: (s) =>
+      s.trim().min(1, "Title is required").max(200, "Title is too long"),
+    slug: (s) =>
+      s
+        .trim()
+        .toLowerCase()
+        .max(100)
+        .regex(SLUG_REGEX, "Invalid URL format"),
+    description: (s) => s.max(5000, "Description is too long"),
+    internalNotes: (s) => s.max(5000, "Notes are too long"),
+  }
+);
+
+export const submitIdeaSchema = featureBoardItemInsertSchema.pick({
+  title: true,
+  description: true,
+  categoryId: true,
+});
+
+export const updateFeatureBoardItemSchema = featureBoardItemInsertSchema.pick({
+  title: true,
+  slug: true,
+  description: true,
+  status: true,
+  categoryId: true,
+  internalNotes: true,
+});
+
 // ---------------------------------------------------------------------------
 // Non-table schemas (plain z.object())
 // ---------------------------------------------------------------------------
@@ -272,4 +304,12 @@ export const feedbackSchema = z.object({
 
 export const banReasonSchema = z.object({
   reason: z.string().max(1000).optional(),
+});
+
+export const submitCommentSchema = z.object({
+  body: z.string().trim().min(1, "Comment cannot be empty").max(5000, "Comment is too long"),
+});
+
+export const editCommentSchema = z.object({
+  body: z.string().trim().min(1, "Comment cannot be empty").max(5000, "Comment is too long"),
 });

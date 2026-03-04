@@ -3,6 +3,10 @@ import Image from "next/image";
 import { currentUser } from "@clerk/nextjs/server";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { getPendingInvitesForUser } from "@/lib/queries";
+import {
+  getUnreadNotifications,
+  getUnreadNotificationCount,
+} from "@/lib/notifications/queries";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { UserMenu } from "@/components/user-menu";
 import { MobileSidebar } from "@/components/mobile-sidebar";
@@ -46,7 +50,7 @@ export async function AppTopbar() {
         <div className="flex justify-end w-full items-center px-4 md:px-6">
           {user ? (
             <div className="flex items-center gap-1">
-              {profileId && <InviteBell profileId={profileId} />}
+              {profileId && <NotificationBellServer profileId={profileId} />}
               <UserMenu
                 imageUrl={user.imageUrl}
                 displayName={displayName}
@@ -67,8 +71,18 @@ export async function AppTopbar() {
   );
 }
 
-async function InviteBell({ profileId }: { profileId: string }) {
-  const invites = await getPendingInvitesForUser(profileId);
+async function NotificationBellServer({ profileId }: { profileId: string }) {
+  const [invites, notifications, unreadCount] = await Promise.all([
+    getPendingInvitesForUser(profileId),
+    getUnreadNotifications(profileId),
+    getUnreadNotificationCount(profileId),
+  ]);
 
-  return <NotificationBell invites={invites} count={invites.length} />;
+  return (
+    <NotificationBell
+      invites={invites}
+      notifications={notifications}
+      unreadCount={unreadCount}
+    />
+  );
 }
