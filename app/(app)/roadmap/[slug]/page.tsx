@@ -12,9 +12,11 @@ import {
 import { StatusBadge } from "@/components/roadmap/status-badge";
 import { UpvoteButton } from "@/components/roadmap/upvote-button";
 import { AdminItemControls } from "@/components/roadmap/admin-item-controls";
+import { DeleteRoadmapItemDialog } from "@/components/roadmap/delete-roadmap-item-dialog";
 import { CommentSection } from "@/components/roadmap/comment-section";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { MarkdownText } from "@/components/ui/markdown-text";
 import { Icon } from "@/components/ui/icon";
 import { timeAgo } from "@/lib/time";
@@ -28,7 +30,11 @@ export async function generateMetadata({
   const item = await getFeatureBoardItemBySlug(slug);
   if (!item) return notFoundMeta;
   if (item.status === "inbox" || item.status === "closed" || item.status === "archived") {
-    return notFoundMeta;
+    // Check if current user is an admin/moderator — show real title for them
+    const { userId } = await auth();
+    if (!userId) return notFoundMeta;
+    const isAdmin = await checkIsModerator(userId);
+    if (!isAdmin) return notFoundMeta;
   }
   return ogMeta(
     item.title,
@@ -141,6 +147,21 @@ export default async function RoadmapItemPage({
               {item.author.displayName}
             </Link>
           </span>
+        </div>
+      )}
+
+      {(profileId === item.authorId || isAdmin) && (
+        <div className="mt-4">
+          <DeleteRoadmapItemDialog
+            itemId={item.id}
+            itemTitle={item.title}
+            trigger={
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+                <Icon name="delete" size="4" />
+                Delete
+              </Button>
+            }
+          />
         </div>
       )}
 
