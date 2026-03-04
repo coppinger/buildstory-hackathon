@@ -27,6 +27,9 @@ export async function generateMetadata({
   const { slug } = await params;
   const item = await getFeatureBoardItemBySlug(slug);
   if (!item) return notFoundMeta;
+  if (item.status === "inbox" || item.status === "closed" || item.status === "archived") {
+    return notFoundMeta;
+  }
   return ogMeta(
     item.title,
     item.description ?? "Feature request on Buildstory"

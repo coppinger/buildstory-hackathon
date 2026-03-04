@@ -12,7 +12,7 @@ import {
   getKanbanItems,
   getFeatureBoardCategories,
   getContributorLeaderboard,
-  isProjectAdmin,
+  isProjectOwnerOrMember,
 } from "@/lib/roadmap/queries";
 import { roadmapBasePath } from "@/lib/roadmap/paths";
 import { Button } from "@/components/ui/button";
@@ -62,7 +62,7 @@ export default async function ProjectRoadmapPage({
     const profile = await ensureProfile(userId);
     profileId = profile?.id ?? null;
     if (profileId) {
-      isAdmin = await isProjectAdmin(profileId, project.id);
+      isAdmin = await isProjectOwnerOrMember(profileId, project.id);
     }
   }
 

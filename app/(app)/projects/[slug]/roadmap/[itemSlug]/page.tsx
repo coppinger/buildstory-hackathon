@@ -8,7 +8,7 @@ import { ogMeta, notFoundMeta } from "@/lib/metadata";
 import {
   getFeatureBoardItemBySlug,
   getCommentsForItem,
-  isProjectAdmin,
+  isProjectOwnerOrMember,
 } from "@/lib/roadmap/queries";
 import { roadmapBasePath } from "@/lib/roadmap/paths";
 import { StatusBadge } from "@/components/roadmap/status-badge";
@@ -29,6 +29,9 @@ export async function generateMetadata({
   const { itemSlug } = await params;
   const item = await getFeatureBoardItemBySlug(itemSlug);
   if (!item) return notFoundMeta;
+  if (item.status === "inbox" || item.status === "closed" || item.status === "archived") {
+    return notFoundMeta;
+  }
   return ogMeta(
     item.title,
     item.description ?? "Feature request on Buildstory"
@@ -54,7 +57,7 @@ export default async function ProjectRoadmapItemPage({
     const profile = await ensureProfile(userId);
     profileId = profile?.id ?? null;
     if (profileId) {
-      isAdmin = await isProjectAdmin(profileId, project.id);
+      isAdmin = await isProjectOwnerOrMember(profileId, project.id);
     }
   }
 

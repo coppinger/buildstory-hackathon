@@ -26,7 +26,7 @@ export function UpvoteButton({
   const [optimistic, setOptimistic] = useOptimistic(
     { count, hasUpvoted },
     (_state, newUpvoted: boolean) => ({
-      count: newUpvoted ? _state.count + 1 : _state.count - 1,
+      count: newUpvoted ? _state.count + 1 : Math.max(_state.count - 1, 0),
       hasUpvoted: newUpvoted,
     })
   );

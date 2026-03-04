@@ -26,7 +26,7 @@ import {
 import { createNotification } from "@/lib/notifications/queries";
 import { notifyShippedItem } from "@/lib/discord";
 import { createLinearIssueFromRoadmapItem } from "@/lib/linear";
-import { isProjectAdmin, searchUsersForMention } from "@/lib/roadmap/queries";
+import { isProjectOwnerOrMember, searchUsersForMention } from "@/lib/roadmap/queries";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -49,6 +49,28 @@ const AUTHOR_EDIT_WINDOW_MS = 15 * 60 * 1000;
 /** Truncate a string for use in notification titles */
 function truncateTitle(title: string, max = 60): string {
   return title.length <= max ? title : title.slice(0, max - 1) + "\u2026";
+}
+
+/** Build the correct href for a roadmap item, accounting for project scope */
+async function buildItemHref(
+  itemSlug: string | null,
+  itemProjectId: string | null
+): Promise<string> {
+  if (!itemSlug) {
+    return itemProjectId ? "/roadmap" : "/roadmap";
+  }
+  if (!itemProjectId) {
+    return `/roadmap/${itemSlug}`;
+  }
+  // Project-scoped item — need to fetch project slug
+  const project = await db.query.projects.findFirst({
+    where: eq(projects.id, itemProjectId),
+    columns: { slug: true },
+  });
+  if (!project?.slug) {
+    return `/roadmap/${itemSlug}`;
+  }
+  return `/projects/${project.slug}/roadmap/${itemSlug}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -239,10 +261,10 @@ export async function updateItem(data: {
 
   const isAuthor = existing.authorId === profile.id;
 
-  // Determine admin access: project board uses project admin, platform uses moderator
+  // Determine admin access: project board uses project owner/member, platform uses moderator
   let isMod: boolean;
   if (data.projectId) {
-    isMod = await isProjectAdmin(profile.id, data.projectId);
+    isMod = await isProjectOwnerOrMember(profile.id, data.projectId);
   } else {
     isMod = await isModerator(userId);
   }
@@ -308,11 +330,12 @@ export async function updateItem(data: {
       try {
         // Notify item author
         if (existing.authorId !== profile.id) {
+          const itemHref = await buildItemHref(existing.slug, existing.projectId);
           await createNotification({
             profileId: existing.authorId,
             type: "item_shipped",
             title: `Your idea "${truncateTitle(existing.title)}" has been shipped!`,
-            href: existing.slug ? `/roadmap/${existing.slug}` : "/roadmap",
+            href: itemHref,
             actorProfileId: profile.id,
           });
         }
@@ -360,7 +383,7 @@ export async function archiveItem(data: {
   if (data.projectId) {
     const profile = await ensureProfile(userId);
     if (!profile) return { success: false, error: "Profile not found" };
-    authorized = await isProjectAdmin(profile.id, data.projectId);
+    authorized = await isProjectOwnerOrMember(profile.id, data.projectId);
   } else {
     authorized = await isModerator(userId);
   }
@@ -575,11 +598,11 @@ export async function submitComment(data: {
     try {
       const item = await db.query.featureBoardItems.findFirst({
         where: eq(featureBoardItems.id, data.itemId),
-        columns: { authorId: true, title: true, slug: true },
+        columns: { authorId: true, title: true, slug: true, projectId: true },
       });
 
       if (item) {
-        const itemHref = item.slug ? `/roadmap/${item.slug}` : "/roadmap";
+        const itemHref = await buildItemHref(item.slug, item.projectId);
 
         // Notify item author if commenter is different
         if (item.authorId !== profile.id && !data.parentCommentId) {
@@ -792,7 +815,7 @@ export async function pushToLinear(data: {
   if (data.projectId) {
     const profile = await ensureProfile(userId);
     if (!profile) return { success: false, error: "Profile not found" };
-    authorized = await isProjectAdmin(profile.id, data.projectId);
+    authorized = await isProjectOwnerOrMember(profile.id, data.projectId);
   } else {
     authorized = await isModerator(userId);
   }
@@ -891,7 +914,7 @@ export async function createCategory(data: {
   const profile = await ensureProfile(userId);
   if (!profile) return { success: false, error: "Profile not found" };
 
-  if (!(await isProjectAdmin(profile.id, data.projectId))) {
+  if (!(await isProjectOwnerOrMember(profile.id, data.projectId))) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -959,7 +982,7 @@ export async function updateCategory(data: {
   const profile = await ensureProfile(userId);
   if (!profile) return { success: false, error: "Profile not found" };
 
-  if (!(await isProjectAdmin(profile.id, data.projectId))) {
+  if (!(await isProjectOwnerOrMember(profile.id, data.projectId))) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -1019,7 +1042,7 @@ export async function deleteCategory(data: {
   const profile = await ensureProfile(userId);
   if (!profile) return { success: false, error: "Profile not found" };
 
-  if (!(await isProjectAdmin(profile.id, data.projectId))) {
+  if (!(await isProjectOwnerOrMember(profile.id, data.projectId))) {
     return { success: false, error: "Unauthorized" };
   }
 

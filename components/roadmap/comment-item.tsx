@@ -261,6 +261,7 @@ export function CommentItem({
               isAdmin={isAdmin}
               isAuthenticated={isAuthenticated}
               isReply
+              basePath={basePath}
               serverNow={serverNow}
             />
           ))}

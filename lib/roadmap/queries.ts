@@ -615,10 +615,12 @@ export async function getContributorLeaderboard(
 // ---------------------------------------------------------------------------
 
 /**
- * Check if a profile is an admin of a project (owner or team member).
- * Returns true if the profile owns the project or is listed as a member.
+ * Check if a profile is an owner or member of a project.
+ * Returns true if the profile owns the project or is listed as a team member.
+ * Used to grant roadmap admin access (status changes, internal notes, Linear push,
+ * category management) to all project collaborators.
  */
-export async function isProjectAdmin(
+export async function isProjectOwnerOrMember(
   profileId: string,
   projectId: string
 ): Promise<boolean> {
