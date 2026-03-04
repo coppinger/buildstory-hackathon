@@ -12,6 +12,7 @@ const navItems = [
   { label: "Projects", href: "/projects" },
   { label: "Members", href: "/members" },
   { label: "Live Streams", href: "/streamers" },
+  { label: "Roadmap", href: "/roadmap" },
   { label: "Settings", href: "/settings" },
 ];
 

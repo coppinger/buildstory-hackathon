@@ -1,0 +1,5 @@
+ALTER TABLE "feature_board_items" DROP CONSTRAINT "feature_board_items_slug_unique";--> statement-breakpoint
+ALTER TABLE "feature_board_categories" ADD CONSTRAINT "feature_board_categories_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "feature_board_items" ADD CONSTRAINT "feature_board_items_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE UNIQUE INDEX "idx_feature_board_items_platform_slug" ON "feature_board_items" USING btree ("slug") WHERE "feature_board_items"."project_id" IS NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "idx_feature_board_items_project_slug" ON "feature_board_items" USING btree ("project_id","slug") WHERE "feature_board_items"."project_id" IS NOT NULL;

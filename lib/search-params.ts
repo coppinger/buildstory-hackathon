@@ -17,3 +17,19 @@ export const searchSortParsers = {
 
 export const loadPaginationParams = createLoader(paginationParsers);
 export const loadSearchSortParams = createLoader(searchSortParsers);
+
+export const roadmapSortOrders = ["most_upvoted", "newest"] as const;
+export type RoadmapSortOrder = (typeof roadmapSortOrders)[number];
+
+export const roadmapViewModes = ["list", "kanban", "contributors"] as const;
+export type RoadmapViewMode = (typeof roadmapViewModes)[number];
+
+export const roadmapParsers = {
+  page: parseAsInteger.withDefault(1),
+  q: parseAsString.withDefault(""),
+  sort: parseAsStringLiteral(roadmapSortOrders).withDefault("most_upvoted"),
+  status: parseAsString.withDefault("all"),
+  view: parseAsStringLiteral(roadmapViewModes).withDefault("list"),
+};
+
+export const loadRoadmapParams = createLoader(roadmapParsers);

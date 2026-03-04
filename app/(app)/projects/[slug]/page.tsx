@@ -137,6 +137,12 @@ export default async function ProjectDetailPage({
             Live site &rarr;
           </a>
         )}
+        <Link
+          href={`/projects/${slug}/roadmap`}
+          className="text-sm font-mono text-foreground hover:text-buildstory-500 transition-colors"
+        >
+          Roadmap &rarr;
+        </Link>
       </div>
 
       {/* Team */}

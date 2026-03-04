@@ -2,6 +2,7 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 import { drizzle } from "drizzle-orm/neon-http";
+import { eq } from "drizzle-orm";
 import { neon } from "@neondatabase/serverless";
 import * as schema from "../lib/db/schema";
 
@@ -13,6 +14,9 @@ const {
   eventProjects,
   projectMembers,
   teamInvites,
+  featureBoardCategories,
+  featureBoardItems,
+  featureBoardUpvotes,
 } = schema;
 
 const sql = neon(process.env.DATABASE_URL!);
@@ -733,6 +737,199 @@ async function seed() {
   }
 
   console.warn(`Team invites: ${inviteCount} seeded`);
+
+  // 7. Seed feature board categories
+  const SEED_CATEGORIES = [
+    { name: "Platform", color: "#6366f1", sortOrder: 0 },
+    { name: "Build Logs", color: "#f59e0b", sortOrder: 1 },
+    { name: "Profiles", color: "#10b981", sortOrder: 2 },
+    { name: "Events", color: "#ef4444", sortOrder: 3 },
+    { name: "Discovery", color: "#8b5cf6", sortOrder: 4 },
+    { name: "Integrations", color: "#06b6d4", sortOrder: 5 },
+  ];
+
+  const categoryRows: (typeof schema.featureBoardCategories.$inferSelect)[] = [];
+  for (const cat of SEED_CATEGORIES) {
+    const [row] = await db
+      .insert(featureBoardCategories)
+      .values(cat)
+      .onConflictDoNothing()
+      .returning();
+
+    if (row) {
+      categoryRows.push(row);
+    } else {
+      const existing = await db.query.featureBoardCategories.findFirst({
+        where: (c, { eq: e }) => e(c.name, cat.name),
+      });
+      if (existing) categoryRows.push(existing);
+    }
+  }
+
+  console.warn(`Feature board categories: ${categoryRows.length} seeded`);
+
+  // Helper to find category by name
+  function findCategory(name: string) {
+    return categoryRows.find((c) => c.name === name);
+  }
+
+  // 8. Seed feature board items
+  const SEED_BOARD_ITEMS = [
+    {
+      title: "GitHub webhook integration for automatic build logs",
+      slug: "github-webhook-build-logs",
+      description: "Connect your GitHub repo and get automatic build logs every time you push. No manual updates needed.",
+      status: "now" as const,
+      categoryName: "Build Logs",
+      authorIndex: 0,
+    },
+    {
+      title: "Project tagging with tools and frameworks",
+      slug: "project-tagging-tools",
+      description: "Tag your projects with the tools you used (React, Claude, Cursor, etc.). Tags become discussion threads.",
+      status: "next" as const,
+      categoryName: "Platform",
+      authorIndex: 1,
+    },
+    {
+      title: "Profile verification via GitHub activity",
+      slug: "profile-verification-github",
+      description: "Verify your builder credentials by connecting GitHub. Shows commit activity and contribution stats.",
+      status: "exploring" as const,
+      categoryName: "Profiles",
+      authorIndex: 3,
+    },
+    {
+      title: "Recurring hackathon events",
+      slug: "recurring-hackathon-events",
+      description: "Monthly or quarterly themed build events beyond Hackathon 00.",
+      status: "exploring" as const,
+      categoryName: "Events",
+      authorIndex: 6,
+    },
+    {
+      title: "Search and filter projects by tech stack",
+      slug: "search-filter-tech-stack",
+      description: "Find projects built with specific tools. Filter the project list by language, framework, or AI model.",
+      status: "next" as const,
+      categoryName: "Discovery",
+      authorIndex: 4,
+    },
+    {
+      title: "Slack and Discord integration for build log updates",
+      slug: "slack-discord-build-logs",
+      description: "Get build log notifications in your team's Slack or Discord channel.",
+      status: "inbox" as const,
+      categoryName: "Integrations",
+      authorIndex: 7,
+    },
+    {
+      title: "Project showcase gallery with screenshots",
+      slug: "project-showcase-gallery",
+      description: "A curated gallery of shipped projects with screenshots and demos. Community voting for featured projects.",
+      status: "shipped" as const,
+      categoryName: "Platform",
+      authorIndex: 2,
+    },
+    {
+      title: "Dark mode toggle",
+      slug: "dark-mode-toggle",
+      description: "Let users switch between light and dark mode.",
+      status: "inbox" as const,
+      categoryName: "Platform",
+      authorIndex: 5,
+    },
+    {
+      title: "RSS feed for build logs",
+      slug: "rss-feed-build-logs",
+      description: "Subscribe to a project's build log via RSS. Great for following along without logging in.",
+      status: "inbox" as const,
+      categoryName: "Build Logs",
+      authorIndex: 8,
+    },
+    {
+      title: "Team formation matching",
+      slug: "team-formation-matching",
+      description: "AI-powered matching of builders looking for teams based on skills, timezone, and interests.",
+      status: "now" as const,
+      categoryName: "Events",
+      authorIndex: 9,
+    },
+  ];
+
+  let boardItemCount = 0;
+  const boardItemRows: (typeof schema.featureBoardItems.$inferSelect)[] = [];
+
+  for (const item of SEED_BOARD_ITEMS) {
+    const profile = profileRows[item.authorIndex];
+    if (!profile) continue;
+
+    const category = findCategory(item.categoryName);
+
+    const [row] = await db
+      .insert(featureBoardItems)
+      .values({
+        title: item.title,
+        slug: item.slug,
+        description: item.description,
+        status: item.status,
+        categoryId: category?.id ?? null,
+        authorId: profile.id,
+        shippedAt: item.status === "shipped" ? new Date("2026-03-02T12:00:00Z") : null,
+      })
+      .onConflictDoNothing()
+      .returning();
+
+    if (row) {
+      boardItemRows.push(row);
+      boardItemCount++;
+    } else {
+      const existing = await db.query.featureBoardItems.findFirst({
+        where: (fi, { eq: e }) => e(fi.slug, item.slug),
+      });
+      if (existing) boardItemRows.push(existing);
+    }
+  }
+
+  console.warn(`Feature board items: ${boardItemCount} seeded`);
+
+  // 9. Seed upvotes (varying counts per item for realistic sorting)
+  const upvoteCounts = [12, 8, 15, 5, 10, 2, 20, 3, 1, 18];
+  let upvoteTotal = 0;
+
+  for (let i = 0; i < boardItemRows.length; i++) {
+    const item = boardItemRows[i];
+    const targetCount = upvoteCounts[i] ?? 3;
+    let itemUpvotes = 0;
+
+    for (let j = 0; j < Math.min(targetCount, profileRows.length); j++) {
+      // Skip the author (don't self-upvote)
+      const voterIndex = (i + j + 1) % profileRows.length;
+      const voter = profileRows[voterIndex];
+      if (!voter) continue;
+
+      const [uv] = await db
+        .insert(featureBoardUpvotes)
+        .values({ itemId: item.id, profileId: voter.id })
+        .onConflictDoNothing()
+        .returning();
+
+      if (uv) {
+        itemUpvotes++;
+        upvoteTotal++;
+      }
+    }
+
+    // Update denormalized count
+    if (itemUpvotes > 0) {
+      await db
+        .update(featureBoardItems)
+        .set({ upvoteCount: itemUpvotes })
+        .where(eq(featureBoardItems.id, item.id));
+    }
+  }
+
+  console.warn(`Feature board upvotes: ${upvoteTotal} seeded`);
   console.warn("Done!");
 }
 

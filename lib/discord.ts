@@ -81,6 +81,41 @@ export function notifyMentorApplication(name: string, types: string[]) {
   });
 }
 
+export function notifyShippedItem(
+  title: string,
+  authorName: string,
+  slug: string
+) {
+  const safeTitle = sanitizeForDiscord(title);
+  const safeAuthor = sanitizeForDiscord(authorName);
+  sendDiscordWebhook(process.env.DISCORD_WEBHOOK_MILESTONES, {
+    embeds: [
+      {
+        title: "Feature Shipped!",
+        description: `"${safeTitle}" has been shipped!`,
+        color: 0x22c55e,
+        fields: [
+          {
+            name: "Suggested by",
+            value: safeAuthor,
+            inline: true,
+          },
+          ...(slug
+            ? [
+                {
+                  name: "Link",
+                  value: `https://buildstory.ai/roadmap/${slug}`,
+                  inline: true,
+                },
+              ]
+            : []),
+        ],
+        timestamp: new Date().toISOString(),
+      },
+    ],
+  });
+}
+
 export function notifySponsorInquiry(
   companyName: string,
   contactName: string

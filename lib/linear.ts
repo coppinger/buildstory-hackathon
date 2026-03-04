@@ -7,7 +7,20 @@ interface CreateIssueInput {
   description: string;
 }
 
-export async function createLinearIssue({ title, description }: CreateIssueInput): Promise<{ success: true; issueId: string } | { success: false; error: string }> {
+interface CreateRoadmapIssueInput {
+  title: string;
+  description: string | null;
+  authorName: string;
+  slug: string;
+  upvoteCount: number;
+  commentCount: number;
+}
+
+type LinearIssueResult =
+  | { success: true; issueId: string; issueUrl: string }
+  | { success: false; error: string };
+
+export async function createLinearIssue({ title, description }: CreateIssueInput): Promise<LinearIssueResult> {
   const apiKey = process.env.LINEAR_API_KEY;
   const teamId = process.env.LINEAR_TEAM_ID;
   const projectId = process.env.LINEAR_PROJECT_ID;
@@ -24,6 +37,7 @@ export async function createLinearIssue({ title, description }: CreateIssueInput
         issue {
           id
           identifier
+          url
         }
       }
     }
@@ -67,11 +81,72 @@ export async function createLinearIssue({ title, description }: CreateIssueInput
       throw new Error("Linear issue creation failed");
     }
 
-    return { success: true, issueId: data.data.issueCreate.issue.id };
+    return {
+      success: true,
+      issueId: data.data.issueCreate.issue.id,
+      issueUrl: data.data.issueCreate.issue.url,
+    };
   } catch (error) {
     Sentry.captureException(error, {
       tags: { component: "linear", action: "createIssue" },
     });
     return { success: false, error: "Failed to submit to Linear" };
+  }
+}
+
+export async function createLinearIssueFromRoadmapItem({
+  title,
+  description,
+  authorName,
+  slug,
+  upvoteCount,
+  commentCount,
+}: CreateRoadmapIssueInput): Promise<LinearIssueResult> {
+  const parts: string[] = [];
+
+  if (description) {
+    parts.push(description);
+  }
+
+  parts.push("---");
+  parts.push(`**Suggested by:** ${authorName}`);
+  parts.push(`**Upvotes:** ${upvoteCount}`);
+  parts.push(`**Comments:** ${commentCount}`);
+  parts.push(`**View on Buildstory:** https://buildstory.ai/roadmap/${slug}`);
+
+  const fullDescription = parts.join("\n");
+
+  return createLinearIssue({ title, description: fullDescription });
+}
+
+// ---------------------------------------------------------------------------
+// Status Mapping (Linear → Feature Board)
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps a Linear workflow state name to a feature board status.
+ * Returns null if no mapping exists (unknown state — caller should skip update).
+ */
+export function mapLinearStateToStatus(
+  stateName: string
+): "exploring" | "next" | "now" | "shipped" | "closed" | null {
+  switch (stateName.toLowerCase()) {
+    case "backlog":
+    case "triage":
+      return "exploring";
+    case "todo":
+    case "planned":
+      return "next";
+    case "in progress":
+    case "started":
+      return "now";
+    case "done":
+    case "completed":
+      return "shipped";
+    case "canceled":
+    case "cancelled":
+      return "closed";
+    default:
+      return null;
   }
 }
