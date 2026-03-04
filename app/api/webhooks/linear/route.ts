@@ -125,8 +125,10 @@ export async function POST(request: NextRequest) {
 
     return new Response("OK", { status: 200 });
   } catch (error) {
+    const issueId = (payload?.data as Record<string, unknown>)?.id;
     Sentry.captureException(error, {
       tags: { component: "webhook", event: "linear-status-sync" },
+      extra: { linearIssueId: issueId ?? "unknown" },
     });
     // Return 200 even on internal errors — Linear doesn't need to retry for our issues
     return new Response("OK", { status: 200 });

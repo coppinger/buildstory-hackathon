@@ -14,6 +14,8 @@ interface CommentSectionProps {
   isAuthenticated: boolean;
   /** Optional base path for revalidation (e.g., "/projects/my-project/roadmap") */
   basePath?: string;
+  /** Server-rendered timestamp (ms) for edit window calculations */
+  serverNow?: number;
 }
 
 export function CommentSection({
@@ -23,6 +25,7 @@ export function CommentSection({
   isAdmin,
   isAuthenticated,
   basePath,
+  serverNow,
 }: CommentSectionProps) {
   // Group into threads: top-level (newest first), replies per parent (oldest first)
   const topLevel = comments
@@ -82,6 +85,7 @@ export function CommentSection({
                 isAuthenticated={isAuthenticated}
                 replies={repliesByParent.get(comment.id)}
                 basePath={basePath}
+                serverNow={serverNow}
               />
             </div>
           ))}

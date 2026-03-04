@@ -12,6 +12,7 @@ import {
   featureBoardComments,
   featureBoardCategories,
   profiles,
+  projects,
 } from "@/lib/db/schema";
 import { isUniqueViolation } from "@/lib/db/errors";
 import { isModerator } from "@/lib/admin";
@@ -25,6 +26,7 @@ import {
 import { createNotification } from "@/lib/notifications/queries";
 import { notifyShippedItem } from "@/lib/discord";
 import { createLinearIssueFromRoadmapItem } from "@/lib/linear";
+import { isProjectAdmin, searchUsersForMention } from "@/lib/roadmap/queries";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -43,6 +45,11 @@ function slugify(text: string): string {
 
 /** 15 minutes in milliseconds */
 const AUTHOR_EDIT_WINDOW_MS = 15 * 60 * 1000;
+
+/** Truncate a string for use in notification titles */
+function truncateTitle(title: string, max = 60): string {
+  return title.length <= max ? title : title.slice(0, max - 1) + "\u2026";
+}
 
 // ---------------------------------------------------------------------------
 // Rate limiting helpers (in-memory per serverless invocation + DB-backed)
@@ -134,6 +141,15 @@ export async function submitIdea(data: {
   });
   if (!parsed.success) return parsed;
 
+  // Validate projectId if provided — must be a real project
+  if (data.projectId) {
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, data.projectId),
+      columns: { id: true },
+    });
+    if (!project) return { success: false, error: "Project not found" };
+  }
+
   // Rate limiting
   const rateLimitError = await checkIdeaRateLimit(profile.id);
   if (rateLimitError) return { success: false, error: rateLimitError };
@@ -159,7 +175,8 @@ export async function submitIdea(data: {
     return { success: true, data: { slug: item.slug } };
   } catch (error) {
     // Slug collision — retry with random suffix
-    if (isUniqueViolation(error, "feature_board_items_slug_unique")) {
+    if (isUniqueViolation(error, "idx_feature_board_items_platform_slug") ||
+      isUniqueViolation(error, "idx_feature_board_items_project_slug")) {
       try {
         const slug = `${slugify(parsed.data.title).slice(0, 70)}-${crypto.randomUUID().slice(0, 6)}`;
         const [item] = await db
@@ -215,12 +232,16 @@ export async function updateItem(data: {
   });
   if (!existing) return { success: false, error: "Item not found" };
 
+  // Verify item belongs to the claimed project scope
+  if (data.projectId && existing.projectId !== data.projectId) {
+    return { success: false, error: "Item does not belong to this project" };
+  }
+
   const isAuthor = existing.authorId === profile.id;
 
   // Determine admin access: project board uses project admin, platform uses moderator
   let isMod: boolean;
   if (data.projectId) {
-    const { isProjectAdmin } = await import("@/lib/roadmap/queries");
     isMod = await isProjectAdmin(profile.id, data.projectId);
   } else {
     isMod = await isModerator(userId);
@@ -290,7 +311,7 @@ export async function updateItem(data: {
           await createNotification({
             profileId: existing.authorId,
             type: "item_shipped",
-            title: `Your idea "${existing.title}" has been shipped!`,
+            title: `Your idea "${truncateTitle(existing.title)}" has been shipped!`,
             href: existing.slug ? `/roadmap/${existing.slug}` : "/roadmap",
             actorProfileId: profile.id,
           });
@@ -315,7 +336,8 @@ export async function updateItem(data: {
     if (existing.slug) revalidatePath(`/roadmap/${existing.slug}`);
     return { success: true };
   } catch (error) {
-    if (isUniqueViolation(error, "feature_board_items_slug_unique")) {
+    if (isUniqueViolation(error, "idx_feature_board_items_platform_slug") ||
+      isUniqueViolation(error, "idx_feature_board_items_project_slug")) {
       return { success: false, error: "That URL slug is already taken" };
     }
     Sentry.captureException(error, {
@@ -338,7 +360,6 @@ export async function archiveItem(data: {
   if (data.projectId) {
     const profile = await ensureProfile(userId);
     if (!profile) return { success: false, error: "Profile not found" };
-    const { isProjectAdmin } = await import("@/lib/roadmap/queries");
     authorized = await isProjectAdmin(profile.id, data.projectId);
   } else {
     authorized = await isModerator(userId);
@@ -346,6 +367,16 @@ export async function archiveItem(data: {
   if (!authorized) return { success: false, error: "Unauthorized" };
 
   try {
+    // Verify item exists and belongs to the claimed project scope
+    const item = await db.query.featureBoardItems.findFirst({
+      where: eq(featureBoardItems.id, data.itemId),
+      columns: { projectId: true },
+    });
+    if (!item) return { success: false, error: "Item not found" };
+    if (data.projectId && item.projectId !== data.projectId) {
+      return { success: false, error: "Item does not belong to this project" };
+    }
+
     await db
       .update(featureBoardItems)
       .set({ status: "archived" })
@@ -438,6 +469,47 @@ export async function toggleUpvote(data: {
   }
 }
 
+async function checkCommentRateLimit(
+  profileId: string
+): Promise<string | null> {
+  const now = new Date();
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const tenSecondsAgo = new Date(now.getTime() - 10 * 1000);
+
+  // Check 10-second cooldown
+  const [recentComment] = await db
+    .select({ createdAt: featureBoardComments.createdAt })
+    .from(featureBoardComments)
+    .where(
+      and(
+        eq(featureBoardComments.authorId, profileId),
+        gte(featureBoardComments.createdAt, tenSecondsAgo)
+      )
+    )
+    .limit(1);
+
+  if (recentComment) {
+    return "Please wait a few seconds before posting another comment.";
+  }
+
+  // Check 30-per-day limit
+  const [{ dayCount }] = await db
+    .select({ dayCount: count() })
+    .from(featureBoardComments)
+    .where(
+      and(
+        eq(featureBoardComments.authorId, profileId),
+        gte(featureBoardComments.createdAt, oneDayAgo)
+      )
+    );
+
+  if (dayCount >= 30) {
+    return "You can post up to 30 comments per day. Please try again later.";
+  }
+
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Comment Actions
 // ---------------------------------------------------------------------------
@@ -464,6 +536,10 @@ export async function submitComment(data: {
 
   const parsed = parseInput(submitCommentSchema, { body: data.body });
   if (!parsed.success) return parsed;
+
+  // Rate limiting
+  const commentRateLimitError = await checkCommentRateLimit(profile.id);
+  if (commentRateLimitError) return { success: false, error: commentRateLimitError };
 
   // Verify parent comment if replying
   if (data.parentCommentId) {
@@ -510,11 +586,14 @@ export async function submitComment(data: {
           await createNotification({
             profileId: item.authorId,
             type: "comment_reply",
-            title: `${profile.displayName} commented on "${item.title}"`,
+            title: `${profile.displayName} commented on "${truncateTitle(item.title)}"`,
             href: itemHref,
             actorProfileId: profile.id,
           });
         }
+
+        // Track IDs that already received a notification to avoid duplicates
+        const notifiedIds = new Set<string>([profile.id, item.authorId]);
 
         // Notify parent comment author if replying
         if (data.parentCommentId) {
@@ -522,14 +601,17 @@ export async function submitComment(data: {
             where: eq(featureBoardComments.id, data.parentCommentId),
             columns: { authorId: true },
           });
-          if (parent && parent.authorId !== profile.id) {
-            await createNotification({
-              profileId: parent.authorId,
-              type: "comment_reply",
-              title: `${profile.displayName} replied to your comment on "${item.title}"`,
-              href: itemHref,
-              actorProfileId: profile.id,
-            });
+          if (parent) {
+            if (!notifiedIds.has(parent.authorId)) {
+              await createNotification({
+                profileId: parent.authorId,
+                type: "comment_reply",
+                title: `${profile.displayName} replied to your comment on "${truncateTitle(item.title)}"`,
+                href: itemHref,
+                actorProfileId: profile.id,
+              });
+              notifiedIds.add(parent.authorId);
+            }
           }
         }
 
@@ -551,18 +633,16 @@ export async function submitComment(data: {
             );
 
           for (const mentioned of mentionedProfiles) {
-            // Don't notify the commenter themselves or people already notified
-            if (
-              mentioned.id !== profile.id &&
-              mentioned.id !== item.authorId
-            ) {
+            // Skip commenter, item author, and parent author (already notified via reply)
+            if (!notifiedIds.has(mentioned.id)) {
               await createNotification({
                 profileId: mentioned.id,
                 type: "mention",
-                title: `${profile.displayName} mentioned you in a comment on "${item.title}"`,
+                title: `${profile.displayName} mentioned you in a comment on "${truncateTitle(item.title)}"`,
                 href: itemHref,
                 actorProfileId: profile.id,
               });
+              notifiedIds.add(mentioned.id);
             }
           }
         }
@@ -572,7 +652,9 @@ export async function submitComment(data: {
     }
 
     revalidatePath("/roadmap");
-    if (data.basePath) revalidatePath(data.basePath);
+    if (data.basePath && /^\/projects\/[\w-]+\/roadmap$/.test(data.basePath)) {
+      revalidatePath(data.basePath);
+    }
     return { success: true };
   } catch (error) {
     Sentry.captureException(error, {
@@ -600,6 +682,11 @@ export async function editComment(data: {
   if (comment.deletedAt) return { success: false, error: "Comment has been deleted" };
   if (comment.authorId !== profile.id) {
     return { success: false, error: "Not authorized" };
+  }
+
+  const elapsed = Date.now() - comment.createdAt.getTime();
+  if (elapsed > AUTHOR_EDIT_WINDOW_MS) {
+    return { success: false, error: "The 15-minute edit window has passed." };
   }
 
   const parsed = parseInput(editCommentSchema, { body: data.body });
@@ -705,7 +792,6 @@ export async function pushToLinear(data: {
   if (data.projectId) {
     const profile = await ensureProfile(userId);
     if (!profile) return { success: false, error: "Profile not found" };
-    const { isProjectAdmin } = await import("@/lib/roadmap/queries");
     authorized = await isProjectAdmin(profile.id, data.projectId);
   } else {
     authorized = await isModerator(userId);
@@ -719,6 +805,11 @@ export async function pushToLinear(data: {
     },
   });
   if (!item) return { success: false, error: "Item not found" };
+
+  // Verify item belongs to the claimed project scope
+  if (data.projectId && item.projectId !== data.projectId) {
+    return { success: false, error: "Item does not belong to this project" };
+  }
 
   if (item.linearIssueId) {
     return { success: false, error: "Already pushed to Linear" };
@@ -773,7 +864,6 @@ export async function searchUsersForMentionAction(data: {
   if (!userId) return { success: false, error: "Not authenticated" };
 
   try {
-    const { searchUsersForMention } = await import("@/lib/roadmap/queries");
     const results = await searchUsersForMention(data.query);
     return { success: true, data: results };
   } catch (error) {
@@ -801,7 +891,6 @@ export async function createCategory(data: {
   const profile = await ensureProfile(userId);
   if (!profile) return { success: false, error: "Profile not found" };
 
-  const { isProjectAdmin } = await import("@/lib/roadmap/queries");
   if (!(await isProjectAdmin(profile.id, data.projectId))) {
     return { success: false, error: "Unauthorized" };
   }
@@ -817,32 +906,39 @@ export async function createCategory(data: {
   }
 
   try {
-    // Check category limit
-    const [{ catCount }] = await db
-      .select({ catCount: count() })
-      .from(featureBoardCategories)
-      .where(eq(featureBoardCategories.projectId, data.projectId));
+    const category = await db.transaction(async (tx) => {
+      // Check category limit (inside transaction for atomicity)
+      const [{ catCount }] = await tx
+        .select({ catCount: count() })
+        .from(featureBoardCategories)
+        .where(eq(featureBoardCategories.projectId, data.projectId));
 
-    if (catCount >= MAX_CATEGORIES_PER_PROJECT) {
+      if (catCount >= MAX_CATEGORIES_PER_PROJECT) {
+        throw new Error("CATEGORY_LIMIT_EXCEEDED");
+      }
+
+      const [inserted] = await tx
+        .insert(featureBoardCategories)
+        .values({
+          name,
+          color,
+          projectId: data.projectId,
+          sortOrder: catCount,
+        })
+        .returning({ id: featureBoardCategories.id });
+
+      return inserted;
+    });
+
+    revalidatePath("/roadmap");
+    return { success: true, data: { id: category.id } };
+  } catch (error) {
+    if (error instanceof Error && error.message === "CATEGORY_LIMIT_EXCEEDED") {
       return {
         success: false,
         error: `Maximum ${MAX_CATEGORIES_PER_PROJECT} categories per project`,
       };
     }
-
-    const [category] = await db
-      .insert(featureBoardCategories)
-      .values({
-        name,
-        color,
-        projectId: data.projectId,
-        sortOrder: catCount,
-      })
-      .returning({ id: featureBoardCategories.id });
-
-    revalidatePath("/roadmap");
-    return { success: true, data: { id: category.id } };
-  } catch (error) {
     Sentry.captureException(error, {
       tags: { component: "server-action", action: "createCategory" },
       extra: { projectId: data.projectId },
@@ -863,7 +959,6 @@ export async function updateCategory(data: {
   const profile = await ensureProfile(userId);
   if (!profile) return { success: false, error: "Profile not found" };
 
-  const { isProjectAdmin } = await import("@/lib/roadmap/queries");
   if (!(await isProjectAdmin(profile.id, data.projectId))) {
     return { success: false, error: "Unauthorized" };
   }
@@ -924,7 +1019,6 @@ export async function deleteCategory(data: {
   const profile = await ensureProfile(userId);
   if (!profile) return { success: false, error: "Profile not found" };
 
-  const { isProjectAdmin } = await import("@/lib/roadmap/queries");
   if (!(await isProjectAdmin(profile.id, data.projectId))) {
     return { success: false, error: "Unauthorized" };
   }
@@ -939,15 +1033,17 @@ export async function deleteCategory(data: {
   if (!existing) return { success: false, error: "Category not found" };
 
   try {
-    // Unlink items from this category first
-    await db
-      .update(featureBoardItems)
-      .set({ categoryId: null })
-      .where(eq(featureBoardItems.categoryId, data.categoryId));
+    await db.transaction(async (tx) => {
+      // Unlink items from this category first
+      await tx
+        .update(featureBoardItems)
+        .set({ categoryId: null })
+        .where(eq(featureBoardItems.categoryId, data.categoryId));
 
-    await db
-      .delete(featureBoardCategories)
-      .where(eq(featureBoardCategories.id, data.categoryId));
+      await tx
+        .delete(featureBoardCategories)
+        .where(eq(featureBoardCategories.id, data.categoryId));
+    });
 
     revalidatePath("/roadmap");
     return { success: true };

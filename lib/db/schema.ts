@@ -10,6 +10,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -556,7 +557,9 @@ export const featureBoardCategories = pgTable("feature_board_categories", {
   name: text("name").notNull(),
   color: text("color").notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),
-  projectId: uuid("project_id"),
+  projectId: uuid("project_id").references(() => projects.id, {
+    onDelete: "cascade",
+  }),
 });
 
 export type FeatureBoardCategory = typeof featureBoardCategories.$inferSelect;
@@ -567,14 +570,20 @@ export const featureBoardItems = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     title: text("title").notNull(),
-    slug: text("slug").unique(),
+    slug: text("slug"),
     description: text("description"),
     status: featureBoardStatusEnum("status").default("inbox").notNull(),
     categoryId: uuid("category_id").references(() => featureBoardCategories.id),
     authorId: uuid("author_id")
       .notNull()
       .references(() => profiles.id),
-    projectId: uuid("project_id"),
+    projectId: uuid("project_id").references(() => projects.id, {
+      onDelete: "cascade",
+    }),
+    // Denormalized counters — maintained via increment/decrement in server actions.
+    // If drift is suspected, reconcile with: UPDATE feature_board_items SET
+    //   upvote_count = (SELECT COUNT(*) FROM feature_board_upvotes WHERE item_id = feature_board_items.id),
+    //   comment_count = (SELECT COUNT(*) FROM feature_board_comments WHERE item_id = feature_board_items.id AND deleted_at IS NULL);
     upvoteCount: integer("upvote_count").default(0).notNull(),
     commentCount: integer("comment_count").default(0).notNull(),
     linearIssueId: text("linear_issue_id"),
@@ -593,6 +602,13 @@ export const featureBoardItems = pgTable(
     index("idx_feature_board_items_author").on(t.authorId),
     index("idx_feature_board_items_project").on(t.projectId),
     index("idx_feature_board_items_category").on(t.categoryId),
+    // Slug uniqueness scoped to project: platform items (NULL) and per-project items
+    uniqueIndex("idx_feature_board_items_platform_slug")
+      .on(t.slug)
+      .where(sql`${t.projectId} IS NULL`),
+    uniqueIndex("idx_feature_board_items_project_slug")
+      .on(t.projectId, t.slug)
+      .where(sql`${t.projectId} IS NOT NULL`),
   ]
 );
 

@@ -127,6 +127,13 @@
       "when": 1772596882935,
       "tag": "0017_empty_susan_delgado",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1772603795648,
+      "tag": "0018_fixed_night_thrasher",
+      "breakpoints": true
     }
   ]
 }

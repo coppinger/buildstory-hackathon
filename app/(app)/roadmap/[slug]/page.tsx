@@ -52,9 +52,9 @@ export default async function RoadmapItemPage({
   const item = await getFeatureBoardItemBySlug(slug, profileId);
   if (!item) notFound();
 
-  // Hide inbox/closed items from non-admins
+  // Hide inbox/closed/archived items from non-admins
   if (
-    (item.status === "inbox" || item.status === "closed") &&
+    (item.status === "inbox" || item.status === "closed" || item.status === "archived") &&
     !isAdmin
   ) {
     notFound();
@@ -165,6 +165,7 @@ export default async function RoadmapItemPage({
         currentProfileId={profileId}
         isAdmin={isAdmin}
         isAuthenticated={!!userId}
+        serverNow={comments.fetchedAt}
       />
     </div>
   );

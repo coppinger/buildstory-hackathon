@@ -208,6 +208,7 @@ export async function getFeatureBoardItemBySlug(
   | (RoadmapItem & {
       internalNotes: string | null;
       authorId: string;
+      projectId: string | null;
       linearIssueId: string | null;
       linearIssueUrl: string | null;
     })
@@ -228,6 +229,7 @@ export async function getFeatureBoardItemBySlug(
       internalNotes: featureBoardItems.internalNotes,
       linearIssueId: featureBoardItems.linearIssueId,
       linearIssueUrl: featureBoardItems.linearIssueUrl,
+      itemProjectId: featureBoardItems.projectId,
       itemAuthorId: featureBoardItems.authorId,
       authorId: profiles.id,
       authorDisplayName: profiles.displayName,
@@ -277,6 +279,7 @@ export async function getFeatureBoardItemBySlug(
     internalNotes: row.internalNotes,
     linearIssueId: row.linearIssueId,
     linearIssueUrl: row.linearIssueUrl,
+    projectId: row.itemProjectId,
     authorId: row.itemAuthorId,
     author: {
       id: row.authorId,
@@ -376,7 +379,8 @@ export async function getKanbanItems(
     .orderBy(
       desc(featureBoardItems.upvoteCount),
       desc(featureBoardItems.createdAt)
-    );
+    )
+    .limit(200);
 
   // Check upvotes
   let upvotedItemIds = new Set<string>();
@@ -479,7 +483,7 @@ export interface RoadmapComment {
 
 export async function getCommentsForItem(
   itemId: string
-): Promise<RoadmapComment[]> {
+): Promise<RoadmapComment[] & { fetchedAt: number }> {
   const rows = await db
     .select({
       id: featureBoardComments.id,
@@ -500,7 +504,7 @@ export async function getCommentsForItem(
     .where(eq(featureBoardComments.itemId, itemId))
     .orderBy(desc(featureBoardComments.createdAt));
 
-  return rows.map((row) => ({
+  const comments = rows.map((row) => ({
     id: row.id,
     itemId: row.itemId,
     body: row.body,
@@ -516,6 +520,8 @@ export async function getCommentsForItem(
       avatarUrl: row.authorAvatarUrl,
     },
   }));
+
+  return Object.assign(comments, { fetchedAt: Date.now() });
 }
 
 // ---------------------------------------------------------------------------

@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { editComment, deleteComment } from "@/app/(app)/roadmap/actions";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { MarkdownText } from "@/components/ui/markdown-text";
+import { renderMarkdown } from "@/lib/markdown";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { timeAgo } from "@/lib/time";
@@ -21,6 +22,8 @@ interface CommentItemProps {
   isReply?: boolean;
   /** Optional base path for revalidation */
   basePath?: string;
+  /** Server-rendered timestamp (ms) for edit window calculations */
+  serverNow?: number;
 }
 
 export function CommentItem({
@@ -32,6 +35,7 @@ export function CommentItem({
   replies,
   isReply,
   basePath,
+  serverNow,
 }: CommentItemProps) {
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -42,6 +46,11 @@ export function CommentItem({
 
   const isDeleted = !!comment.deletedAt;
   const isOwner = currentProfileId === comment.author.id;
+  const canEdit =
+    isOwner &&
+    !isDeleted &&
+    serverNow != null &&
+    serverNow - new Date(comment.createdAt).getTime() < 15 * 60 * 1000;
   const canDelete = (isOwner || isAdmin) && !isDeleted;
   const profileHref = comment.author.username
     ? `/profiles/${comment.author.username}`
@@ -98,6 +107,7 @@ export function CommentItem({
                 isAuthenticated={isAuthenticated}
                 isReply
                 basePath={basePath}
+                serverNow={serverNow}
               />
             ))}
           </div>
@@ -182,7 +192,7 @@ export function CommentItem({
                   Reply
                 </button>
               )}
-              {isOwner && !isDeleted && (
+              {canEdit && (
                 <button
                   type="button"
                   onClick={() => setIsEditing(true)}
@@ -251,6 +261,7 @@ export function CommentItem({
               isAdmin={isAdmin}
               isAuthenticated={isAuthenticated}
               isReply
+              serverNow={serverNow}
             />
           ))}
         </div>
@@ -259,18 +270,22 @@ export function CommentItem({
   );
 }
 
-/** Render comment body with @mention links */
+/** Render comment body with @mention links.
+ * Strategy: render markdown first (HTML-escapes all user input), then
+ * replace @username patterns in the safe output with anchor tags.
+ * The regex is strict (word chars + dots/hyphens, max 30 chars) so it
+ * cannot inject arbitrary HTML into the already-escaped output. */
 function CommentBody({ body }: { body: string }) {
-  // Replace @username with a link, then render the rest as markdown
-  const withMentionLinks = body.replace(
+  const html = renderMarkdown(body);
+  const withMentions = html.replace(
     /@(\w[\w.-]{0,29})/g,
-    "[@$1](/profiles/$1)"
+    '<a href="/profiles/$1" class="text-primary hover:underline font-medium">@$1</a>'
   );
 
   return (
-    <MarkdownText
-      text={withMentionLinks}
-      className="text-sm [&_p]:mb-1 [&_p:last-child]:mb-0"
+    <div
+      className={cn("text-sm [&_p]:mb-1 [&_p:last-child]:mb-0")}
+      dangerouslySetInnerHTML={{ __html: withMentions }}
     />
   );
 }

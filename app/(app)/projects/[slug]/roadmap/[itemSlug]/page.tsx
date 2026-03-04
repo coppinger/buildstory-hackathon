@@ -61,20 +61,12 @@ export default async function ProjectRoadmapItemPage({
   const item = await getFeatureBoardItemBySlug(itemSlug, profileId);
   if (!item) notFound();
 
-  // Ensure item belongs to this project
-  // The item's projectId should match the project's id
-  // (We fetch item by slug globally, so verify scope)
-  const itemRecord = await import("@/lib/db").then((mod) =>
-    mod.db.query.featureBoardItems.findFirst({
-      where: (fields, { eq: whereEq }) => whereEq(fields.slug, itemSlug),
-      columns: { projectId: true },
-    })
-  );
-  if (!itemRecord || itemRecord.projectId !== project.id) notFound();
+  // Verify item belongs to this project (slug is globally unique, so check scope)
+  if (item.projectId !== project.id) notFound();
 
-  // Hide inbox/closed items from non-admins
+  // Hide inbox/closed/archived items from non-admins
   if (
-    (item.status === "inbox" || item.status === "closed") &&
+    (item.status === "inbox" || item.status === "closed" || item.status === "archived") &&
     !isAdmin
   ) {
     notFound();
@@ -187,6 +179,7 @@ export default async function ProjectRoadmapItemPage({
         isAdmin={isAdmin}
         isAuthenticated={!!userId}
         basePath={basePath}
+        serverNow={comments.fetchedAt}
       />
     </div>
   );
