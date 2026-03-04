@@ -67,14 +67,14 @@ export default async function ProjectDetailPage({
 
         {isOwner && (
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" asChild>
               <Link href={`/projects/${slug}/edit`}>Edit</Link>
             </Button>
             <DeleteProjectDialog
               projectId={project.id}
               projectName={project.name}
               trigger={
-                <Button variant="destructive" size="sm">
+                <Button variant="destructive">
                   Delete
                 </Button>
               }

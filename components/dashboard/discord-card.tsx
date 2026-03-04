@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { DiscordIcon } from "@/components/icons";
 import { DISCORD_INVITE_URL } from "@/lib/constants";
 import { dismissDiscordCard } from "@/app/(app)/dashboard/actions";
@@ -24,23 +25,15 @@ export function DiscordCard() {
 
   return (
     <Card className="w-full relative">
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={handleDismiss}
-        className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors p-1"
+        className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
         aria-label="Dismiss Discord card"
       >
-        <svg
-          viewBox="0 0 16 16"
-          className="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M4 4l8 8M12 4l-8 8" />
-        </svg>
-      </button>
+        <Icon name="close" size="4" />
+      </Button>
       <div className="flex items-start gap-4">
         <DiscordIcon className="w-5 h-5 mt-0.5" />
         <div className="flex-1">
@@ -52,7 +45,6 @@ export function DiscordCard() {
           </p>
           <Button
             variant="outline"
-            size="sm"
             className="mt-3 bg-[#5F66EB] text-white"
             asChild
           >

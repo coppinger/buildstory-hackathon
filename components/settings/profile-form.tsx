@@ -289,7 +289,6 @@ export function ProfileForm({ profile }: ProfileFormProps) {
             <Button
               type="button"
               variant="outline"
-              size="sm"
               disabled={avatarUploading}
               onClick={() => fileInputRef.current?.click()}
             >
@@ -299,7 +298,6 @@ export function ProfileForm({ profile }: ProfileFormProps) {
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
                 disabled={avatarUploading}
                 onClick={handleAvatarRemove}
                 className="text-muted-foreground"

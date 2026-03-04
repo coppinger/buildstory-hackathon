@@ -155,7 +155,6 @@ export function CommentItem({
               <div className="flex gap-2 justify-end">
                 <Button
                   variant="ghost"
-                  size="sm"
                   onClick={() => {
                     setIsEditing(false);
                     setEditBody(comment.body);
@@ -166,7 +165,6 @@ export function CommentItem({
                   Cancel
                 </Button>
                 <Button
-                  size="sm"
                   onClick={handleEdit}
                   disabled={isPending || !editBody.trim()}
                 >
@@ -183,51 +181,51 @@ export function CommentItem({
           {!isEditing && (
             <div className="mt-1.5 flex items-center gap-2">
               {!isReply && isAuthenticated && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   onClick={() => setShowReplyInput(!showReplyInput)}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <Icon name="reply" size="3.5" />
                   Reply
-                </button>
+                </Button>
               )}
               {canEdit && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   onClick={() => setIsEditing(true)}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   Edit
-                </button>
+                </Button>
               )}
               {canDelete && !showDeleteConfirm && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                  className="text-muted-foreground hover:text-destructive"
                 >
                   Delete
-                </button>
+                </Button>
               )}
               {showDeleteConfirm && (
                 <span className="text-xs flex items-center gap-1.5">
                   <span className="text-destructive">Delete?</span>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
                     onClick={handleDelete}
                     disabled={isPending}
                     className="text-destructive hover:underline font-medium"
                   >
                     {isPending ? "..." : "Yes"}
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="ghost"
                     onClick={() => setShowDeleteConfirm(false)}
                     className="text-muted-foreground hover:underline"
                   >
                     No
-                  </button>
+                  </Button>
                 </span>
               )}
               {error && !isEditing && (

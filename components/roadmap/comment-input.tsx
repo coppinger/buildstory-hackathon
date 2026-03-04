@@ -173,7 +173,6 @@ export function CommentInput({
         {onCancel && (
           <Button
             variant="ghost"
-            size="sm"
             onClick={onCancel}
             disabled={isPending}
           >
@@ -181,7 +180,6 @@ export function CommentInput({
           </Button>
         )}
         <Button
-          size="sm"
           onClick={handleSubmit}
           disabled={isPending || !body.trim()}
         >

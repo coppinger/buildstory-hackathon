@@ -67,7 +67,7 @@ export function ObfuscatedField({
       </span>
       <Button
         variant="ghost"
-        size="icon-xs"
+        size="icon"
         onClick={() => setRevealed(!revealed)}
         title={revealed ? "Hide" : "Reveal"}
       >
@@ -78,7 +78,7 @@ export function ObfuscatedField({
       </Button>
       <Button
         variant="ghost"
-        size="icon-xs"
+        size="icon"
         onClick={copyToClipboard}
         title="Copy to clipboard"
       >

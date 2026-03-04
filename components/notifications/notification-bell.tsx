@@ -61,8 +61,10 @@ export function NotificationBell({
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
-        <button
-          className="relative p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative text-muted-foreground hover:text-foreground"
           aria-label="Notifications"
         >
           <Icon name="notifications" size="5" />
@@ -71,7 +73,7 @@ export function NotificationBell({
               {totalCount}
             </span>
           )}
-        </button>
+        </Button>
       </Popover.Trigger>
 
       <Popover.Portal>
@@ -85,14 +87,13 @@ export function NotificationBell({
               Notifications
             </p>
             {totalCount > 0 && (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={handleMarkAllAsRead}
                 disabled={isPending}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 Mark all read
-              </button>
+              </Button>
             )}
           </div>
 
@@ -122,19 +123,15 @@ export function NotificationBell({
                     </p>
                     <div className="mt-3 flex items-center gap-2">
                       <Button
-                        size="sm"
                         disabled={isPending}
                         onClick={() => handleRespondInvite(invite.id, true)}
-                        className="h-7 text-xs"
                       >
                         Accept
                       </Button>
                       <Button
                         variant="outline"
-                        size="sm"
                         disabled={isPending}
                         onClick={() => handleRespondInvite(invite.id, false)}
-                        className="h-7 text-xs"
                       >
                         Decline
                       </Button>

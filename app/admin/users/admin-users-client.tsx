@@ -288,7 +288,7 @@ export function AdminUsersClient({
                 {/* Actions */}
                 <div className="flex items-center gap-2 lg:ml-auto">
                   <Link href={`/admin/users/${user.id}`}>
-                    <Button variant="ghost" size="icon-xs" title="View details">
+                    <Button variant="ghost" size="icon" title="View details">
                       <Icon name="open_in_new" size="4" />
                     </Button>
                   </Link>
@@ -301,7 +301,7 @@ export function AdminUsersClient({
                       trigger={
                         <Button
                           variant="ghost"
-                          size="icon-xs"
+                          size="icon"
                           title="Hide user"
                         >
                           <Icon name="visibility_off" size="4" />
@@ -313,7 +313,7 @@ export function AdminUsersClient({
                   {user.hiddenAt && !user.bannedAt && (
                     <Button
                       variant="ghost"
-                      size="icon-xs"
+                      size="icon"
                       title="Unhide user"
                       disabled={isPending}
                       onClick={() => handleUnhide(user.id)}
@@ -330,7 +330,7 @@ export function AdminUsersClient({
                       trigger={
                         <Button
                           variant="ghost"
-                          size="icon-xs"
+                          size="icon"
                           title="Ban user"
                           className="text-destructive hover:text-destructive"
                         >
@@ -343,7 +343,7 @@ export function AdminUsersClient({
                   {user.bannedAt && currentRole === "admin" && (
                     <Button
                       variant="ghost"
-                      size="icon-xs"
+                      size="icon"
                       title="Unban user"
                       disabled={isPending}
                       onClick={() => handleUnban(user.id)}
@@ -371,7 +371,6 @@ export function AdminUsersClient({
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="sm"
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
@@ -383,7 +382,6 @@ export function AdminUsersClient({
             </span>
             <Button
               variant="outline"
-              size="sm"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >

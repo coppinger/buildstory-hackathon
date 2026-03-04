@@ -55,14 +55,12 @@ export function Header() {
             <Button
               asChild
               variant="outline"
-              size="sm"
               className="md:hidden border-border text-white hover:bg-white/10 hover:text-white"
             >
               <Link href="/sign-in">login</Link>
             </Button>
             <Button
               asChild
-              size="sm"
               className="md:hidden bg-buildstory-500 text-black hover:bg-buildstory-400"
             >
               <Link href="/sign-up">register</Link>

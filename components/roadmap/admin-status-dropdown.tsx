@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { DropdownMenu } from "radix-ui";
 import { updateItem } from "@/app/(app)/roadmap/actions";
+import { Button } from "@/components/ui/button";
 import { StatusBadge, ADMIN_STATUSES } from "./status-badge";
 import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
@@ -31,10 +32,10 @@ export function AdminStatusDropdown({
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           disabled={isPending}
-          className="inline-flex items-center gap-1 rounded-md hover:bg-muted/50 transition-colors px-1 py-0.5"
+          className="gap-1"
         >
           <StatusBadge status={currentStatus} />
           <Icon
@@ -42,7 +43,7 @@ export function AdminStatusDropdown({
             size="3.5"
             className="text-muted-foreground"
           />
-        </button>
+        </Button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content

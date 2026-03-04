@@ -107,7 +107,6 @@ export function AdminItemControls({ item, projectId }: AdminItemControlsProps) {
         ) : (
           <div className="flex items-center gap-2">
             <Button
-              size="sm"
               variant="outline"
               onClick={handlePushToLinear}
               disabled={isLinearPending}
@@ -136,7 +135,6 @@ export function AdminItemControls({ item, projectId }: AdminItemControlsProps) {
         />
         <div className="flex items-center gap-2">
           <Button
-            size="sm"
             variant="outline"
             onClick={handleSaveNotes}
             disabled={isPending}

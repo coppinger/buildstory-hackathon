@@ -51,7 +51,7 @@ function ProjectCard({ project, pinned = false }: { project: HackathonProject; p
             </Badge>
           )}
           {pinned && project.slug && (
-            <Button variant="ghost" size="xs" asChild>
+            <Button variant="ghost" asChild>
               <Link href={`/projects/${project.slug}/edit`}>
                 <Icon name="edit" size="4" />
               </Link>
