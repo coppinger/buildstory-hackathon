@@ -180,18 +180,29 @@ export async function submitIdea(data: {
     let slug = slugify(parsed.data.title);
     if (!slug) slug = crypto.randomUUID().slice(0, 8);
 
-    const [item] = await db
-      .insert(featureBoardItems)
-      .values({
-        title: parsed.data.title,
-        slug,
-        description: parsed.data.description ?? null,
-        categoryId: parsed.data.categoryId ?? null,
-        authorId: profile.id,
-        projectId: data.projectId ?? null,
-        status: "inbox",
-      })
-      .returning({ slug: featureBoardItems.slug });
+    const [item] = await db.transaction(async (tx) => {
+      const [inserted] = await tx
+        .insert(featureBoardItems)
+        .values({
+          title: parsed.data.title,
+          slug,
+          description: parsed.data.description ?? null,
+          categoryId: parsed.data.categoryId ?? null,
+          authorId: profile.id,
+          projectId: data.projectId ?? null,
+          status: "inbox",
+          upvoteCount: 1,
+        })
+        .returning({ id: featureBoardItems.id, slug: featureBoardItems.slug });
+
+      // Auto-upvote by the submitter
+      await tx.insert(featureBoardUpvotes).values({
+        itemId: inserted.id,
+        profileId: profile.id,
+      });
+
+      return [inserted];
+    });
 
     revalidatePath("/roadmap");
     return { success: true, data: { slug: item.slug } };
@@ -201,18 +212,29 @@ export async function submitIdea(data: {
       isUniqueViolation(error, "idx_feature_board_items_project_slug")) {
       try {
         const slug = `${slugify(parsed.data.title).slice(0, 70)}-${crypto.randomUUID().slice(0, 6)}`;
-        const [item] = await db
-          .insert(featureBoardItems)
-          .values({
-            title: parsed.data.title,
-            slug,
-            description: parsed.data.description ?? null,
-            categoryId: parsed.data.categoryId ?? null,
-            authorId: profile.id,
-            projectId: data.projectId ?? null,
-            status: "inbox",
-          })
-          .returning({ slug: featureBoardItems.slug });
+        const [item] = await db.transaction(async (tx) => {
+          const [inserted] = await tx
+            .insert(featureBoardItems)
+            .values({
+              title: parsed.data.title,
+              slug,
+              description: parsed.data.description ?? null,
+              categoryId: parsed.data.categoryId ?? null,
+              authorId: profile.id,
+              projectId: data.projectId ?? null,
+              status: "inbox",
+              upvoteCount: 1,
+            })
+            .returning({ id: featureBoardItems.id, slug: featureBoardItems.slug });
+
+          // Auto-upvote by the submitter
+          await tx.insert(featureBoardUpvotes).values({
+            itemId: inserted.id,
+            profileId: profile.id,
+          });
+
+          return [inserted];
+        });
 
         revalidatePath("/roadmap");
         return { success: true, data: { slug: item.slug } };
