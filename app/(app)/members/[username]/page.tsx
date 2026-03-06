@@ -79,7 +79,7 @@ export default async function ProfileDetailPage({
           )}
         </div>
         {isOwner && (
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" asChild>
             <Link href="/settings">
               <Icon name="edit" size="3.5" />
               Edit profile

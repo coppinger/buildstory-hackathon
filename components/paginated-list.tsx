@@ -70,7 +70,6 @@ export function PaginatedList({
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="sm"
               disabled={page <= 1 || isPending}
               onClick={() => handlePageChange(page - 1)}
             >
@@ -79,7 +78,6 @@ export function PaginatedList({
             </Button>
             <Button
               variant="outline"
-              size="sm"
               disabled={page >= totalPages || isPending}
               onClick={() => handlePageChange(page + 1)}
             >

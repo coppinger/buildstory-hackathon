@@ -147,7 +147,6 @@ export function AdminRolesClient({
                   {user.role !== "moderator" && (
                     <Button
                       variant="outline"
-                      size="sm"
                       disabled={isPending}
                       onClick={() => handleRoleChange(user.id, "moderator")}
                     >
@@ -157,7 +156,6 @@ export function AdminRolesClient({
                   {user.role !== "admin" && (
                     <Button
                       variant="outline"
-                      size="sm"
                       disabled={isPending}
                       onClick={() => handleRoleChange(user.id, "admin")}
                     >
@@ -167,7 +165,6 @@ export function AdminRolesClient({
                   {user.role !== "user" && (
                     <Button
                       variant="ghost"
-                      size="sm"
                       disabled={isPending}
                       onClick={() => handleRoleChange(user.id, "user")}
                       className="text-destructive hover:text-destructive"
@@ -232,7 +229,6 @@ export function AdminRolesClient({
                     {user.role === "moderator" && (
                       <Button
                         variant="outline"
-                        size="sm"
                         disabled={isPending}
                         onClick={() => handleRoleChange(user.id, "admin")}
                       >
@@ -242,7 +238,6 @@ export function AdminRolesClient({
                     {user.role === "admin" && (
                       <Button
                         variant="outline"
-                        size="sm"
                         disabled={isPending}
                         onClick={() => handleRoleChange(user.id, "moderator")}
                       >
@@ -251,7 +246,6 @@ export function AdminRolesClient({
                     )}
                     <Button
                       variant="ghost"
-                      size="sm"
                       disabled={isPending}
                       onClick={() => handleRoleChange(user.id, "user")}
                       className="text-destructive hover:text-destructive"

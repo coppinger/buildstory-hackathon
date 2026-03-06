@@ -114,7 +114,7 @@ export function DashboardProjectCard({
             )}
           </div>
           {project.slug && (
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" asChild>
               <Link href={`/projects/${project.slug}/edit`}>Edit project</Link>
             </Button>
           )}

@@ -313,7 +313,6 @@ export function AdminMentorsClient({
                 {app.status === "pending" && (
                   <div className="flex gap-2 pt-1">
                     <Button
-                      size="sm"
                       disabled={isPending}
                       onClick={() => handleApprove(app.id)}
                     >
@@ -322,7 +321,6 @@ export function AdminMentorsClient({
                     </Button>
                     <Button
                       variant="outline"
-                      size="sm"
                       disabled={isPending}
                       onClick={() => handleDecline(app.id)}
                     >

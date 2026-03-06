@@ -40,7 +40,7 @@ export default async function AdminUserDetailPage({
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/admin/users">
-          <Button variant="ghost" size="icon-xs">
+          <Button variant="ghost" size="icon">
             <Icon name="arrow_back" size="5" />
           </Button>
         </Link>

@@ -71,18 +71,18 @@ export function SearchSortBar({ placeholder = "Search..." }: SearchSortBarProps)
           className="pl-9 pr-9"
         />
         {params.q && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
             <Icon name="close" size="4" />
-          </button>
+          </Button>
         )}
       </div>
       <Button
         variant="outline"
-        size="sm"
         onClick={handleSortToggle}
         disabled={isPending}
         className="shrink-0 h-12 px-3 gap-1.5"

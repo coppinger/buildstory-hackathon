@@ -112,10 +112,9 @@ export function TeamSection({
             {isOwner && (
               <Button
                 variant="ghost"
-                size="sm"
                 disabled={isPending}
                 onClick={() => handleRemove(m.profile.id)}
-                className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                className="text-muted-foreground hover:text-destructive"
               >
                 Remove
               </Button>
@@ -124,10 +123,9 @@ export function TeamSection({
               currentUserProfileId === m.profile.id && (
                 <Button
                   variant="ghost"
-                  size="sm"
                   disabled={isPending}
                   onClick={handleLeave}
-                  className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                  className="text-muted-foreground hover:text-destructive"
                 >
                   Leave
                 </Button>
@@ -148,10 +146,8 @@ export function TeamSection({
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="sm"
               disabled={isPending}
               onClick={handleGenerateLink}
-              className="h-8 text-xs"
             >
               <Icon name="link" size="3.5" className="mr-1" />
               Generate invite link
@@ -165,9 +161,8 @@ export function TeamSection({
               </code>
               <Button
                 variant="ghost"
-                size="sm"
                 onClick={handleCopy}
-                className="h-7 text-xs shrink-0"
+                className="shrink-0"
               >
                 {copied ? "Copied!" : "Copy"}
               </Button>
@@ -194,10 +189,9 @@ export function TeamSection({
                   </span>
                   <Button
                     variant="ghost"
-                    size="sm"
                     disabled={isPending}
                     onClick={() => handleRevoke(invite.id)}
-                    className="h-6 text-xs text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground hover:text-destructive"
                   >
                     Revoke
                   </Button>

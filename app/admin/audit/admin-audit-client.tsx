@@ -204,7 +204,6 @@ export function AdminAuditClient({ entries }: { entries: AuditEntry[] }) {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="sm"
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
@@ -216,7 +215,6 @@ export function AdminAuditClient({ entries }: { entries: AuditEntry[] }) {
             </span>
             <Button
               variant="outline"
-              size="sm"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >

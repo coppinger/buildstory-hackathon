@@ -121,7 +121,6 @@ export function CategoryManager({
     return (
       <Button
         variant="outline"
-        size="sm"
         onClick={() => setExpanded(true)}
         className="gap-1.5"
       >
@@ -135,13 +134,13 @@ export function CategoryManager({
     <div className="mt-4 rounded-lg border border-border bg-card p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Categories</h3>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => setExpanded(false)}
-          className="text-muted-foreground hover:text-foreground transition-colors"
         >
           <Icon name="close" size="4" />
-        </button>
+        </Button>
       </div>
 
       {/* Existing categories */}
@@ -163,20 +162,18 @@ export function CategoryManager({
                   maxLength={50}
                 />
                 <Button
-                  size="sm"
+                  size="icon"
                   variant="ghost"
                   onClick={handleSaveEdit}
                   disabled={isPending || !editName.trim()}
-                  className="h-8 w-8 p-0"
                 >
                   <Icon name="check" size="4" />
                 </Button>
                 <Button
-                  size="sm"
+                  size="icon"
                   variant="ghost"
                   onClick={() => setEditingId(null)}
                   disabled={isPending}
-                  className="h-8 w-8 p-0"
                 >
                   <Icon name="close" size="4" />
                 </Button>
@@ -192,22 +189,24 @@ export function CategoryManager({
                 />
                 <span className="text-sm flex-1">{cat.name}</span>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleStartEdit(cat)}
                     disabled={isPending}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     <Icon name="edit" size="3.5" />
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleDelete(cat.id)}
                     disabled={isPending}
-                    className="text-muted-foreground hover:text-destructive transition-colors"
+                    className="text-muted-foreground hover:text-destructive"
                   >
                     <Icon name="delete" size="3.5" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             )
@@ -237,10 +236,8 @@ export function CategoryManager({
           }}
         />
         <Button
-          size="sm"
           onClick={handleCreate}
           disabled={isPending || !newName.trim()}
-          className="h-8"
         >
           Add
         </Button>
