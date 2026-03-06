@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, type ReactNode } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AlertDialog } from "radix-ui";
 import { Button } from "@/components/ui/button";
@@ -24,12 +24,16 @@ export function DeleteRoadmapItemDialog({
 }: DeleteRoadmapItemDialogProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState("");
 
   function handleDelete() {
+    setError("");
     startTransition(async () => {
       const result = await deleteItem({ itemId, projectId });
       if (result.success) {
         router.push(redirectPath);
+      } else {
+        setError(result.error);
       }
     });
   }
@@ -49,6 +53,9 @@ export function DeleteRoadmapItemDialog({
             All upvotes and comments will be permanently removed. This action
             cannot be undone.
           </AlertDialog.Description>
+          {error && (
+            <p className="mt-3 text-sm text-destructive">{error}</p>
+          )}
           <div className="mt-6 flex items-center justify-end gap-3">
             <AlertDialog.Cancel asChild>
               <Button variant="outline" disabled={isPending}>
