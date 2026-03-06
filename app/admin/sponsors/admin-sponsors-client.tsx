@@ -301,7 +301,6 @@ export function AdminSponsorsClient({
                   <div className="flex gap-2 pt-1">
                     {inq.status === "pending" && (
                       <Button
-                        size="sm"
                         variant="outline"
                         disabled={isPending}
                         onClick={() => handleContact(inq.id)}
@@ -311,7 +310,6 @@ export function AdminSponsorsClient({
                       </Button>
                     )}
                     <Button
-                      size="sm"
                       disabled={isPending}
                       onClick={() => handleAccept(inq.id)}
                     >
@@ -320,7 +318,6 @@ export function AdminSponsorsClient({
                     </Button>
                     <Button
                       variant="outline"
-                      size="sm"
                       disabled={isPending}
                       onClick={() => handleDecline(inq.id)}
                     >

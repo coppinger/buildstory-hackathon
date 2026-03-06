@@ -149,7 +149,6 @@ export function AdminStreamersClient({
                     </div>
                   </div>
                   <Button
-                    size="sm"
                     variant={alreadyAdded ? "outline" : "default"}
                     disabled={isPending || alreadyAdded}
                     onClick={() => handleAdd(result)}
@@ -197,7 +196,6 @@ export function AdminStreamersClient({
                     </div>
                   </div>
                   <Button
-                    size="sm"
                     variant="destructive"
                     disabled={isPending}
                     onClick={() => handleRemove(cat.id)}
