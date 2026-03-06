@@ -416,6 +416,59 @@ export async function archiveItem(data: {
   }
 }
 
+export async function deleteItem(data: {
+  itemId: string;
+  /** Pass projectId to use project-level admin auth instead of platform moderator check */
+  projectId?: string;
+}): Promise<ActionResult> {
+  const { userId } = await auth();
+  if (!userId) return { success: false, error: "Not authenticated" };
+
+  const profile = await ensureProfile(userId);
+  if (!profile) return { success: false, error: "Profile not found" };
+
+  const item = await db.query.featureBoardItems.findFirst({
+    where: eq(featureBoardItems.id, data.itemId),
+    columns: { id: true, authorId: true, projectId: true, slug: true },
+  });
+  if (!item) return { success: false, error: "Item not found" };
+
+  // Verify project scope if provided
+  if (data.projectId && item.projectId !== data.projectId) {
+    return { success: false, error: "Item does not belong to this project" };
+  }
+
+  const isAuthor = item.authorId === profile.id;
+
+  // Check authorization: author can delete their own, moderators/project admins can delete any
+  if (!isAuthor) {
+    let isMod: boolean;
+    if (data.projectId) {
+      isMod = await isProjectOwnerOrMember(profile.id, data.projectId);
+    } else {
+      isMod = await isModerator(userId);
+    }
+    if (!isMod) return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    // Upvotes and comments cascade-delete via foreign key constraints
+    await db
+      .delete(featureBoardItems)
+      .where(eq(featureBoardItems.id, data.itemId));
+
+    revalidatePath("/roadmap");
+    if (item.slug) revalidatePath(`/roadmap/${item.slug}`);
+    return { success: true };
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "server-action", action: "deleteItem" },
+      extra: { itemId: data.itemId, userId },
+    });
+    return { success: false, error: "Failed to delete item" };
+  }
+}
+
 export async function toggleUpvote(data: {
   itemId: string;
 }): Promise<ActionResult<{ upvoted: boolean; count: number }>> {

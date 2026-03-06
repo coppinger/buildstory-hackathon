@@ -14,9 +14,11 @@ import { roadmapBasePath } from "@/lib/roadmap/paths";
 import { StatusBadge } from "@/components/roadmap/status-badge";
 import { UpvoteButton } from "@/components/roadmap/upvote-button";
 import { AdminItemControls } from "@/components/roadmap/admin-item-controls";
+import { DeleteRoadmapItemDialog } from "@/components/roadmap/delete-roadmap-item-dialog";
 import { CommentSection } from "@/components/roadmap/comment-section";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { MarkdownText } from "@/components/ui/markdown-text";
 import { Icon } from "@/components/ui/icon";
 import { timeAgo } from "@/lib/time";
@@ -26,11 +28,18 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string; itemSlug: string }>;
 }): Promise<Metadata> {
-  const { itemSlug } = await params;
+  const { slug, itemSlug } = await params;
   const item = await getFeatureBoardItemBySlug(itemSlug);
   if (!item) return notFoundMeta;
   if (item.status === "inbox" || item.status === "closed" || item.status === "archived") {
-    return notFoundMeta;
+    // Check if current user is a project admin — show real title for them
+    const { userId } = await auth();
+    if (!userId) return notFoundMeta;
+    const profile = await ensureProfile(userId);
+    const project = await getProjectBySlug(slug);
+    if (!profile || !project) return notFoundMeta;
+    const isProjectAdmin = await isProjectOwnerOrMember(profile.id, project.id);
+    if (!isProjectAdmin) return notFoundMeta;
   }
   return ogMeta(
     item.title,
@@ -153,6 +162,23 @@ export default async function ProjectRoadmapItemPage({
               {item.author.displayName}
             </Link>
           </span>
+        </div>
+      )}
+
+      {(profileId === item.authorId || isAdmin) && (
+        <div className="mt-4">
+          <DeleteRoadmapItemDialog
+            itemId={item.id}
+            itemTitle={item.title}
+            projectId={project.id}
+            redirectPath={basePath}
+            trigger={
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+                <Icon name="delete" size="4" />
+                Delete
+              </Button>
+            }
+          />
         </div>
       )}
 
