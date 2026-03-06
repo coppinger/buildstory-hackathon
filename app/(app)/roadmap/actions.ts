@@ -144,6 +144,39 @@ async function checkUpvoteRateLimit(
 // Actions
 // ---------------------------------------------------------------------------
 
+/** Create an item with auto-upvote in a single transaction */
+async function createItemWithAutoUpvote(
+  slug: string,
+  title: string,
+  description: string | null,
+  categoryId: string | null,
+  authorId: string,
+  projectId: string | null
+): Promise<{ id: string; slug: string | null }> {
+  return db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(featureBoardItems)
+      .values({
+        title,
+        slug,
+        description,
+        categoryId,
+        authorId,
+        projectId,
+        status: "inbox",
+        upvoteCount: 1,
+      })
+      .returning({ id: featureBoardItems.id, slug: featureBoardItems.slug });
+
+    await tx.insert(featureBoardUpvotes).values({
+      itemId: inserted.id,
+      profileId: authorId,
+    });
+
+    return inserted;
+  });
+}
+
 export async function submitIdea(data: {
   title: string;
   description?: string;
@@ -180,29 +213,14 @@ export async function submitIdea(data: {
     let slug = slugify(parsed.data.title);
     if (!slug) slug = crypto.randomUUID().slice(0, 8);
 
-    const [item] = await db.transaction(async (tx) => {
-      const [inserted] = await tx
-        .insert(featureBoardItems)
-        .values({
-          title: parsed.data.title,
-          slug,
-          description: parsed.data.description ?? null,
-          categoryId: parsed.data.categoryId ?? null,
-          authorId: profile.id,
-          projectId: data.projectId ?? null,
-          status: "inbox",
-          upvoteCount: 1,
-        })
-        .returning({ id: featureBoardItems.id, slug: featureBoardItems.slug });
-
-      // Auto-upvote by the submitter
-      await tx.insert(featureBoardUpvotes).values({
-        itemId: inserted.id,
-        profileId: profile.id,
-      });
-
-      return [inserted];
-    });
+    const item = await createItemWithAutoUpvote(
+      slug,
+      parsed.data.title,
+      parsed.data.description ?? null,
+      parsed.data.categoryId ?? null,
+      profile.id,
+      data.projectId ?? null
+    );
 
     revalidatePath("/roadmap");
     return { success: true, data: { slug: item.slug } };
@@ -212,29 +230,14 @@ export async function submitIdea(data: {
       isUniqueViolation(error, "idx_feature_board_items_project_slug")) {
       try {
         const slug = `${slugify(parsed.data.title).slice(0, 70)}-${crypto.randomUUID().slice(0, 6)}`;
-        const [item] = await db.transaction(async (tx) => {
-          const [inserted] = await tx
-            .insert(featureBoardItems)
-            .values({
-              title: parsed.data.title,
-              slug,
-              description: parsed.data.description ?? null,
-              categoryId: parsed.data.categoryId ?? null,
-              authorId: profile.id,
-              projectId: data.projectId ?? null,
-              status: "inbox",
-              upvoteCount: 1,
-            })
-            .returning({ id: featureBoardItems.id, slug: featureBoardItems.slug });
-
-          // Auto-upvote by the submitter
-          await tx.insert(featureBoardUpvotes).values({
-            itemId: inserted.id,
-            profileId: profile.id,
-          });
-
-          return [inserted];
-        });
+        const item = await createItemWithAutoUpvote(
+          slug,
+          parsed.data.title,
+          parsed.data.description ?? null,
+          parsed.data.categoryId ?? null,
+          profile.id,
+          data.projectId ?? null
+        );
 
         revalidatePath("/roadmap");
         return { success: true, data: { slug: item.slug } };
