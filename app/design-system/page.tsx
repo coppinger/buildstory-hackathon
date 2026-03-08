@@ -90,6 +90,11 @@ export default function DesignSystemPage() {
       {/* Header */}
       <header className="border-b">
         <div className="mx-auto max-w-8xl px-6 py-12 md:py-20">
+          <img
+            src="/buildstory-logo.svg"
+            alt="Buildstory"
+            className="h-9 w-auto mb-6"
+          />
           <p className="text-sm font-mono text-muted-foreground mb-2">
             buildstory/design-system
           </p>
