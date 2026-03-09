@@ -9,10 +9,11 @@ import { useLiveStreamers } from "@/lib/streamers/use-live-streamers";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Submissions", href: "/submissions" },
+  { label: "Hackathons", href: "/hackathons" },
   { label: "Projects", href: "/projects" },
   { label: "Members", href: "/members" },
   { label: "Live Streams", href: "/streamers" },
+  { label: "Tools", href: "/tools" },
   { label: "Roadmap", href: "/roadmap" },
   { label: "Settings", href: "/settings" },
 ];

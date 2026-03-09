@@ -5,7 +5,8 @@ import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { events, eventProjects, projects, projectMembers } from "@/lib/db/schema";
 import { ensureProfile } from "@/lib/db/ensure-profile";
-import { HACKATHON_SLUG, SUBMISSION_DEADLINE } from "@/lib/constants";
+import { HACKATHON_SLUG } from "@/lib/constants";
+import { isSubmissionOpen } from "@/lib/events";
 import { getSubmissionForProjectEvent } from "@/lib/queries";
 import { SubmissionForm } from "@/components/submissions/submission-form";
 
@@ -66,7 +67,7 @@ export default async function SubmitPage({
   if (!eventProject) notFound();
 
   // Deadline check
-  if (new Date() > SUBMISSION_DEADLINE) {
+  if (!isSubmissionOpen(event)) {
     return (
       <div className="p-6 md:p-8 lg:p-12 w-full max-w-2xl mx-auto">
         <div className="text-center py-20">

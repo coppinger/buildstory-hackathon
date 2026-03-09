@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
 import {
+  events,
   eventSubmissions,
   eventSubmissionTools,
   aiTools,
@@ -17,7 +18,7 @@ import type { AiTool } from "@/lib/db/schema";
 import { eq, and, or } from "drizzle-orm";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { submitProjectSchema, parseInput } from "@/lib/db/validations";
-import { SUBMISSION_DEADLINE } from "@/lib/constants";
+import { isSubmissionOpen } from "@/lib/events";
 import { notifySubmission } from "@/lib/discord";
 import { checkSubmissionMilestone } from "@/lib/milestones";
 
@@ -50,15 +51,13 @@ export async function submitProject(
     const parsed = parseInput(submitProjectSchema, validationInput);
     if (!parsed.success) return parsed;
 
-    // Deadline check
-    if (new Date() > SUBMISSION_DEADLINE) {
-      return { success: false, error: "Submission deadline has passed" };
-    }
-
-    // Fetch project and verify event link in parallel
-    const [project, eventProject] = await Promise.all([
+    // Fetch project, event, and event link in parallel
+    const [project, event, eventProject] = await Promise.all([
       db.query.projects.findFirst({
         where: eq(projects.id, projectId),
+      }),
+      db.query.events.findFirst({
+        where: eq(events.id, eventId),
       }),
       db.query.eventProjects.findFirst({
         where: and(
@@ -68,8 +67,14 @@ export async function submitProject(
       }),
     ]);
     if (!project) return { success: false, error: "Project not found" };
+    if (!event) return { success: false, error: "Event not found" };
     if (!eventProject) {
       return { success: false, error: "Project is not linked to this event" };
+    }
+
+    // Deadline check
+    if (!isSubmissionOpen(event)) {
+      return { success: false, error: "Submission deadline has passed" };
     }
 
     // Ownership or membership check
@@ -148,7 +153,7 @@ export async function submitProject(
 
     revalidatePath("/dashboard");
     revalidatePath(`/projects/${project.slug}`);
-    revalidatePath("/submissions");
+    revalidatePath("/hackathons");
 
     return { success: true };
   } catch (error) {
