@@ -25,7 +25,7 @@ export function SubmissionCelebration({
     return () => clearTimeout(timer);
   }, []);
 
-  const projectUrl = `https://buildstory.com/projects/${projectSlug}`;
+  const projectUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/projects/${projectSlug}`;
   const tweetText = `I just shipped ${projectName} for Hackathon 00!\n\n${whatBuilt}\n\n#Buildstory\n${projectUrl}`;
 
   const handleDownload = async () => {

@@ -40,23 +40,22 @@ export async function GET(request: Request) {
     return new Response("Submission not found", { status: 404 });
   }
 
-  const { dmSans, instrumentSerif, dmMono } = await loadFonts();
-
-  const { projectName, whatBuilt, lessonLearned, tools, country, region } =
-    data;
-
-  // Build location string
-  let locationText: string | null = null;
-  if (country) {
-    locationText = region
-      ? `Built from ${region}, ${country}`
-      : `Built from ${country}`;
-  }
-
-  // Limit tools to 5
-  const displayTools = tools.slice(0, 5);
-
   try {
+    const { dmSans, instrumentSerif, dmMono } = await loadFonts();
+
+    const { projectName, whatBuilt, lessonLearned, tools, country, region } =
+      data;
+
+    // Build location string
+    let locationText: string | null = null;
+    if (country) {
+      locationText = region
+        ? `Built from ${region}, ${country}`
+        : `Built from ${country}`;
+    }
+
+    // Limit tools to 5
+    const displayTools = tools.slice(0, 5);
     return new ImageResponse(
       (
         <div

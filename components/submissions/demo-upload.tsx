@@ -30,6 +30,11 @@ export function DemoUpload({
 
   const uploadFile = useCallback(
     async (file: File) => {
+      const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+      if (file.size > MAX_FILE_SIZE) {
+        setError("File too large. Maximum size is 50 MB.");
+        return;
+      }
       setError(null);
       setUploading(true);
       setProgress(0);
