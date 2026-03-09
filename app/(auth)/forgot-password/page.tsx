@@ -29,6 +29,8 @@ export default function ForgotPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
 
   // --- Step 1: Request reset code ---
 
@@ -62,6 +64,33 @@ export default function ForgotPasswordPage() {
       );
     } finally {
       setLoading(false);
+    }
+  }
+
+  // --- Resend code ---
+
+  async function handleResendCode() {
+    if (!isLoaded || resending) return;
+
+    setResending(true);
+    setError("");
+    setResent(false);
+
+    try {
+      await signIn.create({
+        strategy: "reset_password_email_code",
+        identifier: email,
+      });
+      setResent(true);
+      setCode("");
+    } catch (err: unknown) {
+      const clerkErr = err as { errors?: { message: string }[] };
+      setError(
+        clerkErr.errors?.[0]?.message ??
+          "Failed to resend code. Please try again."
+      );
+    } finally {
+      setResending(false);
     }
   }
 
@@ -261,18 +290,32 @@ export default function ForgotPasswordPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-base text-neutral-400">
+          <div className="mt-6 flex flex-col items-center gap-2 text-base text-neutral-400">
+            <p>
+              Didn&apos;t receive a code?{" "}
+              <button
+                onClick={handleResendCode}
+                disabled={resending}
+                className="text-buildstory-400 hover:text-buildstory-500 cursor-pointer disabled:opacity-50"
+              >
+                {resending ? "Resending..." : "Resend code"}
+              </button>
+              {resent && (
+                <span className="ml-2 text-sm text-green-500">Sent!</span>
+              )}
+            </p>
             <button
               onClick={() => {
                 setStep("email");
                 setCode("");
                 setError("");
+                setResent(false);
               }}
               className="text-buildstory-400 hover:text-buildstory-500 cursor-pointer"
             >
               Use a different email
             </button>
-          </p>
+          </div>
         </CardContent>
       </Card>
     );
