@@ -310,6 +310,21 @@ export async function toggleReaction(data: {
   const profile = await ensureProfile(userId);
   if (!profile) return { success: false, error: "Profile not found" };
 
+  // Verify target exists before proceeding
+  if (data.targetType === "post") {
+    const post = await db.query.posts.findFirst({
+      where: eq(posts.id, data.targetId),
+      columns: { id: true },
+    });
+    if (!post) return { success: false, error: "Post not found" };
+  } else {
+    const comment = await db.query.postComments.findFirst({
+      where: eq(postComments.id, data.targetId),
+      columns: { id: true },
+    });
+    if (!comment) return { success: false, error: "Comment not found" };
+  }
+
   // Pre-check rate limit outside transaction (only matters for adding, not removing)
   const rateLimitError = await checkReactionRateLimit(profile.id);
 

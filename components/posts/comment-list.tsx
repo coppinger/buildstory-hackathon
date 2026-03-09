@@ -5,6 +5,7 @@ import type { CommentWithAuthor } from "@/lib/content/queries";
 import { CommentThread } from "@/components/posts/comment-thread";
 import { CommentForm } from "@/components/posts/comment-form";
 import { fetchComments } from "@/app/(app)/content/fetch-comments";
+import { Button } from "@/components/ui/button";
 
 export function CommentList({
   postId,
@@ -16,14 +17,18 @@ export function CommentList({
   currentUserProfileId: string | null;
 }) {
   const [comments, setComments] = useState<CommentWithAuthor[] | null>(null);
+  const [error, setError] = useState(false);
   const loadingRef = useRef(false);
 
   const load = useCallback(async () => {
     if (loadingRef.current) return;
     loadingRef.current = true;
+    setError(false);
     try {
       const data = await fetchComments(postId);
       setComments(data);
+    } catch {
+      setError(true);
     } finally {
       loadingRef.current = false;
     }
@@ -32,6 +37,17 @@ export function CommentList({
   useEffect(() => {
     load();
   }, [load]);
+
+  if (error) {
+    return (
+      <div className="flex items-center gap-2 py-2">
+        <p className="text-xs text-muted-foreground">Failed to load comments.</p>
+        <Button variant="ghost" size="sm" onClick={load} className="h-6 text-xs">
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   if (comments === null) {
     return (
