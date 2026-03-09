@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import * as Sentry from "@sentry/nextjs";
 import { ensureProfile } from "@/lib/db/ensure-profile";
-import { createPresignedUploadUrl, isAllowedContentType } from "@/lib/r2";
+import { createPresignedUploadUrl, isAllowedContentType, isValidPrefix } from "@/lib/r2";
 
 export async function POST(request: Request) {
   try {
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { contentType } = body as { contentType?: string };
+    const { contentType, prefix } = body as { contentType?: string; prefix?: string };
 
     if (!contentType || !isAllowedContentType(contentType)) {
       return NextResponse.json(
@@ -36,9 +36,17 @@ export async function POST(request: Request) {
       );
     }
 
+    if (prefix && !isValidPrefix(prefix)) {
+      return NextResponse.json(
+        { error: "Invalid upload prefix" },
+        { status: 400 }
+      );
+    }
+
     const { uploadUrl, publicUrl } = await createPresignedUploadUrl({
       profileId: profile.id,
       contentType,
+      prefix: prefix ?? "submissions",
     });
 
     return NextResponse.json({ uploadUrl, publicUrl });

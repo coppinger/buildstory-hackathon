@@ -141,6 +141,20 @@
       "when": 1773018324895,
       "tag": "0019_parallel_star_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1773216000000,
+      "tag": "0020_hackathon_01_setup",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1773042934631,
+      "tag": "0021_freezing_susan_delgado",
+      "breakpoints": true
     }
   ]
 }

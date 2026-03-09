@@ -90,6 +90,30 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "comment_reply",
 ]);
 
+export const postContextTypeEnum = pgEnum("post_context_type", [
+  "project",
+  "tool",
+]);
+
+export const postSourceEnum = pgEnum("post_source", [
+  "manual",
+  "cli",
+  "webhook",
+]);
+
+export const reactionTargetTypeEnum = pgEnum("reaction_target_type", [
+  "post",
+  "comment",
+]);
+
+export const reactionEmojiEnum = pgEnum("reaction_emoji", [
+  "fire",
+  "rocket",
+  "lightbulb",
+  "clap",
+  "wrench",
+]);
+
 // --- Profiles ---
 
 export const profiles = pgTable("profiles", {
@@ -272,6 +296,9 @@ export const profilesRelations = relations(profiles, ({ many }) => ({
   featureBoardUpvotes: many(featureBoardUpvotes),
   featureBoardComments: many(featureBoardComments),
   eventSubmissions: many(eventSubmissions),
+  posts: many(posts),
+  postComments: many(postComments),
+  reactions: many(reactions),
 }));
 
 export const eventsRelations = relations(events, ({ many }) => ({
@@ -676,6 +703,8 @@ export const aiTools = pgTable("ai_tools", {
   name: text("name").notNull().unique(),
   slug: text("slug").notNull().unique(),
   category: text("category").notNull(),
+  description: text("description"),
+  iconUrl: text("icon_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -740,6 +769,131 @@ export const eventSubmissionTools = pgTable(
 
 export type EventSubmissionTool = typeof eventSubmissionTools.$inferSelect;
 export type NewEventSubmissionTool = typeof eventSubmissionTools.$inferInsert;
+
+// --- Posts ---
+
+export const posts = pgTable(
+  "posts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    authorId: uuid("author_id")
+      .notNull()
+      .references(() => profiles.id),
+    body: text("body").notNull(),
+    imageUrl: text("image_url"),
+    linkUrl: text("link_url"),
+    contextType: postContextTypeEnum("context_type").notNull(),
+    contextId: uuid("context_id").notNull(),
+    source: postSourceEnum("source").default("manual").notNull(),
+    reactionCount: integer("reaction_count").default(0).notNull(),
+    commentCount: integer("comment_count").default(0).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    index("idx_posts_context").on(t.contextType, t.contextId),
+    index("idx_posts_author").on(t.authorId),
+    index("idx_posts_created").on(t.createdAt),
+  ]
+);
+
+export type Post = typeof posts.$inferSelect;
+export type NewPost = typeof posts.$inferInsert;
+
+// --- Post Comments ---
+
+export const postComments = pgTable(
+  "post_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    authorId: uuid("author_id")
+      .notNull()
+      .references(() => profiles.id),
+    body: text("body").notNull(),
+    parentCommentId: uuid("parent_comment_id"),
+    reactionCount: integer("reaction_count").default(0).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    index("idx_post_comments_post").on(t.postId),
+    index("idx_post_comments_author").on(t.authorId),
+    index("idx_post_comments_parent").on(t.parentCommentId),
+  ]
+);
+
+export type PostComment = typeof postComments.$inferSelect;
+export type NewPostComment = typeof postComments.$inferInsert;
+
+// --- Reactions ---
+
+export const reactions = pgTable(
+  "reactions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    profileId: uuid("profile_id")
+      .notNull()
+      .references(() => profiles.id),
+    targetType: reactionTargetTypeEnum("target_type").notNull(),
+    targetId: uuid("target_id").notNull(),
+    emoji: reactionEmojiEnum("emoji").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    unique().on(t.targetType, t.targetId, t.profileId, t.emoji),
+    index("idx_reactions_target").on(t.targetType, t.targetId),
+    index("idx_reactions_profile").on(t.profileId),
+  ]
+);
+
+export type Reaction = typeof reactions.$inferSelect;
+export type NewReaction = typeof reactions.$inferInsert;
+
+// --- Posts Relations ---
+
+export const postsRelations = relations(posts, ({ one, many }) => ({
+  author: one(profiles, {
+    fields: [posts.authorId],
+    references: [profiles.id],
+  }),
+  comments: many(postComments),
+}));
+
+export const postCommentsRelations = relations(
+  postComments,
+  ({ one, many }) => ({
+    post: one(posts, {
+      fields: [postComments.postId],
+      references: [posts.id],
+    }),
+    author: one(profiles, {
+      fields: [postComments.authorId],
+      references: [profiles.id],
+    }),
+    parent: one(postComments, {
+      fields: [postComments.parentCommentId],
+      references: [postComments.id],
+      relationName: "postCommentThread",
+    }),
+    replies: many(postComments, { relationName: "postCommentThread" }),
+  })
+);
+
+export const reactionsRelations = relations(reactions, ({ one }) => ({
+  profile: one(profiles, {
+    fields: [reactions.profileId],
+    references: [profiles.id],
+  }),
+}));
 
 // --- AI Tools Relations ---
 

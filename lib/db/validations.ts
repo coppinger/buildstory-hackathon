@@ -314,6 +314,20 @@ export const editCommentSchema = z.object({
   body: z.string().trim().min(1, "Comment cannot be empty").max(5000, "Comment is too long"),
 });
 
+export const createPostSchema = z.object({
+  body: z.string().trim().min(1, "Post cannot be empty").max(280, "Max 280 characters"),
+  imageUrl: sanitizedUrlField(2000).nullable().optional(),
+  linkUrl: sanitizedUrlField(2000).nullable().optional(),
+  contextType: z.enum(["project", "tool"]),
+  contextId: z.string().uuid(),
+});
+
+export const createPostCommentSchema = z.object({
+  body: z.string().trim().min(1, "Comment cannot be empty").max(280, "Max 280 characters"),
+  postId: z.string().uuid(),
+  parentCommentId: z.string().uuid().nullable().optional(),
+});
+
 export const submitProjectSchema = z.object({
   whatBuilt: z.string().trim().min(1, "Required").max(280),
   demoUrl: sanitizedUrlField(2000).nullable(),

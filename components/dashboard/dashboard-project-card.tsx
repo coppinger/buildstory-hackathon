@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DISCORD_INVITE_URL, SUBMISSION_DEADLINE } from "@/lib/constants";
+import { DISCORD_INVITE_URL } from "@/lib/constants";
 import { stripMarkdown } from "@/lib/markdown";
 import type { Project } from "@/lib/db/schema";
 
@@ -14,9 +14,11 @@ const startingPointLabels: Record<string, string> = {
 export function DashboardProjectCard({
   project,
   hasSubmission,
+  submissionOpen = false,
 }: {
   project: Project | null;
   hasSubmission?: boolean;
+  submissionOpen?: boolean;
 }) {
   if (!project) {
     return (
@@ -57,7 +59,7 @@ export function DashboardProjectCard({
     );
   }
 
-  const isPastDeadline = new Date() > SUBMISSION_DEADLINE;
+  const isPastDeadline = !submissionOpen;
 
   return (
     <Card className="w-full">

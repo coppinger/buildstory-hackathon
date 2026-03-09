@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/schema";
 import {
   eq,
+  ne,
   and,
   or,
   count,
@@ -24,6 +25,7 @@ import {
   aliasedTable,
 } from "drizzle-orm";
 import { HACKATHON_SLUG } from "@/lib/constants";
+import { getComputedEventState } from "@/lib/events";
 import { getCountryName } from "@/lib/countries";
 import { getRegionName } from "@/lib/regions";
 import { DEFAULT_PAGE_SIZE, type SortOrder } from "@/lib/search-params";
@@ -799,4 +801,136 @@ export async function hasHackathonSubmission(projectId: string): Promise<boolean
   });
 
   return !!row;
+}
+
+// --- Multi-Event Queries ---
+
+/** Get all non-draft events, ordered by startsAt descending */
+export async function getAllPublicEvents() {
+  return db.query.events.findMany({
+    where: ne(events.status, "draft"),
+    orderBy: [desc(events.startsAt)],
+  });
+}
+
+/** Get a single event by slug */
+export async function getEventBySlug(slug: string) {
+  return db.query.events.findFirst({
+    where: eq(events.slug, slug),
+  });
+}
+
+/** Get the registration count for a given event */
+export async function getEventRegistrationCount(eventId: string): Promise<number> {
+  const notBannedOrHidden = and(
+    isNull(profiles.bannedAt),
+    isNull(profiles.hiddenAt)
+  );
+
+  const [result] = await db
+    .select({ count: count() })
+    .from(eventRegistrations)
+    .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
+    .where(and(eq(eventRegistrations.eventId, eventId), notBannedOrHidden));
+
+  return result.count;
+}
+
+/** Get submissions feed for an event (newest first, limited) */
+export async function getSubmissionsFeed(eventId: string, limit = 10) {
+  const notBannedOrHidden = and(
+    isNull(profiles.bannedAt),
+    isNull(profiles.hiddenAt)
+  );
+
+  const rows = await db
+    .select({ submissionId: eventSubmissions.id })
+    .from(eventSubmissions)
+    .innerJoin(profiles, eq(eventSubmissions.profileId, profiles.id))
+    .where(and(eq(eventSubmissions.eventId, eventId), notBannedOrHidden))
+    .orderBy(desc(eventSubmissions.submittedAt))
+    .limit(limit);
+
+  if (rows.length === 0) return [];
+
+  const ids = rows.map((r) => r.submissionId);
+  const hydrated = await db.query.eventSubmissions.findMany({
+    where: inArray(eventSubmissions.id, ids),
+    with: {
+      profile: true,
+      project: true,
+      tools: {
+        with: { tool: true },
+      },
+    },
+  });
+
+  const byId = new Map(hydrated.map((s) => [s.id, s]));
+  return ids.map((id) => {
+    const { tools: toolRels, profile, project, ...submission } = byId.get(id)!;
+    return {
+      submission,
+      profile,
+      project,
+      tools: toolRels.map((t) => ({
+        id: t.tool.id,
+        name: t.tool.name,
+        slug: t.tool.slug,
+        category: t.tool.category,
+      })),
+    };
+  });
+}
+
+/** Get hackathon event history for a project (events + submissions) */
+export async function getProjectEventHistory(projectId: string) {
+  const eps = await db.query.eventProjects.findMany({
+    where: eq(eventProjects.projectId, projectId),
+    with: {
+      event: true,
+    },
+    orderBy: [desc(eventProjects.submittedAt)],
+  });
+
+  if (eps.length === 0) return [];
+
+  const allSubmissions = await db.query.eventSubmissions.findMany({
+    where: eq(eventSubmissions.projectId, projectId),
+    with: {
+      tools: {
+        with: { tool: true },
+      },
+    },
+  });
+  const submissionsByEventId = new Map(allSubmissions.map((s) => [s.eventId, s]));
+
+  return eps.map((ep) => {
+    const submission = submissionsByEventId.get(ep.eventId);
+    return {
+      event: ep.event,
+      state: getComputedEventState(ep.event),
+      submission: submission
+        ? {
+            whatBuilt: submission.whatBuilt,
+            demoUrl: submission.demoUrl,
+            tools: submission.tools.map((t) => ({
+              id: t.tool.id,
+              name: t.tool.name,
+            })),
+          }
+        : null,
+    };
+  });
+}
+
+/** Get the latest event with open registration */
+export async function getLatestOpenEvent() {
+  const allEvents = await db.query.events.findMany({
+    orderBy: [desc(events.startsAt)],
+  });
+
+  return allEvents.find((e) => {
+    const state = getComputedEventState(e);
+    return state === "upcoming" || state === "active";
+  }) ?? null;
 }
