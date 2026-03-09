@@ -8,4 +8,3 @@ export const VOLUNTEER_URL = "#"; // TODO: replace with real URL
 export const SPONSOR_URL = "/sponsor-apply";
 export const SPONSOR_CREDITS_URL = "#"; // TODO: replace with real URL
 export const DOCS_URL = "#"; // TODO: replace with real URL
-export const SUBMISSION_DEADLINE = new Date("2026-03-11T00:00:00Z"); // March 10 EOD UTC

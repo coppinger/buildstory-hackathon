@@ -17,10 +17,11 @@ import { DashboardCountdown } from "@/components/dashboard/dashboard-countdown";
 import { DashboardActivityFeed } from "@/components/dashboard/dashboard-activity-feed";
 import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card";
 import { DashboardStreamsCard } from "@/components/dashboard/dashboard-streams-card";
+import { DashboardSubmissionsFeed } from "@/components/dashboard/dashboard-submissions-feed";
 import { DiscordCard } from "@/components/dashboard/discord-card";
-import { getPublicStats, getPublicActivityFeed } from "@/lib/queries";
+import { getPublicStats, getPublicActivityFeed, getSubmissionsFeed } from "@/lib/queries";
 import { HACKATHON_SLUG } from "@/lib/constants";
-import { getEventStatusLabel } from "@/lib/events";
+import { getEventStatusLabel, isSubmissionOpen } from "@/lib/events";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -33,8 +34,11 @@ async function getHackathonData() {
 
   if (!event) return null;
 
-  const stats = await getPublicStats(event.id);
-  return { event, stats };
+  const [stats, submissionsFeed] = await Promise.all([
+    getPublicStats(event.id),
+    getSubmissionsFeed(event.id, 8),
+  ]);
+  return { event, stats, submissionsFeed };
 }
 
 async function getUserDashboardData(eventId: string) {
@@ -197,7 +201,12 @@ export default async function DashboardPage() {
         )}
 
         {/* Your Project — shown only if registered */}
-        {isRegistered && <DashboardProjectCard project={project} hasSubmission={hasSubmission} />}
+        {isRegistered && <DashboardProjectCard project={project} hasSubmission={hasSubmission} submissionOpen={data ? isSubmissionOpen(data.event) : false} />}
+
+        {/* Submissions Feed */}
+        {data?.submissionsFeed && data.submissionsFeed.length > 0 && (
+          <DashboardSubmissionsFeed items={data.submissionsFeed} />
+        )}
 
         {/* Live Streams */}
         <DashboardStreamsCard />
