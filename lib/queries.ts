@@ -3,6 +3,7 @@ import {
   events,
   eventProjects,
   eventRegistrations,
+  eventSubmissions,
   profiles,
   projects,
   teamInvites,
@@ -23,6 +24,8 @@ import {
   aliasedTable,
 } from "drizzle-orm";
 import { HACKATHON_SLUG } from "@/lib/constants";
+import { getCountryName } from "@/lib/countries";
+import { getRegionName } from "@/lib/regions";
 import { DEFAULT_PAGE_SIZE, type SortOrder } from "@/lib/search-params";
 
 /** Escape ILIKE wildcard characters so user input is matched literally. */
@@ -49,7 +52,7 @@ export interface PaginatedResult<T> {
 }
 
 export interface ActivityFeedItem {
-  type: "signup" | "project" | "team_join";
+  type: "signup" | "project" | "team_join" | "submission";
   displayName: string;
   username: string | null;
   avatarUrl: string | null;
@@ -370,7 +373,7 @@ export async function getPublicStats(eventId: string) {
     isNull(profiles.hiddenAt)
   );
 
-  const [signups, projectCount, soloCount, teamCount, countryCount] =
+  const [signups, projectCount, soloCount, teamCount, countryCount, submissionCount] =
     await Promise.all([
       db
         .select({ count: count() })
@@ -429,9 +432,15 @@ export async function getPublicStats(eventId: string) {
           )
         )
         .then(([r]) => r.count),
+      db
+        .select({ count: count() })
+        .from(eventSubmissions)
+        .innerJoin(profiles, eq(eventSubmissions.profileId, profiles.id))
+        .where(and(eq(eventSubmissions.eventId, eventId), notBannedOrHidden))
+        .then(([r]) => r.count),
     ]);
 
-  return { signups, projectCount, soloCount, teamCount, countryCount };
+  return { signups, projectCount, soloCount, teamCount, countryCount, submissionCount };
 }
 
 // --- Team & Invite Queries ---
@@ -528,7 +537,7 @@ export async function getPublicActivityFeed(
 
   const ownerProfiles = aliasedTable(profiles, "owner_profiles");
 
-  const [signups, projectCreations, teamJoins] = await Promise.all([
+  const [signups, projectCreations, teamJoins, submissions] = await Promise.all([
     // Signups: event registrations
     db
       .select({
@@ -584,6 +593,22 @@ export async function getPublicActivityFeed(
       )
       .orderBy(desc(projectMembers.joinedAt))
       .limit(limit),
+
+    // Submissions: final project submissions
+    db
+      .select({
+        displayName: profiles.displayName,
+        username: profiles.username,
+        avatarUrl: profiles.avatarUrl,
+        projectName: projects.name,
+        timestamp: eventSubmissions.submittedAt,
+      })
+      .from(eventSubmissions)
+      .innerJoin(profiles, eq(eventSubmissions.profileId, profiles.id))
+      .innerJoin(projects, eq(eventSubmissions.projectId, projects.id))
+      .where(and(eq(eventSubmissions.eventId, eventId), notBannedOrHidden))
+      .orderBy(desc(eventSubmissions.submittedAt))
+      .limit(limit),
   ]);
 
   const items: ActivityFeedItem[] = [
@@ -611,8 +636,167 @@ export async function getPublicActivityFeed(
       detail: r.projectName,
       timestamp: r.timestamp,
     })),
+    ...submissions.map((r) => ({
+      type: "submission" as const,
+      displayName: r.displayName,
+      username: r.username,
+      avatarUrl: r.avatarUrl,
+      detail: r.projectName,
+      timestamp: r.timestamp,
+    })),
   ];
 
   items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   return items.slice(0, limit);
+}
+
+// --- Submission Queries ---
+
+export async function getSubmissionForProjectEvent(
+  projectId: string,
+  eventId: string
+) {
+  return db.query.eventSubmissions.findFirst({
+    where: and(
+      eq(eventSubmissions.projectId, projectId),
+      eq(eventSubmissions.eventId, eventId)
+    ),
+    with: {
+      tools: {
+        with: { tool: true },
+      },
+    },
+  });
+}
+
+export async function getEventSubmissions(
+  eventId: string,
+  page = 1,
+  pageSize = 20
+): Promise<PaginatedResult<{
+  submission: typeof eventSubmissions.$inferSelect;
+  profile: typeof profiles.$inferSelect;
+  project: typeof projects.$inferSelect;
+  tools: { id: string; name: string; slug: string; category: string }[];
+}>> {
+  const notBannedOrHidden = and(
+    isNull(profiles.bannedAt),
+    isNull(profiles.hiddenAt)
+  );
+
+  const [{ totalCount }] = await db
+    .select({ totalCount: count() })
+    .from(eventSubmissions)
+    .innerJoin(profiles, eq(eventSubmissions.profileId, profiles.id))
+    .where(and(eq(eventSubmissions.eventId, eventId), notBannedOrHidden));
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const safePage = Math.max(1, Math.min(page, totalPages));
+  const emptyResult = { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
+
+  if (totalCount === 0) return emptyResult;
+
+  const rows = await db
+    .select({ submissionId: eventSubmissions.id })
+    .from(eventSubmissions)
+    .innerJoin(profiles, eq(eventSubmissions.profileId, profiles.id))
+    .where(and(eq(eventSubmissions.eventId, eventId), notBannedOrHidden))
+    .orderBy(desc(eventSubmissions.submittedAt))
+    .limit(pageSize)
+    .offset((safePage - 1) * pageSize);
+
+  const ids = rows.map((r) => r.submissionId);
+
+  const hydrated = await db.query.eventSubmissions.findMany({
+    where: inArray(eventSubmissions.id, ids),
+    with: {
+      profile: true,
+      project: true,
+      tools: {
+        with: { tool: true },
+      },
+    },
+  });
+
+  const byId = new Map(hydrated.map((s) => [s.id, s]));
+  const items = ids.map((id) => {
+    const { tools: toolRels, profile, project, ...submission } = byId.get(id)!;
+    return {
+      submission,
+      profile,
+      project,
+      tools: toolRels.map((t) => ({
+        id: t.tool.id,
+        name: t.tool.name,
+        slug: t.tool.slug,
+        category: t.tool.category,
+      })),
+    };
+  });
+
+  return { items, totalCount, page: safePage, pageSize, totalPages };
+}
+
+/** Fetch submission data for OG image generation by project slug */
+export async function getSubmissionByProjectSlug(slug: string): Promise<{
+  projectName: string;
+  whatBuilt: string;
+  lessonLearned: string | null;
+  tools: string[];
+  country: string | null;
+  region: string | null;
+} | null> {
+  const eventId = await getHackathonEventId();
+  if (!eventId) return null;
+
+  const project = await db.query.projects.findFirst({
+    where: eq(projects.slug, slug),
+    columns: { id: true, name: true, profileId: true },
+  });
+  if (!project) return null;
+
+  const [submission, profile] = await Promise.all([
+    db.query.eventSubmissions.findFirst({
+      where: and(
+        eq(eventSubmissions.projectId, project.id),
+        eq(eventSubmissions.eventId, eventId)
+      ),
+      columns: { whatBuilt: true, lessonLearned: true, profileId: true },
+      with: {
+        tools: {
+          with: { tool: { columns: { name: true } } },
+        },
+      },
+    }),
+    db.query.profiles.findFirst({
+      where: eq(profiles.id, project.profileId),
+      columns: { country: true, region: true },
+    }),
+  ]);
+  if (!submission) return null;
+
+  return {
+    projectName: project.name,
+    whatBuilt: submission.whatBuilt,
+    lessonLearned: submission.lessonLearned,
+    tools: submission.tools.map((t) => t.tool.name),
+    country: profile?.country ? getCountryName(profile.country) : null,
+    region: profile?.region ? getRegionName(profile.region) : null,
+  };
+}
+
+/** Check if a project has a submission for the hackathon event */
+export async function hasHackathonSubmission(projectId: string): Promise<boolean> {
+  const eventId = await getHackathonEventId();
+  if (!eventId) return false;
+
+  const row = await db.query.eventSubmissions.findFirst({
+    where: and(
+      eq(eventSubmissions.projectId, projectId),
+      eq(eventSubmissions.eventId, eventId)
+    ),
+    columns: { id: true },
+  });
+
+  return !!row;
 }

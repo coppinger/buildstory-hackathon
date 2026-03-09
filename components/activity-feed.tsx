@@ -20,6 +20,7 @@ function getActivityIcon(type: string) {
   if (type === "signup") return "\u2192";
   if (type === "project") return "\u25C6";
   if (type === "team_join") return "\u2B21";
+  if (type === "submission") return "\u2605";
   return "\u2192";
 }
 
@@ -27,11 +28,12 @@ function formatAction(type: string, detail: string | null) {
   if (type === "signup") return "signed up";
   if (type === "project") return `added a project: '${detail}'`;
   if (type === "team_join") return `joined team on '${detail}'`;
+  if (type === "submission") return `submitted '${detail}'`;
   return "signed up";
 }
 
 interface SerializedActivity {
-  type: "signup" | "project" | "team_join";
+  type: "signup" | "project" | "team_join" | "submission";
   displayName: string;
   username: string | null;
   avatarUrl: string | null;
@@ -41,7 +43,7 @@ interface SerializedActivity {
 
 interface FeedItem {
   id: number;
-  type: "signup" | "project" | "team_join";
+  type: "signup" | "project" | "team_join" | "submission";
   name: string;
   handle: string;
   avatarUrl: string | null;

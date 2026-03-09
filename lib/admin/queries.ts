@@ -3,6 +3,7 @@ import {
   events,
   eventRegistrations,
   eventProjects,
+  eventSubmissions,
   projects,
   profiles,
   adminAuditLog,
@@ -32,6 +33,14 @@ export async function getTotalProjects(eventId: string) {
     .select({ count: count() })
     .from(eventProjects)
     .where(eq(eventProjects.eventId, eventId));
+  return result.count;
+}
+
+export async function getTotalSubmissions(eventId: string) {
+  const [result] = await db
+    .select({ count: count() })
+    .from(eventSubmissions)
+    .where(eq(eventSubmissions.eventId, eventId));
   return result.count;
 }
 

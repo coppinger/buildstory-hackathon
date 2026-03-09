@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DISCORD_INVITE_URL } from "@/lib/constants";
+import { DISCORD_INVITE_URL, SUBMISSION_DEADLINE } from "@/lib/constants";
 import { stripMarkdown } from "@/lib/markdown";
 import type { Project } from "@/lib/db/schema";
 
@@ -13,8 +13,10 @@ const startingPointLabels: Record<string, string> = {
 
 export function DashboardProjectCard({
   project,
+  hasSubmission,
 }: {
   project: Project | null;
+  hasSubmission?: boolean;
 }) {
   if (!project) {
     return (
@@ -55,6 +57,8 @@ export function DashboardProjectCard({
     );
   }
 
+  const isPastDeadline = new Date() > SUBMISSION_DEADLINE;
+
   return (
     <Card className="w-full">
       <div className="flex flex-col gap-4">
@@ -76,17 +80,50 @@ export function DashboardProjectCard({
               )}
             </h2>
           </div>
-          {project.startingPoint && (
-            <Badge variant="outline" className="shrink-0">
-              {startingPointLabels[project.startingPoint] ??
-                project.startingPoint}
-            </Badge>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {hasSubmission && (
+              <Badge className="bg-green-500/15 text-green-500 border-green-500/30">
+                Submitted
+              </Badge>
+            )}
+            {project.startingPoint && (
+              <Badge variant="outline">
+                {startingPointLabels[project.startingPoint] ??
+                  project.startingPoint}
+              </Badge>
+            )}
+          </div>
         </div>
 
         {project.description && (
           <p className="text-sm text-muted-foreground line-clamp-2">
             {stripMarkdown(project.description)}
+          </p>
+        )}
+
+        {/* Submission CTA */}
+        {project.slug && !hasSubmission && !isPastDeadline && (
+          <div className="border border-buildstory-500/30 bg-buildstory-500/5 p-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                Submit your project
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Hackathon 00 has ended &mdash; submit by March 10
+              </p>
+            </div>
+            <Button
+              asChild
+              className="shrink-0 bg-buildstory-500 text-background text-sm"
+            >
+              <Link href={`/projects/${project.slug}/submit`}>Submit</Link>
+            </Button>
+          </div>
+        )}
+
+        {!hasSubmission && isPastDeadline && (
+          <p className="text-xs font-mono text-muted-foreground">
+            Submission window closed
           </p>
         )}
 
@@ -113,11 +150,22 @@ export function DashboardProjectCard({
               </a>
             )}
           </div>
-          {project.slug && (
-            <Button variant="outline" asChild>
-              <Link href={`/projects/${project.slug}/edit`}>Edit project</Link>
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {project.slug && hasSubmission && (
+              <Button variant="outline" asChild>
+                <Link href={`/projects/${project.slug}/submit`}>
+                  Edit submission
+                </Link>
+              </Button>
+            )}
+            {project.slug && (
+              <Button variant="outline" asChild>
+                <Link href={`/projects/${project.slug}/edit`}>
+                  Edit project
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </Card>

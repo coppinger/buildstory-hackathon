@@ -271,11 +271,13 @@ export const profilesRelations = relations(profiles, ({ many }) => ({
   featureBoardItems: many(featureBoardItems),
   featureBoardUpvotes: many(featureBoardUpvotes),
   featureBoardComments: many(featureBoardComments),
+  eventSubmissions: many(eventSubmissions),
 }));
 
 export const eventsRelations = relations(events, ({ many }) => ({
   eventRegistrations: many(eventRegistrations),
   eventProjects: many(eventProjects),
+  eventSubmissions: many(eventSubmissions),
 }));
 
 export const eventRegistrationsRelations = relations(
@@ -300,6 +302,7 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   eventProjects: many(eventProjects),
   members: many(projectMembers),
   invites: many(teamInvites),
+  eventSubmissions: many(eventSubmissions),
 }));
 
 export const eventProjectsRelations = relations(eventProjects, ({ one }) => ({
@@ -665,6 +668,119 @@ export const featureBoardComments = pgTable(
 
 export type FeatureBoardComment = typeof featureBoardComments.$inferSelect;
 export type NewFeatureBoardComment = typeof featureBoardComments.$inferInsert;
+
+// --- AI Tools ---
+
+export const aiTools = pgTable("ai_tools", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  category: text("category").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type AiTool = typeof aiTools.$inferSelect;
+export type NewAiTool = typeof aiTools.$inferInsert;
+
+// --- Event Submissions ---
+
+export const eventSubmissions = pgTable(
+  "event_submissions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    profileId: uuid("profile_id")
+      .notNull()
+      .references(() => profiles.id),
+    whatBuilt: text("what_built").notNull(),
+    demoUrl: text("demo_url"),
+    demoMediaUrl: text("demo_media_url"),
+    demoMediaType: text("demo_media_type"),
+    repoUrl: text("repo_url"),
+    lessonLearned: text("lesson_learned"),
+    submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    unique().on(t.eventId, t.projectId),
+    index("idx_event_submissions_event").on(t.eventId),
+    index("idx_event_submissions_profile").on(t.profileId),
+  ]
+);
+
+export type EventSubmission = typeof eventSubmissions.$inferSelect;
+export type NewEventSubmission = typeof eventSubmissions.$inferInsert;
+
+// --- Event Submission Tools (junction) ---
+
+export const eventSubmissionTools = pgTable(
+  "event_submission_tools",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    submissionId: uuid("submission_id")
+      .notNull()
+      .references(() => eventSubmissions.id, { onDelete: "cascade" }),
+    toolId: uuid("tool_id")
+      .notNull()
+      .references(() => aiTools.id),
+  },
+  (t) => [
+    unique().on(t.submissionId, t.toolId),
+    index("idx_event_submission_tools_submission").on(t.submissionId),
+  ]
+);
+
+export type EventSubmissionTool = typeof eventSubmissionTools.$inferSelect;
+export type NewEventSubmissionTool = typeof eventSubmissionTools.$inferInsert;
+
+// --- AI Tools Relations ---
+
+export const aiToolsRelations = relations(aiTools, ({ many }) => ({
+  submissionTools: many(eventSubmissionTools),
+}));
+
+// --- Event Submissions Relations ---
+
+export const eventSubmissionsRelations = relations(
+  eventSubmissions,
+  ({ one, many }) => ({
+    event: one(events, {
+      fields: [eventSubmissions.eventId],
+      references: [events.id],
+    }),
+    project: one(projects, {
+      fields: [eventSubmissions.projectId],
+      references: [projects.id],
+    }),
+    profile: one(profiles, {
+      fields: [eventSubmissions.profileId],
+      references: [profiles.id],
+    }),
+    tools: many(eventSubmissionTools),
+  })
+);
+
+export const eventSubmissionToolsRelations = relations(
+  eventSubmissionTools,
+  ({ one }) => ({
+    submission: one(eventSubmissions, {
+      fields: [eventSubmissionTools.submissionId],
+      references: [eventSubmissions.id],
+    }),
+    tool: one(aiTools, {
+      fields: [eventSubmissionTools.toolId],
+      references: [aiTools.id],
+    }),
+  })
+);
 
 export const featureBoardCategoriesRelations = relations(
   featureBoardCategories,

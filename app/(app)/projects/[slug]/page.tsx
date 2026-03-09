@@ -4,7 +4,7 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getProjectBySlug, getProjectPendingInvites } from "@/lib/queries";
+import { getProjectBySlug, getProjectPendingInvites, hasHackathonSubmission } from "@/lib/queries";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
 import { TeamSection } from "@/components/projects/team-section";
@@ -19,7 +19,27 @@ export async function generateMetadata({
   const { slug } = await params;
   const project = await getProjectBySlug(slug);
   if (!project) return notFoundMeta;
-  return ogMeta(project.name, project.description);
+
+  const meta = ogMeta(project.name, project.description);
+
+  const hasSubmission = await hasHackathonSubmission(project.id);
+  if (hasSubmission) {
+    const ogImageUrl = `/api/og/submission?slug=${slug}`;
+    return {
+      ...meta,
+      openGraph: {
+        ...meta.openGraph,
+        images: [{ url: ogImageUrl, width: 1200, height: 675 }],
+      },
+      twitter: {
+        ...meta.twitter,
+        card: "summary_large_image",
+        images: [ogImageUrl],
+      },
+    };
+  }
+
+  return meta;
 }
 
 const startingPointLabels: Record<string, string> = {
@@ -67,6 +87,9 @@ export default async function ProjectDetailPage({
 
         {isOwner && (
           <div className="flex items-center gap-2">
+            <Button asChild className="bg-buildstory-500 text-background">
+              <Link href={`/projects/${slug}/submit`}>Submit</Link>
+            </Button>
             <Button variant="outline" asChild>
               <Link href={`/projects/${slug}/edit`}>Edit</Link>
             </Button>
