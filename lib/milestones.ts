@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { getTotalSignups, getTotalProjects } from "@/lib/admin/queries";
+import { getTotalSignups, getTotalProjects, getTotalSubmissions } from "@/lib/admin/queries";
 import { sendDiscordWebhook } from "@/lib/discord";
 
 const THRESHOLDS = [10, 25, 50, 75, 100, 150, 200, 250, 500, 1000];
@@ -48,6 +48,31 @@ export function checkProjectMilestone(eventId: string): void {
     } catch (error) {
       Sentry.captureException(error, {
         tags: { component: "milestones", action: "checkProjectMilestone" },
+        extra: { eventId },
+      });
+    }
+  })();
+}
+
+export function checkSubmissionMilestone(eventId: string): void {
+  void (async () => {
+    try {
+      const total = await getTotalSubmissions(eventId);
+      if (THRESHOLDS.includes(total)) {
+        sendDiscordWebhook(process.env.DISCORD_WEBHOOK_MILESTONES, {
+          embeds: [
+            {
+              title: `Milestone: ${total} Submissions!`,
+              description: `Hackathon 00 has reached **${total}** final submissions!`,
+              color: 0x22c55e,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        });
+      }
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { component: "milestones", action: "checkSubmissionMilestone" },
         extra: { eventId },
       });
     }

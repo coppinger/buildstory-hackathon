@@ -7,6 +7,7 @@ import {
   events,
   eventProjects,
   eventRegistrations,
+  eventSubmissions,
   profiles,
   projects,
 } from "@/lib/db/schema";
@@ -39,13 +40,13 @@ async function getHackathonData() {
 async function getUserDashboardData(eventId: string) {
   const { userId } = await auth();
   if (!userId)
-    return { isRegistered: false, project: null, discordCardDismissed: false };
+    return { isRegistered: false, project: null, hasSubmission: false, discordCardDismissed: false };
 
   const profile = await db.query.profiles.findFirst({
     where: eq(profiles.clerkId, userId),
   });
   if (!profile)
-    return { isRegistered: false, project: null, discordCardDismissed: false };
+    return { isRegistered: false, project: null, hasSubmission: false, discordCardDismissed: false };
 
   const discordCardDismissed = profile.discordCardDismissed;
 
@@ -56,7 +57,7 @@ async function getUserDashboardData(eventId: string) {
     ),
   });
   if (!reg)
-    return { isRegistered: false, project: null, discordCardDismissed };
+    return { isRegistered: false, project: null, hasSubmission: false, discordCardDismissed };
 
   // Get the user's project linked to this hackathon
   const userProject = await db.query.projects.findFirst({
@@ -72,7 +73,20 @@ async function getUserDashboardData(eventId: string) {
     ? userProject
     : null;
 
-  return { isRegistered: true, project: hackathonProject, discordCardDismissed };
+  // Check if user has submitted
+  let hasSubmission = false;
+  if (hackathonProject) {
+    const submission = await db.query.eventSubmissions.findFirst({
+      where: and(
+        eq(eventSubmissions.projectId, hackathonProject.id),
+        eq(eventSubmissions.eventId, eventId)
+      ),
+      columns: { id: true },
+    });
+    hasSubmission = !!submission;
+  }
+
+  return { isRegistered: true, project: hackathonProject, hasSubmission, discordCardDismissed };
 }
 
 export default async function DashboardPage() {
@@ -102,9 +116,9 @@ export default async function DashboardPage() {
       statusLabel: "Upcoming Event",
     };
 
-  const { isRegistered, project, discordCardDismissed } = data
+  const { isRegistered, project, hasSubmission, discordCardDismissed } = data
     ? await getUserDashboardData(data.event.id)
-    : { isRegistered: false, project: null, discordCardDismissed: false };
+    : { isRegistered: false, project: null, hasSubmission: false, discordCardDismissed: false };
 
   return (
     <div className="p-6 md:p-8 lg:p-12 w-full space-y-6 grid lg:grid-cols-12 gap-6 md:gap-12">
@@ -150,6 +164,10 @@ export default async function DashboardPage() {
                 <p className="text-lg lg:text-2xl font-medium text-foreground font-mono text-center tabular-nums">{data?.stats.projectCount ?? 0}</p>
                 <p className="text-sm text-muted-foreground text-center">projects</p>
               </div>
+              <div className="flex flex-col justify-center">
+                <p className="text-lg lg:text-2xl font-medium text-foreground font-mono text-center tabular-nums">{data?.stats.submissionCount ?? 0}</p>
+                <p className="text-sm text-muted-foreground text-center">submitted</p>
+              </div>
             </div>
           </div>
         </Card>
@@ -179,7 +197,7 @@ export default async function DashboardPage() {
         )}
 
         {/* Your Project — shown only if registered */}
-        {isRegistered && <DashboardProjectCard project={project} />}
+        {isRegistered && <DashboardProjectCard project={project} hasSubmission={hasSubmission} />}
 
         {/* Live Streams */}
         <DashboardStreamsCard />

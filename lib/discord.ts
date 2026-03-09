@@ -116,6 +116,24 @@ export function notifyShippedItem(
   });
 }
 
+export function notifySubmission(
+  displayName: string,
+  projectName: string
+) {
+  const safeName = sanitizeForDiscord(displayName);
+  const safeProject = sanitizeForDiscord(projectName);
+  sendDiscordWebhook(process.env.DISCORD_WEBHOOK_SIGNUPS, {
+    embeds: [
+      {
+        title: "Project Submitted!",
+        description: `**${safeName}** submitted **${safeProject}** for Hackathon 00`,
+        color: 0x22c55e,
+        timestamp: new Date().toISOString(),
+      },
+    ],
+  });
+}
+
 export function notifySponsorInquiry(
   companyName: string,
   contactName: string

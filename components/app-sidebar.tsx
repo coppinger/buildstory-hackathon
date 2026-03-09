@@ -9,6 +9,7 @@ import { useLiveStreamers } from "@/lib/streamers/use-live-streamers";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
+  { label: "Submissions", href: "/submissions" },
   { label: "Projects", href: "/projects" },
   { label: "Members", href: "/members" },
   { label: "Live Streams", href: "/streamers" },

@@ -313,3 +313,15 @@ export const submitCommentSchema = z.object({
 export const editCommentSchema = z.object({
   body: z.string().trim().min(1, "Comment cannot be empty").max(5000, "Comment is too long"),
 });
+
+export const submitProjectSchema = z.object({
+  whatBuilt: z.string().trim().min(1, "Required").max(280),
+  demoUrl: sanitizedUrlField(2000).nullable(),
+  demoMediaUrl: z.string().max(2000).nullable(),
+  demoMediaType: z.enum(["image", "video"]).nullable(),
+  repoUrl: sanitizedUrlField(2000).nullable(),
+  lessonLearned: z.string().max(280).nullable(),
+  toolIds: z.array(z.string().uuid()).default([]),
+  country: z.string().max(2).nullable().optional(),
+  region: z.string().max(10).nullable().optional(),
+});
