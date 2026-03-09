@@ -93,23 +93,13 @@ export async function submitProject(
 
     const data = parsed.data;
 
-    // Upsert submission
-    const [submission] = await db
-      .insert(eventSubmissions)
-      .values({
-        eventId,
-        projectId,
-        profileId: profile.id,
-        whatBuilt: data.whatBuilt,
-        demoUrl: data.demoUrl,
-        demoMediaUrl: data.demoMediaUrl,
-        demoMediaType: data.demoMediaType,
-        repoUrl: data.repoUrl,
-        lessonLearned: data.lessonLearned,
-      })
-      .onConflictDoUpdate({
-        target: [eventSubmissions.eventId, eventSubmissions.projectId],
-        set: {
+    // Upsert submission and replace tools in a transaction
+    const submission = await db.transaction(async (tx) => {
+      const [sub] = await tx
+        .insert(eventSubmissions)
+        .values({
+          eventId,
+          projectId,
           profileId: profile.id,
           whatBuilt: data.whatBuilt,
           demoUrl: data.demoUrl,
@@ -117,24 +107,38 @@ export async function submitProject(
           demoMediaType: data.demoMediaType,
           repoUrl: data.repoUrl,
           lessonLearned: data.lessonLearned,
-          updatedAt: new Date(),
-        },
-      })
-      .returning({ id: eventSubmissions.id });
+        })
+        .onConflictDoUpdate({
+          target: [eventSubmissions.eventId, eventSubmissions.projectId],
+          set: {
+            profileId: profile.id,
+            whatBuilt: data.whatBuilt,
+            demoUrl: data.demoUrl,
+            demoMediaUrl: data.demoMediaUrl,
+            demoMediaType: data.demoMediaType,
+            repoUrl: data.repoUrl,
+            lessonLearned: data.lessonLearned,
+            updatedAt: new Date(),
+          },
+        })
+        .returning({ id: eventSubmissions.id });
 
-    // Replace tools: delete existing, re-insert
-    await db
-      .delete(eventSubmissionTools)
-      .where(eq(eventSubmissionTools.submissionId, submission.id));
+      // Replace tools: delete existing, re-insert
+      await tx
+        .delete(eventSubmissionTools)
+        .where(eq(eventSubmissionTools.submissionId, sub.id));
 
-    if (data.toolIds.length > 0) {
-      await db.insert(eventSubmissionTools).values(
-        data.toolIds.map((toolId) => ({
-          submissionId: submission.id,
-          toolId,
-        }))
-      );
-    }
+      if (data.toolIds.length > 0) {
+        await tx.insert(eventSubmissionTools).values(
+          data.toolIds.map((toolId) => ({
+            submissionId: sub.id,
+            toolId,
+          }))
+        );
+      }
+
+      return sub;
+    });
 
     // Update profile location if provided and profile has none
     if (data.country && !profile.country) {
