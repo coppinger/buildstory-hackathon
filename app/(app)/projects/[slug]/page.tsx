@@ -4,12 +4,16 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getProjectBySlug, getProjectPendingInvites, hasHackathonSubmission } from "@/lib/queries";
+import { getProjectBySlug, getProjectPendingInvites, hasHackathonSubmission, getProjectEventHistory } from "@/lib/queries";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
 import { TeamSection } from "@/components/projects/team-section";
+import { HackathonHistorySection } from "@/components/projects/hackathon-history-section";
 import { MarkdownText } from "@/components/ui/markdown-text";
 import { ogMeta, notFoundMeta } from "@/lib/metadata";
+import { getPostsByContext, getReactionSummaries, getUserReactions } from "@/lib/content/queries";
+import { PostFeed } from "@/components/posts/post-feed";
+import { CreatePostForm } from "@/components/posts/create-post-form";
 
 export async function generateMetadata({
   params,
@@ -71,9 +75,27 @@ export default async function ProjectDetailPage({
     }
   }
 
-  const pendingInvites = isOwner
-    ? await getProjectPendingInvites(project.id)
-    : [];
+  // Check if current user is a member (for showing create post form)
+  const isMember =
+    isOwner ||
+    (currentUserProfileId != null &&
+      project.members.some((m) => m.profile.id === currentUserProfileId));
+
+  const [pendingInvites, hackathonHistory, postData] = await Promise.all([
+    isOwner ? getProjectPendingInvites(project.id) : Promise.resolve([]),
+    getProjectEventHistory(project.id),
+    getPostsByContext("project", project.id),
+  ]);
+
+  const postIds = postData.items.map((p) => p.id);
+  const [reactionSummaries, userReactionsMap] = await Promise.all([
+    postIds.length > 0
+      ? getReactionSummaries("post", postIds)
+      : Promise.resolve(new Map<string, Record<string, number>>()),
+    currentUserProfileId && postIds.length > 0
+      ? getUserReactions(currentUserProfileId, "post", postIds)
+      : Promise.resolve(new Map<string, string[]>()),
+  ]);
 
   return (
     <div className="p-6 md:p-8 lg:p-12 w-full max-w-3xl">
@@ -177,6 +199,28 @@ export default async function ProjectDetailPage({
         pendingInvites={pendingInvites}
         currentUserProfileId={currentUserProfileId}
       />
+
+      {/* Updates */}
+      <section className="mt-10">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-mono mb-4">
+          Updates
+        </h2>
+        {isMember && (
+          <div className="mb-3">
+            <CreatePostForm contextType="project" contextId={project.id} />
+          </div>
+        )}
+        <PostFeed
+          posts={postData.items}
+          reactionSummaries={reactionSummaries}
+          userReactionsMap={userReactionsMap}
+          currentUserProfileId={currentUserProfileId}
+          contextType="project"
+        />
+      </section>
+
+      {/* Hackathon History */}
+      <HackathonHistorySection history={hackathonHistory} />
     </div>
   );
 }

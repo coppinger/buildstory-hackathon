@@ -40,15 +40,23 @@ export function isAllowedContentType(contentType: string): boolean {
   return ALLOWED_TYPES.has(contentType);
 }
 
+const VALID_PREFIXES = new Set(["submissions", "posts"]);
+
+export function isValidPrefix(prefix: string): boolean {
+  return VALID_PREFIXES.has(prefix);
+}
+
 export async function createPresignedUploadUrl({
   profileId,
   contentType,
+  prefix = "submissions",
 }: {
   profileId: string;
   contentType: string;
+  prefix?: string;
 }): Promise<{ uploadUrl: string; key: string; publicUrl: string }> {
   const ext = getExtension(contentType);
-  const key = `submissions/${profileId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  const key = `${prefix}/${profileId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
 
   const client = getS3Client();
   const command = new PutObjectCommand({
