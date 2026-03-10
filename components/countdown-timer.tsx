@@ -66,39 +66,35 @@ export function CountdownTimer() {
       ]
     : placeholder;
 
+  if (state?.phase === "ended") return null;
+
   const label = !state
     ? "Starts March 1st, 12 pm PST"
     : state.phase === "before"
       ? "Starts March 1st, 12 pm PST"
-      : state.phase === "live"
-        ? "Live now \u2014 ends March 8th, 12 pm PST"
-        : "That\u2019s a wrap!";
-
-  const showDigits = !state || state.phase !== "ended";
+      : "Live now \u2014 ends March 8th, 12 pm PST";
 
   return (
     <div className="flex flex-col items-center gap-6">
-      {showDigits && (
-        <div className="flex items-center gap-3 sm:gap-4">
-          {segments.map((seg, i) => (
-            <div key={seg.label} className="flex items-center gap-3 sm:gap-4">
-              <div className="flex flex-col items-center">
-                <span className="font-mono text-4xl sm:text-5xl tabular-nums tracking-tight text-white">
-                  {seg.value}
-                </span>
-                <span className="text-[11px] uppercase tracking-widest text-white/40 mt-1">
-                  {seg.label}
-                </span>
-              </div>
-              {i < segments.length - 1 && (
-                <span className="text-2xl sm:text-3xl text-white/20 font-light -mt-4">
-                  :
-                </span>
-              )}
+      <div className="flex items-center gap-3 sm:gap-4">
+        {segments.map((seg, i) => (
+          <div key={seg.label} className="flex items-center gap-3 sm:gap-4">
+            <div className="flex flex-col items-center">
+              <span className="font-mono text-4xl sm:text-5xl tabular-nums tracking-tight text-white">
+                {seg.value}
+              </span>
+              <span className="text-[11px] uppercase tracking-widest text-white/40 mt-1">
+                {seg.label}
+              </span>
             </div>
-          ))}
-        </div>
-      )}
+            {i < segments.length - 1 && (
+              <span className="text-2xl sm:text-3xl text-white/20 font-light -mt-4">
+                :
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
       <p className="text-xs uppercase tracking-[0.2em] text-white/40">
         {label}
       </p>

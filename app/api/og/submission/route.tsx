@@ -8,7 +8,7 @@ const fontsDir = join(process.cwd(), "lib/og/fonts");
 
 let fontsCachePromise: Promise<{
   dmSans: Buffer;
-  instrumentSerif: Buffer;
+  advercase: Buffer;
   dmMono: Buffer;
 }> | null = null;
 
@@ -16,11 +16,11 @@ function loadFonts() {
   if (!fontsCachePromise) {
     fontsCachePromise = Promise.all([
       readFile(join(fontsDir, "DMSans-Regular.ttf")),
-      readFile(join(fontsDir, "InstrumentSerif-Regular.ttf")),
+      readFile(join(fontsDir, "AdvercaseFont-Regular.ttf")),
       readFile(join(fontsDir, "DMMono-Regular.ttf")),
-    ]).then(([dmSans, instrumentSerif, dmMono]) => ({
+    ]).then(([dmSans, advercase, dmMono]) => ({
       dmSans,
-      instrumentSerif,
+      advercase,
       dmMono,
     }));
   }
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { dmSans, instrumentSerif, dmMono } = await loadFonts();
+    const { dmSans, advercase, dmMono } = await loadFonts();
 
     const { projectName, whatBuilt, lessonLearned, tools, country, region } =
       data;
@@ -92,7 +92,7 @@ export async function GET(request: Request) {
             {/* Project name */}
             <div
               style={{
-                fontFamily: "Instrument Serif",
+                fontFamily: "Advercase",
                 fontSize: 42,
                 color: "#e8e4de",
                 marginTop: 20,
@@ -242,8 +242,8 @@ export async function GET(request: Request) {
             weight: 400 as const,
           },
           {
-            name: "Instrument Serif",
-            data: instrumentSerif,
+            name: "Advercase",
+            data: advercase,
             style: "normal" as const,
             weight: 400 as const,
           },

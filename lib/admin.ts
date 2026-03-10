@@ -18,8 +18,11 @@ export async function getRole(
 
   const profile = await db.query.profiles.findFirst({
     where: eq(profiles.clerkId, clerkUserId),
-    columns: { role: true },
+    columns: { role: true, bannedAt: true },
   });
+
+  // Banned users lose elevated roles
+  if (profile?.bannedAt) return "user";
 
   return profile?.role ?? "user";
 }

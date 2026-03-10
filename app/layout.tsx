@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { DM_Sans, Instrument_Serif, DM_Mono } from "next/font/google";
+import { DM_Sans, DM_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
@@ -9,10 +10,20 @@ const dmSans = DM_Sans({
   subsets: ["latin"],
 });
 
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
-  weight: ["400"],
-  subsets: ["latin"],
+const advercase = localFont({
+  src: [
+    {
+      path: "./fonts/AdvercaseFont-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/AdvercaseFont-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-advercase",
 });
 
 const dmMono = DM_Mono({
@@ -69,7 +80,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`dark ${dmSans.variable} ${instrumentSerif.variable} ${dmMono.variable}`}>
+      <html lang="en" className={`dark ${dmSans.variable} ${advercase.variable} ${dmMono.variable}`}>
         <body className="antialiased">
           <NuqsAdapter>{children}</NuqsAdapter>
         </body>

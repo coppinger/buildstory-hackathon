@@ -31,9 +31,34 @@ import { getRegionName } from "@/lib/regions";
 import { DEFAULT_PAGE_SIZE, type SortOrder } from "@/lib/search-params";
 
 /** Escape ILIKE wildcard characters so user input is matched literally. */
-function escapeIlike(value: string): string {
+export function escapeIlike(value: string): string {
   return value.replace(/[%_\\]/g, "\\$&");
 }
+
+/**
+ * Profile columns safe for public display.
+ * Excludes: clerkId, role, allowInvites, bannedBy, banReason, hiddenBy,
+ * discordCardDismissed, updatedAt.
+ * Includes bannedAt/hiddenAt for isProfileVisible() filtering.
+ */
+const publicProfileColumns = {
+  id: true,
+  displayName: true,
+  username: true,
+  avatarUrl: true,
+  bio: true,
+  country: true,
+  region: true,
+  experienceLevel: true,
+  websiteUrl: true,
+  twitterHandle: true,
+  githubHandle: true,
+  twitchUrl: true,
+  streamUrl: true,
+  createdAt: true,
+  bannedAt: true,
+  hiddenAt: true,
+} as const;
 
 export interface PaginationParams {
   page: number;
@@ -91,7 +116,7 @@ export async function getHackathonProjects(
       with: {
         project: {
           with: {
-            profile: true,
+            profile: { columns: publicProfileColumns },
             members: {
               with: {
                 profile: {
@@ -155,7 +180,7 @@ export async function getHackathonProjects(
   const hydrated = await db.query.projects.findMany({
     where: inArray(projects.id, ids),
     with: {
-      profile: true,
+      profile: { columns: publicProfileColumns },
       members: {
         with: {
           profile: {
@@ -214,7 +239,7 @@ export async function getUserHackathonProjects(profileId: string) {
   const hydrated = await db.query.projects.findMany({
     where: inArray(projects.id, allIds),
     with: {
-      profile: true,
+      profile: { columns: publicProfileColumns },
       members: {
         with: {
           profile: {
@@ -232,12 +257,12 @@ export async function getProjectBySlug(slug: string) {
   const project = await db.query.projects.findFirst({
     where: eq(projects.slug, slug),
     with: {
-      profile: true,
+      profile: { columns: publicProfileColumns },
       eventProjects: {
         with: { event: true },
       },
       members: {
-        with: { profile: true },
+        with: { profile: { columns: publicProfileColumns } },
       },
     },
   });
@@ -261,7 +286,7 @@ export async function getHackathonProfiles(
 
     const registrations = await db.query.eventRegistrations.findMany({
       where: eq(eventRegistrations.eventId, eventId),
-      with: { profile: true },
+      with: { profile: { columns: publicProfileColumns } },
       orderBy: [desc(eventRegistrations.registeredAt)],
     });
 
@@ -318,6 +343,7 @@ export async function getHackathonProfiles(
 
   const hydratedProfiles = await db.query.profiles.findMany({
     where: inArray(profiles.id, profileIds),
+    columns: publicProfileColumns,
   });
 
   // Preserve the sort order from the paginated query
@@ -335,6 +361,7 @@ export async function getProfileByUsername(username: string) {
 
   const profile = await db.query.profiles.findFirst({
     where: eq(profiles.username, username),
+    columns: { ...publicProfileColumns, clerkId: true },
     with: {
       projects: {
         with: {
@@ -445,6 +472,23 @@ export async function getPublicStats(eventId: string) {
   return { signups, projectCount, soloCount, teamCount, countryCount, submissionCount };
 }
 
+export async function getParticipantCountries(eventId: string) {
+  const rows = await db
+    .selectDistinct({ country: profiles.country })
+    .from(eventRegistrations)
+    .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
+    .where(
+      and(
+        eq(eventRegistrations.eventId, eventId),
+        isNotNull(profiles.country),
+        isNull(profiles.bannedAt),
+        isNull(profiles.hiddenAt)
+      )
+    );
+
+  return rows.map((r) => r.country).filter((c): c is string => c !== null);
+}
+
 // --- Team & Invite Queries ---
 
 export async function getPendingInvitesForUser(profileId: string) {
@@ -469,7 +513,7 @@ export async function getPendingInvitesForUser(profileId: string) {
 export async function getProjectMembers(projectId: string) {
   const members = await db.query.projectMembers.findMany({
     where: eq(projectMembers.projectId, projectId),
-    with: { profile: true },
+    with: { profile: { columns: publicProfileColumns } },
   });
   return members.filter((m) => isProfileVisible(m.profile));
 }
@@ -675,12 +719,7 @@ export async function getEventSubmissions(
   eventId: string,
   page = 1,
   pageSize = 20
-): Promise<PaginatedResult<{
-  submission: typeof eventSubmissions.$inferSelect;
-  profile: typeof profiles.$inferSelect;
-  project: typeof projects.$inferSelect;
-  tools: { id: string; name: string; slug: string; category: string }[];
-}>> {
+) {
   const notBannedOrHidden = and(
     isNull(profiles.bannedAt),
     isNull(profiles.hiddenAt)
@@ -712,7 +751,7 @@ export async function getEventSubmissions(
   const hydrated = await db.query.eventSubmissions.findMany({
     where: inArray(eventSubmissions.id, ids),
     with: {
-      profile: true,
+      profile: { columns: publicProfileColumns },
       project: true,
       tools: {
         with: { tool: true },
@@ -857,7 +896,7 @@ export async function getSubmissionsFeed(eventId: string, limit = 10) {
   const hydrated = await db.query.eventSubmissions.findMany({
     where: inArray(eventSubmissions.id, ids),
     with: {
-      profile: true,
+      profile: { columns: publicProfileColumns },
       project: true,
       tools: {
         with: { tool: true },

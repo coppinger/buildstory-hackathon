@@ -26,7 +26,7 @@ export function AppSidebar() {
   return (
     <aside className="hidden md:block px-12 w-58 lg:w-64 shrink-0 border-r border-border min-h-full">
       <div className="sticky top-0 flex flex-col min-h-screen py-8">
-        <nav className="flex flex-col gap-4 lg:gap-6">
+        <nav className="flex flex-col gap-4 lg:gap-8">
           {navItems.map(({ label, href }) => {
             const isActive =
               pathname === href || pathname.startsWith(href + "/");

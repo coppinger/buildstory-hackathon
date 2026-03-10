@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { BlurFade } from "@/components/blur-fade"
 import Link from "next/link";
 import { getHackathonEvent } from "@/lib/admin/queries";
-import { getPublicStats, getPublicActivityFeed } from "@/lib/queries";
+import { getPublicStats, getPublicActivityFeed, getParticipantCountries } from "@/lib/queries";
+import { getCoordinatesForCountries } from "@/lib/country-coordinates";
 import { VOLUNTEER_URL, SPONSOR_URL } from "@/lib/constants";
 import { TeamSection } from "@/components/landing/team-section";
 import { getSponsors, getVolunteerRoles } from "@/lib/sanity/queries";
@@ -16,14 +17,17 @@ import { urlFor } from "@/lib/sanity/image";
 
 export default async function Home() {
   const event = await getHackathonEvent();
-  const [publicStats, sponsors, volunteerRoles, activityFeed] = await Promise.all([
+  const [publicStats, sponsors, volunteerRoles, activityFeed, participantCountryCodes] = await Promise.all([
     event
       ? getPublicStats(event.id)
       : Promise.resolve({ signups: 0, teamCount: 0, soloCount: 0, countryCount: 0, projectCount: 0 }),
     getSponsors(),
     getVolunteerRoles(),
     getPublicActivityFeed(),
+    event ? getParticipantCountries(event.id) : Promise.resolve([]),
   ]);
+
+  const globeLocations = getCoordinatesForCountries(participantCountryCodes);
 
   const serializedActivities = activityFeed.map((a) => ({
     ...a,
@@ -41,7 +45,7 @@ export default async function Home() {
     <div className="relative min-h-screen">
       <Header />
       {/* Hero */}
-      <section className="flex flex-col items-center px-6 pt-32 md:pt-48 pb-48 md:pb-96 gap-10 text-center border-b border-border overflow-hidden">
+      <section className="flex flex-col items-center px-6 pt-32 md:pt-48 pb-48 md:pb-96 gap-10 text-center border-b border-border overflow-hidden max-h-screen">
         {/* Label */}
         <BlurFade delay={0.1}>
           <span className="text-xs uppercase tracking-[0.2em] text-white/40">
@@ -100,7 +104,7 @@ export default async function Home() {
         </BlurFade>
 
         {/* Globe */}
-        <Globe />
+        <Globe locations={globeLocations} />
       </section>
 
       {/* Why */}
