@@ -7,6 +7,9 @@ import { ReactionBar } from "@/components/posts/reaction-bar";
 import { CommentForm } from "@/components/posts/comment-form";
 import { timeAgo } from "@/lib/time";
 
+const MAX_DEPTH = 3;
+const VISIBLE_REPLIES = 3;
+
 export function CommentThread({
   comment,
   postId,
@@ -27,53 +30,66 @@ export function CommentThread({
   onRefresh?: () => void;
 }) {
   const [showReply, setShowReply] = useState(false);
+  const [repliesExpanded, setRepliesExpanded] = useState(false);
 
-  // Project: flat (no replies). Tool: max 2 levels.
   const canReply =
     currentUserProfileId !== null &&
     contextType === "tool" &&
-    depth < 2;
+    depth < MAX_DEPTH;
+
+  const visibleReplies = repliesExpanded
+    ? comment.replies
+    : comment.replies.slice(0, VISIBLE_REPLIES);
+  const hiddenReplyCount = comment.replies.length - visibleReplies.length;
 
   return (
-    <div className={depth > 0 ? "ml-4 border-l border-border pl-3" : ""}>
-      <div className="py-2">
-        {/* Author + time */}
+    <div
+      className={
+        depth > 0
+          ? "ml-5 pl-3 border-l-2 border-border/30 hover:border-buildstory-500/20 transition-colors"
+          : ""
+      }
+    >
+      <div className="flex flex-col gap-2 py-1.5">
+        {/* Author row */}
         <div className="flex items-center gap-2">
           {comment.author.avatarUrl ? (
             <img
               src={comment.author.avatarUrl}
               alt=""
-              className="h-5 w-5 rounded-full object-cover"
+              className="size-8 rounded-full object-cover shrink-0"
             />
           ) : (
-            <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium text-muted-foreground">
-              {comment.author.displayName[0]?.toUpperCase()}
+            <div className="size-8 rounded-full bg-buildstory-500/10 flex items-center justify-center shrink-0">
+              <span className="text-[9px] font-semibold text-buildstory-500">
+                {comment.author.displayName[0]?.toUpperCase()}
+              </span>
             </div>
           )}
           {comment.author.username ? (
             <Link
-              href={`/profiles/${comment.author.username}`}
-              className="text-xs font-medium text-foreground hover:underline"
+              href={`/members/${comment.author.username}`}
+              className="text-base font-medium text-foreground hover:text-buildstory-500 transition-colors"
             >
               {comment.author.displayName}
             </Link>
           ) : (
-            <span className="text-xs font-medium text-foreground">
+            <span className="text-base font-medium text-foreground">
               {comment.author.displayName}
             </span>
           )}
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground/60 font-mono">
             {timeAgo(comment.createdAt)}
           </span>
         </div>
 
         {/* Body */}
-        <p className="mt-1 text-xs text-foreground whitespace-pre-wrap break-words">
+        <p className="pl-10 pt-0.5 text-base leading-normal text-foreground/80 whitespace-pre-wrap break-words">
           {comment.body}
         </p>
 
         {/* Actions */}
-        <div className="mt-1 flex items-center gap-2">
+        <div className="flex items-center gap-2 pl-10 pt-1">
           <ReactionBar
             targetType="comment"
             targetId={comment.id}
@@ -84,7 +100,7 @@ export function CommentThread({
           {canReply && (
             <button
               onClick={() => setShowReply(!showReply)}
-              className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm font-medium text-muted-foreground/60 hover:text-foreground transition-colors"
             >
               Reply
             </button>
@@ -93,7 +109,7 @@ export function CommentThread({
 
         {/* Reply form */}
         {showReply && (
-          <div className="mt-2">
+          <div className="pl-10 pt-1">
             <CommentForm
               postId={postId}
               parentCommentId={comment.id}
@@ -104,9 +120,9 @@ export function CommentThread({
       </div>
 
       {/* Nested replies */}
-      {comment.replies.length > 0 && (
-        <div>
-          {comment.replies.map((reply) => (
+      {visibleReplies.length > 0 && (
+        <div className="flex flex-col gap-4">
+          {visibleReplies.map((reply) => (
             <CommentThread
               key={reply.id}
               comment={reply}
@@ -120,6 +136,16 @@ export function CommentThread({
             />
           ))}
         </div>
+      )}
+
+      {/* Expand replies */}
+      {hiddenReplyCount > 0 && (
+        <button
+          onClick={() => setRepliesExpanded(true)}
+          className="ml-5 mt-1 mb-1 text-xs font-medium text-buildstory-500 hover:text-buildstory-600 transition-colors"
+        >
+          View {hiddenReplyCount} more {hiddenReplyCount === 1 ? "reply" : "replies"}
+        </button>
       )}
     </div>
   );

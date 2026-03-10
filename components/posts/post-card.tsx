@@ -24,90 +24,96 @@ export function PostCard({
   const [showComments, setShowComments] = useState(false);
 
   return (
-    <div className="border border-border p-4">
-      {/* Author row */}
-      <div className="flex items-center gap-2">
-        {post.author.avatarUrl ? (
-          <img
-            src={post.author.avatarUrl}
-            alt=""
-            className="h-7 w-7 rounded-full object-cover"
-          />
-        ) : (
-          <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">
-            {post.author.displayName[0]?.toUpperCase()}
-          </div>
-        )}
-        <div className="min-w-0">
-          {post.author.username ? (
-            <Link
-              href={`/profiles/${post.author.username}`}
-              className="text-sm font-medium text-foreground hover:underline truncate"
-            >
-              {post.author.displayName}
-            </Link>
+    <article className="border border-border/60 overflow-hidden">
+      {/* Post content */}
+      <div className="flex flex-col gap-2 p-4">
+        {/* Author row */}
+        <div className="flex items-center gap-2.5">
+          {post.author.avatarUrl ? (
+            <img
+              src={post.author.avatarUrl}
+              alt=""
+              className="size-8 rounded-full object-cover shrink-0"
+            />
           ) : (
-            <span className="text-sm font-medium text-foreground truncate">
-              {post.author.displayName}
+            <div className="size-8 rounded-full bg-buildstory-500/10 flex items-center justify-center shrink-0">
+              <span className="text-xs font-semibold text-buildstory-500">
+                {post.author.displayName[0]?.toUpperCase()}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            {post.author.username ? (
+              <Link
+                href={`/members/${post.author.username}`}
+                className="text-base font-medium text-foreground hover:text-buildstory-500 transition-colors"
+              >
+                {post.author.displayName}
+              </Link>
+            ) : (
+              <span className="text-base font-medium text-foreground">
+                {post.author.displayName}
+              </span>
+            )}
+            <span className="text-xs text-muted-foreground/70 font-mono">
+              {timeAgo(post.createdAt)}
             </span>
+          </div>
+        </div>
+
+        {/* Body + attachments */}
+        <div className="flex flex-col pl-[42px] gap-2.5">
+          <p className="text-base leading-relaxed text-foreground/90 whitespace-pre-wrap break-words">
+            {post.body}
+          </p>
+
+          {/* Image */}
+          {post.imageUrl && (
+            <img
+              src={post.imageUrl}
+              alt="Post attachment"
+              className="max-h-72 w-auto border border-border/40 object-contain"
+            />
+          )}
+
+          {/* Link */}
+          {post.linkUrl && (
+            <a
+              href={post.linkUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 border border-border/50 bg-muted/30 px-2.5 py-1 text-xs text-muted-foreground hover:text-buildstory-500 hover:border-buildstory-500/30 transition-colors font-mono self-start whitespace-nowrap"
+            >
+              <Icon name="link" size="3" />
+              {(() => { try { return new URL(post.linkUrl!).hostname; } catch { return post.linkUrl; } })()}
+            </a>
           )}
         </div>
-        <span className="text-xs text-muted-foreground ml-auto shrink-0">
-          {timeAgo(post.createdAt)}
-        </span>
-      </div>
 
-      {/* Body */}
-      <p className="mt-2 text-sm text-foreground whitespace-pre-wrap break-words">
-        {post.body}
-      </p>
-
-      {/* Image */}
-      {post.imageUrl && (
-        <div className="mt-3">
-          <img
-            src={post.imageUrl}
-            alt="Post attachment"
-            className="max-h-80 w-auto rounded border border-border object-contain"
+        {/* Reactions + comment toggle */}
+        <div className="flex items-center gap-4 pt-0.5 pl-[42px]">
+          <ReactionBar
+            targetType="post"
+            targetId={post.id}
+            summary={reactionSummary ?? {}}
+            userReactions={userReactions ?? []}
+            currentUserProfileId={currentUserProfileId}
           />
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+          >
+            <Icon name="chat_bubble" size="3.5" />
+            {post.commentCount > 0 && (
+              <span className="font-mono tabular-nums">{post.commentCount}</span>
+            )}
+          </button>
         </div>
-      )}
-
-      {/* Link */}
-      {post.linkUrl && (
-        <a
-          href={post.linkUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2 inline-flex items-center gap-1 text-xs text-buildstory-500 hover:underline font-mono"
-        >
-          <Icon name="link" size="3.5" />
-          {(() => { try { return new URL(post.linkUrl!).hostname; } catch { return post.linkUrl; } })()}
-        </a>
-      )}
-
-      {/* Actions */}
-      <div className="mt-3 flex items-center gap-3">
-        <ReactionBar
-          targetType="post"
-          targetId={post.id}
-          summary={reactionSummary ?? {}}
-          userReactions={userReactions ?? []}
-          currentUserProfileId={currentUserProfileId}
-        />
-
-        <button
-          onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <Icon name="chat_bubble" size="3.5" />
-          {post.commentCount > 0 && post.commentCount}
-        </button>
       </div>
 
-      {/* Comments */}
+      {/* Comments - lazy loaded on click */}
       {showComments && (
-        <div className="mt-3 border-t border-border pt-3">
+        <div className="flex flex-col gap-4 bg-muted/15 border-t border-border/40 p-4">
           <CommentList
             postId={post.id}
             contextType={contextType}
@@ -115,6 +121,6 @@ export function PostCard({
           />
         </div>
       )}
-    </div>
+    </article>
   );
 }

@@ -531,10 +531,7 @@ describe("updateProject", () => {
 // ========================================================================
 
 describe("deleteProject", () => {
-  it("fails with transaction error on neon-http driver", async () => {
-    // NOTE: deleteProject uses db.transaction() which is not supported by the
-    // Neon HTTP adapter. This test documents the current behavior. If the driver
-    // or code is updated to support transactions, this test should be updated.
+  it("deletes project and cleans up related rows", async () => {
     const [project] = await db
       .insert(projects)
       .values({
@@ -543,12 +540,14 @@ describe("deleteProject", () => {
         description: "Will be deleted",
       })
       .returning();
-    createdProjectIds.push(project.id);
 
     const result = await deleteProject({ projectId: project.id });
-    // Transaction not supported on neon-http → caught by Sentry, returns error
-    expect(result.success).toBe(false);
-    expect(mockCaptureException).toHaveBeenCalled();
+    expect(result.success).toBe(true);
+
+    const deleted = await db.query.projects.findFirst({
+      where: eq(projects.id, project.id),
+    });
+    expect(deleted).toBeUndefined();
   });
 
   it("returns error for non-existent project", async () => {

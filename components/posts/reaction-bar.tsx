@@ -54,11 +54,15 @@ export function ReactionBar({
     });
   }
 
+  const hasAny = REACTION_EMOJIS.some(({ key }) => (optimistic.summary[key] ?? 0) > 0);
+
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-4">
       {REACTION_EMOJIS.map(({ key, label, emoji }) => {
         const count = optimistic.summary[key] ?? 0;
         const isActive = optimistic.userEmojis.includes(key);
+
+        if (count === 0 && !isActive && hasAny) return null;
 
         return (
           <button
@@ -66,15 +70,17 @@ export function ReactionBar({
             onClick={() => handleToggle(key)}
             disabled={!currentUserProfileId || isPending}
             title={label}
-            className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs rounded-full border transition-colors ${
+            className={`inline-flex items-center gap-[3px] rounded-full border text-xs transition-all duration-150 ${
+              count > 0 || isActive ? "px-2 py-[3px]" : "px-[5px] py-[3px]"
+            } ${
               isActive
-                ? "border-buildstory-500/40 bg-buildstory-500/10 text-foreground"
-                : "border-transparent hover:border-border text-muted-foreground hover:text-foreground"
-            } ${!currentUserProfileId ? "opacity-50 cursor-default" : "cursor-pointer"}`}
+                ? "border-buildstory-500/30 bg-buildstory-500/10 text-foreground"
+                : "border-transparent text-muted-foreground/50 hover:text-muted-foreground"
+            } ${!currentUserProfileId ? "opacity-40 cursor-default" : "cursor-pointer active:scale-90"}`}
           >
-            <span className="text-xs">{emoji}</span>
+            <span className={`text-xs leading-none ${!isActive && count === 0 ? "opacity-50" : ""}`}>{emoji}</span>
             {count > 0 && (
-              <span className="font-mono text-[10px]">{count}</span>
+              <span className="font-mono text-xs leading-none tabular-nums">{count}</span>
             )}
           </button>
         );

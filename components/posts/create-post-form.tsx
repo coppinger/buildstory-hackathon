@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
 import { createPost } from "@/app/(app)/content/actions";
 import { POST_BODY_MAX_LENGTH } from "@/lib/constants";
+import { Icon } from "@/components/ui/icon";
 
 export function CreatePostForm({
   contextType,
@@ -44,66 +44,80 @@ export function CreatePostForm({
   }
 
   return (
-    <div className="border border-border p-4">
-      <textarea
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        placeholder={
-          contextType === "project"
-            ? "Share a project update..."
-            : "Start a discussion..."
-        }
-        className="w-full resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none min-h-[60px]"
-        rows={2}
-        disabled={isPending}
-      />
-
-      {showLink && (
-        <input
-          type="url"
-          value={linkUrl}
-          onChange={(e) => setLinkUrl(e.target.value)}
-          placeholder="https://..."
-          className="mt-2 w-full border border-border bg-transparent px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground/30"
+    <div className="flex flex-col border border-border/60 overflow-hidden">
+      <div className="p-4">
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder={
+            contextType === "project"
+              ? "Share a project update..."
+              : "Start a discussion..."
+          }
+          className="w-full resize-none bg-transparent text-base text-foreground placeholder:text-muted-foreground/50 focus:outline-none min-h-[48px]"
+          rows={2}
           disabled={isPending}
         />
+      </div>
+
+      {showLink && (
+        <div className="px-4 pb-2">
+          <div className="flex items-center gap-2 border border-border/50 bg-muted/30 px-2.5 py-1.5">
+            <Icon name="link" size="3.5" className="text-muted-foreground/50 shrink-0" />
+            <input
+              type="url"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="https://..."
+              className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
+              disabled={isPending}
+            />
+          </div>
+        </div>
       )}
 
-      <div className="mt-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-4 py-2.5 border-t border-border/30">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setShowLink(!showLink)}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className={`flex items-center transition-colors ${
+              showLink
+                ? "text-buildstory-500"
+                : "text-muted-foreground/50 hover:text-muted-foreground"
+            }`}
             disabled={isPending}
           >
-            {showLink ? "- Remove link" : "+ Add link"}
+            <Icon name="link" size="4" />
           </button>
-          <span
-            className={`text-xs font-mono ${
-              isOverLimit
-                ? "text-destructive"
-                : charCount > POST_BODY_MAX_LENGTH - 40
-                  ? "text-yellow-500"
-                  : "text-muted-foreground"
-            }`}
-          >
-            {charCount}/{POST_BODY_MAX_LENGTH}
-          </span>
+          {charCount > 0 && (
+            <span
+              className={`text-xs font-mono tabular-nums ${
+                isOverLimit
+                  ? "text-destructive"
+                  : charCount > POST_BODY_MAX_LENGTH - 40
+                    ? "text-yellow-500"
+                    : "text-muted-foreground/40"
+              }`}
+            >
+              {charCount}/{POST_BODY_MAX_LENGTH}
+            </span>
+          )}
         </div>
 
-        <Button
+        <button
           onClick={handleSubmit}
           disabled={!body.trim() || isOverLimit || isPending}
-          size="sm"
-          className="bg-buildstory-500 text-background"
+          className="bg-buildstory-500 text-background text-xs font-medium py-3 px-6 disabled:opacity-40 disabled:cursor-default transition-colors hover:bg-buildstory-600"
         >
           {isPending ? "Posting..." : "Post"}
-        </Button>
+        </button>
       </div>
 
       {error && (
-        <p className="mt-2 text-xs text-destructive">{error}</p>
+        <div className="px-4 pb-3">
+          <p className="text-xs text-destructive">{error}</p>
+        </div>
       )}
     </div>
   );
