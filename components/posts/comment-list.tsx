@@ -7,6 +7,8 @@ import { CommentForm } from "@/components/posts/comment-form";
 import { fetchComments } from "@/app/(app)/content/fetch-comments";
 import { Button } from "@/components/ui/button";
 
+const VISIBLE_LIMIT = 3;
+
 export function CommentList({
   postId,
   contextType,
@@ -17,7 +19,14 @@ export function CommentList({
   currentUserProfileId: string | null;
 }) {
   const [comments, setComments] = useState<CommentWithAuthor[] | null>(null);
+  const [reactionSummaries, setReactionSummaries] = useState<
+    Map<string, Record<string, number>>
+  >(new Map());
+  const [userReactionsMap, setUserReactionsMap] = useState<
+    Map<string, string[]>
+  >(new Map());
   const [error, setError] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const loadingRef = useRef(false);
 
   const load = useCallback(async () => {
@@ -26,7 +35,9 @@ export function CommentList({
     setError(false);
     try {
       const data = await fetchComments(postId);
-      setComments(data);
+      setComments(data.comments);
+      setReactionSummaries(new Map(Object.entries(data.reactionSummaries)));
+      setUserReactionsMap(new Map(Object.entries(data.userReactions)));
     } catch {
       setError(true);
     } finally {
@@ -40,7 +51,7 @@ export function CommentList({
 
   if (error) {
     return (
-      <div className="flex items-center gap-2 py-2">
+      <div className="flex items-center gap-2">
         <p className="text-xs text-muted-foreground">Failed to load comments.</p>
         <Button variant="ghost" size="sm" onClick={load} className="h-6 text-xs">
           Retry
@@ -51,27 +62,40 @@ export function CommentList({
 
   if (comments === null) {
     return (
-      <p className="text-xs text-muted-foreground py-2">
-        Loading comments...
-      </p>
+      <p className="text-xs text-muted-foreground">Loading comments...</p>
     );
   }
 
+  const total = comments.length;
+  const visible = expanded ? comments : comments.slice(0, VISIBLE_LIMIT);
+  const hiddenCount = total - visible.length;
+
   return (
-    <div>
-      {comments.length > 0 && (
-        <div className="mb-3">
-          {comments.map((comment) => (
+    <div className="flex flex-col gap-4">
+      {visible.length > 0 && (
+        <div className="flex flex-col gap-4">
+          {visible.map((comment) => (
             <CommentThread
               key={comment.id}
               comment={comment}
               postId={postId}
               contextType={contextType}
               currentUserProfileId={currentUserProfileId}
+              reactionSummaries={reactionSummaries}
+              userReactionsMap={userReactionsMap}
               onRefresh={load}
             />
           ))}
         </div>
+      )}
+
+      {hiddenCount > 0 && (
+        <button
+          onClick={() => setExpanded(true)}
+          className="text-xs font-medium text-buildstory-500 hover:text-buildstory-600 transition-colors self-start"
+        >
+          View {hiddenCount} more {hiddenCount === 1 ? "comment" : "comments"}
+        </button>
       )}
 
       {currentUserProfileId && (

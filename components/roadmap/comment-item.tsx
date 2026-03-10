@@ -53,7 +53,7 @@ export function CommentItem({
     serverNow - new Date(comment.createdAt).getTime() < 15 * 60 * 1000;
   const canDelete = (isOwner || isAdmin) && !isDeleted;
   const profileHref = comment.author.username
-    ? `/profiles/${comment.author.username}`
+    ? `/members/${comment.author.username}`
     : "#";
 
   function handleEdit() {
@@ -278,7 +278,7 @@ function CommentBody({ body }: { body: string }) {
   const html = renderMarkdown(body);
   const withMentions = html.replace(
     /@(\w[\w.-]{0,29})/g,
-    '<a href="/profiles/$1" class="text-primary hover:underline font-medium">@$1</a>'
+    '<a href="/members/$1" class="text-primary hover:underline font-medium">@$1</a>'
   );
 
   return (

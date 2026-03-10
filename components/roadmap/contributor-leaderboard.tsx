@@ -111,7 +111,7 @@ export function ContributorLeaderboard({
             const rank = i + 1;
             const isTop3 = rank <= 3;
             const profileHref = entry.username
-              ? `/profiles/${entry.username}`
+              ? `/members/${entry.username}`
               : "#";
 
             return (

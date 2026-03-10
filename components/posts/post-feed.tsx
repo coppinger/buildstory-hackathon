@@ -16,14 +16,16 @@ export function PostFeed({
 }) {
   if (posts.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground py-6 text-center">
-        No posts yet. Be the first to share an update.
-      </p>
+      <div className="border border-dashed border-border/40 py-10 text-center">
+        <p className="text-sm text-muted-foreground/60">
+          No posts yet. Be the first to share an update.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="grid gap-3">
+    <div className="space-y-3">
       {posts.map((post) => (
         <PostCard
           key={post.id}

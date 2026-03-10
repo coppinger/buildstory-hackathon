@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
 import { submitComment } from "@/app/(app)/content/actions";
 import { POST_BODY_MAX_LENGTH } from "@/lib/constants";
 
@@ -42,33 +41,33 @@ export function CommentForm({
   }
 
   return (
-    <div className="flex gap-2">
-      <input
-        type="text"
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            handleSubmit();
-          }
-        }}
-        placeholder={parentCommentId ? "Reply..." : "Add a comment..."}
-        className="flex-1 bg-transparent border border-border px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground/30"
-        disabled={isPending}
-        maxLength={POST_BODY_MAX_LENGTH}
-      />
-      <Button
-        onClick={handleSubmit}
-        disabled={!body.trim() || isOverLimit || isPending}
-        size="sm"
-        variant="outline"
-        className="text-xs h-auto py-1"
-      >
-        {isPending ? "..." : parentCommentId ? "Reply" : "Comment"}
-      </Button>
+    <div>
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit();
+            }
+          }}
+          placeholder={parentCommentId ? "Write a reply..." : "Add a comment..."}
+          className="flex-1 border border-border/50 p-4 bg-transparent text-base text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
+          disabled={isPending}
+          maxLength={POST_BODY_MAX_LENGTH}
+        />
+        <button
+          onClick={handleSubmit}
+          disabled={!body.trim() || isOverLimit || isPending}
+          className="shrink-0 self-stretch border border-border/50 px-5 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-default transition-colors whitespace-nowrap"
+        >
+          {isPending ? "..." : parentCommentId ? "Reply" : "Post"}
+        </button>
+      </div>
       {error && (
-        <span className="text-xs text-destructive self-center">{error}</span>
+        <p className="mt-1 text-xs text-destructive">{error}</p>
       )}
     </div>
   );

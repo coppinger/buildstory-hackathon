@@ -29,7 +29,7 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 - **Shaders**: `@paper-design/shaders-react` for ShaderBackground
 - **CMS**: Sanity (`next-sanity`, `@sanity/image-url`, `sanity`) -- embedded studio at `/studio` (admin-only), manages sponsors and volunteer roles for the homepage
 - **Auth**: Clerk (`@clerk/nextjs`) -- custom sign-in/sign-up forms (not Clerk pre-built components)
-- **Database**: Neon Postgres via `@neondatabase/serverless` (HTTP adapter), Drizzle ORM
+- **Database**: Neon Postgres via `@neondatabase/serverless` (WebSocket adapter), Drizzle ORM — supports `db.transaction()`
 - **Icons**: Google Material Symbols (`material-symbols`, sharp filled style) via `components/ui/icon.tsx` `<Icon>` wrapper -- brand icons (GitHub, Google) are custom SVGs in `components/icons.tsx`
 - **UI primitives**: Radix UI via `radix-ui` package
 - **Charts**: Recharts (`recharts`) via shadcn chart component (`components/ui/chart.tsx`)
@@ -106,7 +106,7 @@ No webhook. Profiles are created lazily via `lib/db/ensure-profile.ts` -- call `
 
 ### Database
 
-Neon Postgres with Drizzle ORM. Client in `lib/db/index.ts` uses the Neon HTTP (serverless) adapter and imports the full schema for relational queries.
+Neon Postgres with Drizzle ORM. Client in `lib/db/index.ts` uses the Neon WebSocket (serverless) adapter via `drizzle-orm/neon-serverless`, which supports `db.transaction()`. Imports the full schema for relational queries.
 
 **Schema** (`lib/db/schema.ts`):
 - `profiles` -- clerk_id (unique), username (unique, nullable), display_name, bio, social links, country (uppercase ISO 3166-1 alpha-2 code), region (ISO 3166-2 subdivision code, nullable), experience_level enum, role (user_role enum, default 'user'), allowInvites (boolean, default true -- privacy toggle for team invites), bannedAt/bannedBy/banReason (ban state), hiddenAt/hiddenBy (soft-hide state)

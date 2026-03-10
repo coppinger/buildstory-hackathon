@@ -139,7 +139,7 @@ export default async function RoadmapItemPage({
             <Link
               href={
                 item.author.username
-                  ? `/profiles/${item.author.username}`
+                  ? `/members/${item.author.username}`
                   : "#"
               }
               className="text-foreground hover:underline"

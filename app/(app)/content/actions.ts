@@ -261,9 +261,21 @@ export async function submitComment(data: {
       return { success: false, error: "Replies are not supported on project updates" };
     }
 
-    // Tool context: max depth 2 (reply to a reply is not allowed)
-    if (post.contextType === "tool" && parent.parentCommentId !== null) {
-      return { success: false, error: "Cannot reply to a reply" };
+    // Tool context: max depth 3
+    if (post.contextType === "tool") {
+      let depth = 1;
+      let ancestorId = parent.parentCommentId;
+      while (ancestorId) {
+        depth++;
+        if (depth >= 3) {
+          return { success: false, error: "Maximum reply depth reached" };
+        }
+        const ancestor = await db.query.postComments.findFirst({
+          where: eq(postComments.id, ancestorId),
+          columns: { parentCommentId: true },
+        });
+        ancestorId = ancestor?.parentCommentId ?? null;
+      }
     }
   }
 
