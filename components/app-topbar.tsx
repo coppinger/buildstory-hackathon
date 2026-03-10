@@ -17,6 +17,7 @@ export async function AppTopbar() {
   let displayName = "Builder";
   let username: string | null = null;
   let profileId: string | null = null;
+  let avatarUrl: string | null = user?.imageUrl ?? null;
 
   if (user) {
     const profile = await ensureProfile(user.id);
@@ -24,6 +25,7 @@ export async function AppTopbar() {
       displayName = profile.displayName ?? user.firstName ?? "Builder";
       username = profile.username ?? null;
       profileId = profile.id;
+      if (profile.avatarUrl) avatarUrl = profile.avatarUrl;
     } else {
       displayName = user.firstName ?? "Builder";
     }
@@ -52,7 +54,7 @@ export async function AppTopbar() {
             <div className="flex items-center gap-1">
               {profileId && <NotificationBellServer profileId={profileId} />}
               <UserMenu
-                imageUrl={user.imageUrl}
+                imageUrl={avatarUrl ?? user.imageUrl}
                 displayName={displayName}
                 username={username}
               />

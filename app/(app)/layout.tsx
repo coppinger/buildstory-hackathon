@@ -1,5 +1,6 @@
 import { AppTopbar } from "@/components/app-topbar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { DevIdentityPanel } from "@/components/dev/dev-identity-panel";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,6 +10,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         {children}
       </div>
+      {process.env.NODE_ENV === "development" && <DevIdentityPanel />}
     </main>
   );
 }
