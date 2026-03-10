@@ -321,10 +321,20 @@ export async function revokeInvite(data: {
       return { success: false, error: "Only pending invites can be revoked" };
     }
 
-    await db
+    const [updated] = await db
       .update(teamInvites)
       .set({ status: "revoked" })
-      .where(eq(teamInvites.id, data.inviteId));
+      .where(
+        and(
+          eq(teamInvites.id, data.inviteId),
+          eq(teamInvites.status, "pending")
+        )
+      )
+      .returning({ id: teamInvites.id });
+
+    if (!updated) {
+      return { success: false, error: "Invite is no longer pending" };
+    }
 
     revalidatePath(`/projects/${invite.project.slug}`);
     return { success: true };

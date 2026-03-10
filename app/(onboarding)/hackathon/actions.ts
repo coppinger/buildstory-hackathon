@@ -218,6 +218,7 @@ export async function searchUsers(
       return { success: true, data: [] };
     }
 
+    const escaped = trimmed.replace(/[%_\\]/g, "\\$&");
     const results = await db
       .select({
         id: profiles.id,
@@ -227,8 +228,8 @@ export async function searchUsers(
       .from(profiles)
       .where(
         or(
-          ilike(profiles.username, `%${trimmed}%`),
-          ilike(profiles.displayName, `%${trimmed}%`)
+          ilike(profiles.username, `%${escaped}%`),
+          ilike(profiles.displayName, `%${escaped}%`)
         )
       )
       .limit(5);
@@ -256,7 +257,8 @@ export async function searchProjects(
       return { success: true, data: [] };
     }
 
-    const conditions = [ilike(projects.name, `%${trimmed}%`)];
+    const escaped = trimmed.replace(/[%_\\]/g, "\\$&");
+    const conditions = [ilike(projects.name, `%${escaped}%`)];
     if (profileId) {
       conditions.push(eq(projects.profileId, profileId));
     }

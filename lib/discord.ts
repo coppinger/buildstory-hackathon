@@ -31,11 +31,12 @@ export function sendDiscordWebhook(
 }
 
 export function notifySignup(displayName: string) {
+  const safeName = sanitizeForDiscord(displayName);
   sendDiscordWebhook(process.env.DISCORD_WEBHOOK_SIGNUPS, {
     embeds: [
       {
         title: "New Signup",
-        description: `**${displayName}** registered for Hackathon 00`,
+        description: `**${safeName}** registered for Hackathon 00`,
         color: 0xc4a35a,
         timestamp: new Date().toISOString(),
       },
@@ -44,11 +45,13 @@ export function notifySignup(displayName: string) {
 }
 
 export function notifyProject(displayName: string, projectName: string) {
+  const safeName = sanitizeForDiscord(displayName);
+  const safeProject = sanitizeForDiscord(projectName);
   sendDiscordWebhook(process.env.DISCORD_WEBHOOK_SIGNUPS, {
     embeds: [
       {
         title: "New Project",
-        description: `**${displayName}** submitted **${projectName}**`,
+        description: `**${safeName}** submitted **${safeProject}**`,
         color: 0x5a8f7a,
         timestamp: new Date().toISOString(),
       },

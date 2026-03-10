@@ -48,7 +48,7 @@ export const proxy = clerkMiddleware(async (auth, request) => {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax",
-          maxAge: 60 * 60 * 24 * 365, // 1 year
+          maxAge: 60 * 5, // 5 minutes — short TTL so ban checks re-run promptly
         });
         return response;
       }

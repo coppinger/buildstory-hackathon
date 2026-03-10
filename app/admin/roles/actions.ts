@@ -73,13 +73,20 @@ export async function setUserRole(data: {
   }
 }
 
+function escapeIlike(value: string): string {
+  return value.replace(/[%_\\]/g, "\\$&");
+}
+
 export async function searchProfilesByName(query: string) {
   try {
+    const { userId } = await auth();
+    if (!userId || !(await isAdmin(userId))) return [];
+
     const parsed = parseInput(searchQuerySchema, { query });
     if (!parsed.success) return [];
     if (parsed.data.query.length < 2) return [];
 
-    const pattern = `%${parsed.data.query}%`;
+    const pattern = `%${escapeIlike(parsed.data.query)}%`;
 
     const results = await db
       .select({
