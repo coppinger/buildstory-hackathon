@@ -7,7 +7,7 @@ import { ReactionBar } from "@/components/posts/reaction-bar";
 import { CommentForm } from "@/components/posts/comment-form";
 import { timeAgo } from "@/lib/time";
 
-const MAX_DEPTH = 3;
+const MAX_DEPTH = 2;
 const VISIBLE_REPLIES = 3;
 
 export function CommentThread({

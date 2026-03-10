@@ -154,7 +154,7 @@ export default async function ProjectRoadmapItemPage({
             <Link
               href={
                 item.author.username
-                  ? `/profiles/${item.author.username}`
+                  ? `/members/${item.author.username}`
                   : "#"
               }
               className="text-foreground hover:underline"
