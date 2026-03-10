@@ -23,7 +23,7 @@ Launching through **Hackathon 00** (March 1–8, 2026), a 7-day AI building even
 
 - **Framework**: Next.js 16 (App Router, React 19, TypeScript), deployed on Vercel
 - **Styling**: Tailwind CSS v4, shadcn/ui (new-york style), tw-animate-css
-- **Fonts**: DM Sans (body via `font-sans`), Instrument Serif (headings via `font-heading`), DM Mono (mono via `font-mono`) -- loaded in `app/layout.tsx` as CSS variables
+- **Fonts**: DM Sans (body via `font-sans`), Advercase (headings via `font-heading`, local font in `app/fonts/`), DM Mono (mono via `font-mono`) -- loaded in `app/layout.tsx` as CSS variables
 - **Animation**: Motion (Framer Motion), custom BlurFade component with scroll-triggered `inView` mode; `canvas-confetti` for celebration effects
 - **Map**: Mapbox GL (`mapbox-gl`) for the Globe component
 - **Shaders**: `@paper-design/shaders-react` for ShaderBackground

@@ -472,6 +472,23 @@ export async function getPublicStats(eventId: string) {
   return { signups, projectCount, soloCount, teamCount, countryCount, submissionCount };
 }
 
+export async function getParticipantCountries(eventId: string) {
+  const rows = await db
+    .selectDistinct({ country: profiles.country })
+    .from(eventRegistrations)
+    .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
+    .where(
+      and(
+        eq(eventRegistrations.eventId, eventId),
+        isNotNull(profiles.country),
+        isNull(profiles.bannedAt),
+        isNull(profiles.hiddenAt)
+      )
+    );
+
+  return rows.map((r) => r.country).filter((c): c is string => c !== null);
+}
+
 // --- Team & Invite Queries ---
 
 export async function getPendingInvitesForUser(profileId: string) {

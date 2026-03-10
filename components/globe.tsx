@@ -3,30 +3,11 @@
 import { useEffect, useRef } from "react";
 import { motion } from "motion/react";
 
-const PARTICIPANT_LOCATIONS: [number, number][] = [
-  [-73.935, 40.73],    // New York
-  [-122.42, 37.77],    // San Francisco
-  [-43.17, -22.91],    // Rio de Janeiro
-  [-3.7, 40.42],       // Madrid
-  [2.35, 48.86],       // Paris
-  [13.4, 52.52],       // Berlin
-  [12.5, 41.9],        // Rome
-  [31.24, 30.04],      // Cairo
-  [28.98, 41.01],      // Istanbul
-  [37.62, 55.75],      // Moscow
-  [77.21, 28.61],      // New Delhi
-  [100.5, 13.76],      // Bangkok
-  [103.85, 1.29],      // Singapore
-  [121.47, 31.23],     // Shanghai
-  [139.69, 35.69],     // Tokyo
-  [151.21, -33.87],    // Sydney
-  [-46.63, -23.55],    // Sao Paulo
-  [18.42, -33.92],     // Cape Town
-  [24.94, 60.17],      // Helsinki
-  [-79.38, 43.65],     // Toronto
-];
+interface GlobeProps {
+  locations: [number, number][];
+}
 
-export function Globe() {
+export function Globe({ locations }: GlobeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -83,7 +64,7 @@ export function Globe() {
           type: "geojson",
           data: {
             type: "FeatureCollection",
-            features: PARTICIPANT_LOCATIONS.map(([lng, lat]) => ({
+            features: locations.map(([lng, lat]) => ({
               type: "Feature" as const,
               geometry: { type: "Point" as const, coordinates: [lng, lat] },
               properties: {},
@@ -135,7 +116,7 @@ export function Globe() {
 
   return (
     <motion.div
-      className="absolute -z-10 w-full overflow-hidden"
+      className="absolute -z-10 w-full"
       style={{ height: "80vh" }}
       initial={{ opacity: 0, filter: "blur(20px)" }}
       animate={{ opacity: 1, filter: "blur(0px)" }}
@@ -144,7 +125,7 @@ export function Globe() {
       <div
         ref={containerRef}
         className="absolute left-0 right-0"
-        style={{ top: "10%", height: "250%" }}
+        style={{ top: "0%", height: "250%" }}
       />
       {/* Top fade into the page background */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-background to-transparent" />
