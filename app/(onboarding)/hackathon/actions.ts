@@ -24,6 +24,7 @@ import {
   searchQuerySchema,
   parseInput,
 } from "@/lib/db/validations";
+import { escapeIlike } from "@/lib/queries";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -218,7 +219,7 @@ export async function searchUsers(
       return { success: true, data: [] };
     }
 
-    const escaped = trimmed.replace(/[%_\\]/g, "\\$&");
+    const pattern = `%${escapeIlike(trimmed)}%`;
     const results = await db
       .select({
         id: profiles.id,
@@ -228,8 +229,8 @@ export async function searchUsers(
       .from(profiles)
       .where(
         or(
-          ilike(profiles.username, `%${escaped}%`),
-          ilike(profiles.displayName, `%${escaped}%`)
+          ilike(profiles.username, pattern),
+          ilike(profiles.displayName, pattern)
         )
       )
       .limit(5);
@@ -257,8 +258,8 @@ export async function searchProjects(
       return { success: true, data: [] };
     }
 
-    const escaped = trimmed.replace(/[%_\\]/g, "\\$&");
-    const conditions = [ilike(projects.name, `%${escaped}%`)];
+    const pattern = `%${escapeIlike(trimmed)}%`;
+    const conditions = [ilike(projects.name, pattern)];
     if (profileId) {
       conditions.push(eq(projects.profileId, profileId));
     }

@@ -31,7 +31,7 @@ import { getRegionName } from "@/lib/regions";
 import { DEFAULT_PAGE_SIZE, type SortOrder } from "@/lib/search-params";
 
 /** Escape ILIKE wildcard characters so user input is matched literally. */
-function escapeIlike(value: string): string {
+export function escapeIlike(value: string): string {
   return value.replace(/[%_\\]/g, "\\$&");
 }
 

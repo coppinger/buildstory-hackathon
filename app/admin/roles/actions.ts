@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { profiles, adminAuditLog } from "@/lib/db/schema";
 import { isAdmin, isSuperAdmin } from "@/lib/admin";
 import { searchQuerySchema, parseInput } from "@/lib/db/validations";
+import { escapeIlike } from "@/lib/queries";
 
 type ActionResult = { success: true } | { success: false; error: string };
 
@@ -71,10 +72,6 @@ export async function setUserRole(data: {
     });
     return { success: false, error: "Failed to update role" };
   }
-}
-
-function escapeIlike(value: string): string {
-  return value.replace(/[%_\\]/g, "\\$&");
 }
 
 export async function searchProfilesByName(query: string) {

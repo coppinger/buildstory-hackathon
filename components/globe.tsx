@@ -112,7 +112,7 @@ export function Globe({ locations }: GlobeProps) {
       cancelAnimationFrame(animationId);
       map?.remove();
     };
-  }, []);
+  }, [locations]);
 
   return (
     <motion.div
