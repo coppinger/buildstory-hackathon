@@ -177,61 +177,65 @@ async function performSwap(
   target: { id: string; clerkId: string },
   config: DevConfig
 ): Promise<{ success: boolean; error?: string }> {
-  const parkedProfiles: SwapState["parkedProfiles"] = [];
-  const parkedClerkId = `parked_${Date.now()}`;
+  return db.transaction(async (tx) => {
+    const parkedProfiles: SwapState["parkedProfiles"] = [];
+    const parkedClerkId = `parked_${Date.now()}`;
 
-  // Phase 1: Park source's clerk_id to free the unique slot
-  await db
-    .update(profiles)
-    .set({ clerkId: parkedClerkId })
-    .where(eq(profiles.id, source.id));
-  parkedProfiles.push({ profileId: source.id, originalClerkId: source.clerkId });
-
-  // If target has a different clerk_id, park it too
-  if (target.clerkId !== clerkId) {
-    const targetParkedClerkId = `parked_${Date.now()}_target`;
-    await db
+    // Phase 1: Park source's clerk_id to free the unique slot
+    await tx
       .update(profiles)
-      .set({ clerkId: targetParkedClerkId })
+      .set({ clerkId: parkedClerkId })
+      .where(eq(profiles.id, source.id));
+    parkedProfiles.push({ profileId: source.id, originalClerkId: source.clerkId });
+
+    // If target has a different clerk_id, park it too
+    if (target.clerkId !== clerkId) {
+      const targetParkedClerkId = `parked_${Date.now()}_target`;
+      await tx
+        .update(profiles)
+        .set({ clerkId: targetParkedClerkId })
+        .where(eq(profiles.id, target.id));
+      parkedProfiles.push({ profileId: target.id, originalClerkId: target.clerkId });
+    }
+
+    // Phase 2: Assign our clerk_id to target
+    await tx
+      .update(profiles)
+      .set({ clerkId })
       .where(eq(profiles.id, target.id));
-    parkedProfiles.push({ profileId: target.id, originalClerkId: target.clerkId });
-  }
 
-  // Phase 2: Assign our clerk_id to target
-  await db
-    .update(profiles)
-    .set({ clerkId })
-    .where(eq(profiles.id, target.id));
+    // Save swap state for recovery
+    config.swapState = {
+      originalClerkId: clerkId,
+      parkedProfiles,
+      activeTargetProfileId: target.id,
+    };
+    await writeConfig(config);
 
-  // Save swap state for recovery
-  config.swapState = {
-    originalClerkId: clerkId,
-    parkedProfiles,
-    activeTargetProfileId: target.id,
-  };
-  await writeConfig(config);
+    // Delete bs_profile cookie so middleware re-resolves
+    const cookieStore = await cookies();
+    cookieStore.delete(PROFILE_COOKIE);
 
-  // Delete bs_profile cookie so middleware re-resolves
-  const cookieStore = await cookies();
-  cookieStore.delete(PROFILE_COOKIE);
-
-  return { success: true };
+    return { success: true };
+  });
 }
 
 async function restoreSwapState(swapState: SwapState): Promise<void> {
-  // First, clear the clerk_id from the active target (free the unique slot)
-  await db
-    .update(profiles)
-    .set({ clerkId: `restoring_${Date.now()}` })
-    .where(eq(profiles.id, swapState.activeTargetProfileId));
-
-  // Restore all parked profiles to their original clerk_ids
-  for (const parked of swapState.parkedProfiles) {
-    await db
+  await db.transaction(async (tx) => {
+    // First, clear the clerk_id from the active target (free the unique slot)
+    await tx
       .update(profiles)
-      .set({ clerkId: parked.originalClerkId })
-      .where(eq(profiles.id, parked.profileId));
-  }
+      .set({ clerkId: `restoring_${Date.now()}` })
+      .where(eq(profiles.id, swapState.activeTargetProfileId));
+
+    // Restore all parked profiles to their original clerk_ids
+    for (const parked of swapState.parkedProfiles) {
+      await tx
+        .update(profiles)
+        .set({ clerkId: parked.originalClerkId })
+        .where(eq(profiles.id, parked.profileId));
+    }
+  });
 }
 
 export async function resetDevIdentity(): Promise<{
@@ -270,7 +274,8 @@ export async function searchDevProfiles(query: string) {
   if (!isDev()) return [];
   if (query.length < 2) return [];
 
-  const pattern = `%${query}%`;
+  const escaped = query.replace(/%/g, "\\%").replace(/_/g, "\\_");
+  const pattern = `%${escaped}%`;
 
   const results = await db
     .select({
