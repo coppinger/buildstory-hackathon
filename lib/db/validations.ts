@@ -328,6 +328,35 @@ export const createPostCommentSchema = z.object({
   parentCommentId: z.string().uuid().nullable().optional(),
 });
 
+export const submitReviewSchema = z.object({
+  feedback: z.string().trim().min(1, "Feedback is required").max(512, "Max 512 characters"),
+  highlights: z
+    .array(
+      z.object({
+        category: z.enum([
+          "creativity",
+          "business_case",
+          "technical_challenge",
+          "impact",
+          "design",
+        ]),
+        text: z
+          .string()
+          .trim()
+          .min(1, "Highlight text is required")
+          .max(256, "Max 256 characters"),
+      })
+    )
+    .max(3, "Maximum 3 highlights")
+    .refine(
+      (items) => {
+        const categories = items.map((i) => i.category);
+        return new Set(categories).size === categories.length;
+      },
+      { message: "Each category can only be selected once" }
+    ),
+});
+
 export const submitProjectSchema = z.object({
   whatBuilt: z.string().trim().min(1, "Required").max(280),
   demoUrl: sanitizedUrlField(2000).nullable(),

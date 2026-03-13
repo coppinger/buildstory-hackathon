@@ -1,5 +1,10 @@
 import { SubmissionCard } from "@/components/submissions/submission-card";
 
+interface HighlightAggregate {
+  totalReviews: number;
+  categories: { category: string; count: number }[];
+}
+
 interface SubmissionsGalleryProps {
   items: {
     submission: {
@@ -8,6 +13,7 @@ interface SubmissionsGalleryProps {
       demoMediaUrl: string | null;
       demoMediaType: string | null;
       lessonLearned: string | null;
+      projectId?: string;
     };
     profile: {
       displayName: string;
@@ -16,6 +22,7 @@ interface SubmissionsGalleryProps {
       country: string | null;
     };
     project: {
+      id: string;
       name: string;
       slug: string | null;
     };
@@ -25,6 +32,7 @@ interface SubmissionsGalleryProps {
   page: number;
   totalPages: number;
   basePath: string;
+  highlightAggregates?: Record<string, HighlightAggregate>;
 }
 
 export function SubmissionsGallery({
@@ -33,6 +41,7 @@ export function SubmissionsGallery({
   page,
   totalPages,
   basePath,
+  highlightAggregates,
 }: SubmissionsGalleryProps) {
   if (items.length === 0) {
     return (
@@ -58,6 +67,7 @@ export function SubmissionsGallery({
             profile={item.profile}
             project={item.project}
             tools={item.tools}
+            highlights={highlightAggregates?.[item.project.id]}
           />
         ))}
       </div>

@@ -63,6 +63,17 @@ export function getEventStateLabel(state: ComputedEventState): string {
   }
 }
 
+/** Reviews are open between reviewOpensAt (or endsAt if unset) and reviewClosesAt */
+export function isReviewOpen(
+  event: Pick<Event, "endsAt" | "reviewOpensAt" | "reviewClosesAt">
+): boolean {
+  const now = new Date();
+  const opensAt = event.reviewOpensAt ?? event.endsAt;
+  if (now < opensAt) return false;
+  if (event.reviewClosesAt && now >= event.reviewClosesAt) return false;
+  return true;
+}
+
 /** Badge color variant for a computed event state */
 export function getEventStateBadgeVariant(
   state: ComputedEventState

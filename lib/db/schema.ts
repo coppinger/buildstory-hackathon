@@ -90,6 +90,14 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "comment_reply",
 ]);
 
+export const highlightCategoryEnum = pgEnum("highlight_category", [
+  "creativity",
+  "business_case",
+  "technical_challenge",
+  "impact",
+  "design",
+]);
+
 export const postContextTypeEnum = pgEnum("post_context_type", [
   "project",
   "tool",
@@ -160,6 +168,8 @@ export const events = pgTable("events", {
   endsAt: timestamp("ends_at").notNull(),
   registrationOpensAt: timestamp("registration_opens_at"),
   registrationClosesAt: timestamp("registration_closes_at"),
+  reviewOpensAt: timestamp("review_opens_at"),
+  reviewClosesAt: timestamp("review_closes_at"),
   status: eventStatusEnum("status").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -296,6 +306,7 @@ export const profilesRelations = relations(profiles, ({ many }) => ({
   featureBoardUpvotes: many(featureBoardUpvotes),
   featureBoardComments: many(featureBoardComments),
   eventSubmissions: many(eventSubmissions),
+  hackathonReviews: many(hackathonReviews),
   posts: many(posts),
   postComments: many(postComments),
   reactions: many(reactions),
@@ -305,6 +316,7 @@ export const eventsRelations = relations(events, ({ many }) => ({
   eventRegistrations: many(eventRegistrations),
   eventProjects: many(eventProjects),
   eventSubmissions: many(eventSubmissions),
+  hackathonReviews: many(hackathonReviews),
 }));
 
 export const eventRegistrationsRelations = relations(
@@ -330,6 +342,7 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   members: many(projectMembers),
   invites: many(teamInvites),
   eventSubmissions: many(eventSubmissions),
+  hackathonReviews: many(hackathonReviews),
 }));
 
 export const eventProjectsRelations = relations(eventProjects, ({ one }) => ({
@@ -770,6 +783,61 @@ export const eventSubmissionTools = pgTable(
 export type EventSubmissionTool = typeof eventSubmissionTools.$inferSelect;
 export type NewEventSubmissionTool = typeof eventSubmissionTools.$inferInsert;
 
+// --- Hackathon Reviews ---
+
+export const hackathonReviews = pgTable(
+  "hackathon_reviews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id),
+    reviewerProfileId: uuid("reviewer_profile_id")
+      .notNull()
+      .references(() => profiles.id),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    feedback: text("feedback").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    unique().on(t.reviewerProfileId, t.projectId, t.eventId),
+    index("idx_hackathon_reviews_event").on(t.eventId),
+    index("idx_hackathon_reviews_project").on(t.projectId),
+    index("idx_hackathon_reviews_reviewer").on(t.reviewerProfileId),
+  ]
+);
+
+export type HackathonReview = typeof hackathonReviews.$inferSelect;
+export type NewHackathonReview = typeof hackathonReviews.$inferInsert;
+
+export const hackathonReviewHighlights = pgTable(
+  "hackathon_review_highlights",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    reviewId: uuid("review_id")
+      .notNull()
+      .references(() => hackathonReviews.id, { onDelete: "cascade" }),
+    category: highlightCategoryEnum("category").notNull(),
+    text: text("text").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    unique().on(t.reviewId, t.category),
+    index("idx_hackathon_review_highlights_review").on(t.reviewId),
+  ]
+);
+
+export type HackathonReviewHighlight =
+  typeof hackathonReviewHighlights.$inferSelect;
+export type NewHackathonReviewHighlight =
+  typeof hackathonReviewHighlights.$inferInsert;
+
 // --- Posts ---
 
 export const posts = pgTable(
@@ -857,6 +925,37 @@ export const reactions = pgTable(
 
 export type Reaction = typeof reactions.$inferSelect;
 export type NewReaction = typeof reactions.$inferInsert;
+
+// --- Hackathon Reviews Relations ---
+
+export const hackathonReviewsRelations = relations(
+  hackathonReviews,
+  ({ one, many }) => ({
+    event: one(events, {
+      fields: [hackathonReviews.eventId],
+      references: [events.id],
+    }),
+    reviewer: one(profiles, {
+      fields: [hackathonReviews.reviewerProfileId],
+      references: [profiles.id],
+    }),
+    project: one(projects, {
+      fields: [hackathonReviews.projectId],
+      references: [projects.id],
+    }),
+    highlights: many(hackathonReviewHighlights),
+  })
+);
+
+export const hackathonReviewHighlightsRelations = relations(
+  hackathonReviewHighlights,
+  ({ one }) => ({
+    review: one(hackathonReviews, {
+      fields: [hackathonReviewHighlights.reviewId],
+      references: [hackathonReviews.id],
+    }),
+  })
+);
 
 // --- Posts Relations ---
 

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getCountryName } from "@/lib/countries";
+import { HighlightBadges } from "@/components/reviews/highlight-badges";
 
 interface SubmissionCardProps {
   submission: {
@@ -23,6 +24,10 @@ interface SubmissionCardProps {
     slug: string | null;
   };
   tools: { id: string; name: string }[];
+  highlights?: {
+    totalReviews: number;
+    categories: { category: string; count: number }[];
+  };
 }
 
 const MAX_VISIBLE_TOOLS = 4;
@@ -32,6 +37,7 @@ export function SubmissionCard({
   profile,
   project,
   tools,
+  highlights,
 }: SubmissionCardProps) {
   const visibleTools = tools.slice(0, MAX_VISIBLE_TOOLS);
   const extraCount = tools.length - MAX_VISIBLE_TOOLS;
@@ -107,6 +113,14 @@ export function SubmissionCard({
             </Badge>
           )}
         </div>
+      )}
+
+      {/* Highlights */}
+      {highlights && highlights.totalReviews > 0 && (
+        <HighlightBadges
+          categories={highlights.categories}
+          totalReviews={highlights.totalReviews}
+        />
       )}
 
       {/* Links */}
