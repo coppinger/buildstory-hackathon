@@ -162,6 +162,13 @@
       "when": 1773371018836,
       "tag": "0022_bumpy_slayback",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1773372789509,
+      "tag": "0023_classy_garia",
+      "breakpoints": true
     }
   ]
 }

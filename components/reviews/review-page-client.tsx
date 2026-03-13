@@ -30,7 +30,6 @@ interface ReviewPageClientProps {
   reviewOpen: boolean;
   initialReviewCount: number;
   totalSubmissions: number;
-  userProjectId: string;
   receivedReviews: ReceivedReview[];
 }
 

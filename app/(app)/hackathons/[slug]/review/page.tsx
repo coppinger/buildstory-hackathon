@@ -57,7 +57,6 @@ export default async function ReviewPage({
         reviewOpen={reviewOpen}
         initialReviewCount={reviewCount}
         totalSubmissions={totalSubmissions}
-        userProjectId={userSubmission.projectId}
         receivedReviews={receivedReviews.map((r) => ({
           id: r.id,
           feedback: r.feedback,

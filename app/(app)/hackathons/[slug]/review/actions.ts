@@ -120,7 +120,7 @@ export async function submitReview(
     if (
       isUniqueViolation(
         error,
-        "hackathon_reviews_reviewer_profile_id_project_id_unique"
+        "hackathon_reviews_reviewer_profile_id_project_id_event_id_unique"
       )
     ) {
       return { success: false, error: "You have already reviewed this project" };

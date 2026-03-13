@@ -806,7 +806,7 @@ export const hackathonReviews = pgTable(
       .$onUpdate(() => new Date()),
   },
   (t) => [
-    unique().on(t.reviewerProfileId, t.projectId),
+    unique().on(t.reviewerProfileId, t.projectId, t.eventId),
     index("idx_hackathon_reviews_event").on(t.eventId),
     index("idx_hackathon_reviews_project").on(t.projectId),
     index("idx_hackathon_reviews_reviewer").on(t.reviewerProfileId),
