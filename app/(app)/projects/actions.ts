@@ -69,7 +69,7 @@ export async function createProject(data: {
         where: eq(events.id, data.eventId),
         columns: { id: true, status: true },
       });
-      if (event && (event.status === "open" || event.status === "active")) {
+      if (event && (event.status === "open" || event.status === "active" || event.status === "judging")) {
         await db
           .insert(eventProjects)
           .values({ eventId: event.id, projectId: project.id })

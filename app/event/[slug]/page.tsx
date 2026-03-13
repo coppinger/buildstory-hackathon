@@ -89,7 +89,9 @@ export default async function EventPage({
                 ? "Registration open"
                 : event.status === "active"
                   ? "Live now"
-                  : event.status}
+                  : event.status === "judging"
+                    ? "Judging in progress"
+                    : event.status}
             </span>
           </BlurFade>
 
