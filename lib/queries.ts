@@ -4,6 +4,8 @@ import {
   eventProjects,
   eventRegistrations,
   eventSubmissions,
+  hackathonReviews,
+  hackathonReviewHighlights,
   profiles,
   projects,
   teamInvites,
@@ -972,4 +974,110 @@ export async function getLatestOpenEvent() {
     const state = getComputedEventState(e);
     return state === "upcoming" || state === "active";
   }) ?? null;
+}
+
+// --- Review Queries ---
+
+/** Get all reviews + highlights + reviewer profile for a project in an event */
+export async function getReviewsForProject(projectId: string, eventId: string) {
+  return db.query.hackathonReviews.findMany({
+    where: and(
+      eq(hackathonReviews.projectId, projectId),
+      eq(hackathonReviews.eventId, eventId)
+    ),
+    with: {
+      reviewer: { columns: publicProfileColumns },
+      highlights: true,
+    },
+    orderBy: [desc(hackathonReviews.createdAt)],
+  });
+}
+
+/** Aggregate highlight counts per project for an event */
+export async function getReviewHighlightAggregates(eventId: string) {
+  const [rows, reviewCounts] = await Promise.all([
+    db
+      .select({
+        projectId: hackathonReviews.projectId,
+        category: hackathonReviewHighlights.category,
+        count: count(),
+      })
+      .from(hackathonReviewHighlights)
+      .innerJoin(
+        hackathonReviews,
+        eq(hackathonReviewHighlights.reviewId, hackathonReviews.id)
+      )
+      .where(eq(hackathonReviews.eventId, eventId))
+      .groupBy(hackathonReviews.projectId, hackathonReviewHighlights.category),
+    db
+      .select({
+        projectId: hackathonReviews.projectId,
+        count: count(),
+      })
+      .from(hackathonReviews)
+      .where(eq(hackathonReviews.eventId, eventId))
+      .groupBy(hackathonReviews.projectId),
+  ]);
+
+  const reviewCountMap = new Map(reviewCounts.map((r) => [r.projectId, r.count]));
+
+  const result = new Map<
+    string,
+    { totalReviews: number; categories: { category: string; count: number }[] }
+  >();
+
+  for (const row of rows) {
+    if (!result.has(row.projectId)) {
+      result.set(row.projectId, {
+        totalReviews: reviewCountMap.get(row.projectId) ?? 0,
+        categories: [],
+      });
+    }
+    result.get(row.projectId)!.categories.push({
+      category: row.category,
+      count: row.count,
+    });
+  }
+
+  // Include projects that have reviews but no highlights
+  for (const [projectId, totalReviews] of reviewCountMap) {
+    if (!result.has(projectId)) {
+      result.set(projectId, { totalReviews, categories: [] });
+    }
+  }
+
+  return result;
+}
+
+/** Count of reviews submitted by a user for an event */
+export async function getUserReviewCount(
+  profileId: string,
+  eventId: string
+): Promise<number> {
+  const [result] = await db
+    .select({ count: count() })
+    .from(hackathonReviews)
+    .where(
+      and(
+        eq(hackathonReviews.reviewerProfileId, profileId),
+        eq(hackathonReviews.eventId, eventId)
+      )
+    );
+  return result.count;
+}
+
+/** Total submissions for an event (for progress denominator) */
+export async function getEventSubmissionCount(eventId: string): Promise<number> {
+  const notBannedOrHidden = and(
+    isNull(profiles.bannedAt),
+    isNull(profiles.hiddenAt)
+  );
+
+  const [result] = await db
+    .select({ count: count() })
+    .from(eventSubmissions)
+    .innerJoin(profiles, eq(eventSubmissions.profileId, profiles.id))
+    .where(and(eq(eventSubmissions.eventId, eventId), notBannedOrHidden));
+
+  return result.count;
 }

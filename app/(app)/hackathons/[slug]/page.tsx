@@ -4,11 +4,19 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { eventRegistrations, profiles } from "@/lib/db/schema";
-import { getEventBySlug, getPublicStats, getEventSubmissions } from "@/lib/queries";
+import { eventRegistrations, eventSubmissions } from "@/lib/db/schema";
+import {
+  getEventBySlug,
+  getPublicStats,
+  getEventSubmissions,
+  getReviewHighlightAggregates,
+  getUserReviewCount,
+  getEventSubmissionCount,
+} from "@/lib/queries";
 import {
   getComputedEventState,
   isRegistrationOpen,
+  isReviewOpen,
 } from "@/lib/events";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { HackathonDetailHeader } from "@/components/hackathons/hackathon-detail-header";
@@ -44,29 +52,52 @@ export default async function HackathonDetailPage({
   const state = getComputedEventState(event);
   const showSubmissions = state === "active" || state === "judging" || state === "complete";
 
-  const [stats, { userId }, submissions] = await Promise.all([
+  const reviewOpen = isReviewOpen(event);
+
+  const [stats, { userId }, submissions, highlightAggregates] = await Promise.all([
     getPublicStats(event.id),
     auth(),
     showSubmissions ? getEventSubmissions(event.id, page) : Promise.resolve(null),
+    showSubmissions ? getReviewHighlightAggregates(event.id) : Promise.resolve(new Map()),
   ]);
 
   // Auth state for registration
   let isLoggedIn = false;
   let hasProfile = false;
   let isRegistered = false;
+  let hasSubmission = false;
+  let userReviewCount = 0;
+  let totalSubmissionCount = 0;
 
   if (userId) {
     isLoggedIn = true;
     const profile = await ensureProfile(userId);
     if (profile) {
       hasProfile = true;
-      const reg = await db.query.eventRegistrations.findFirst({
-        where: and(
-          eq(eventRegistrations.eventId, event.id),
-          eq(eventRegistrations.profileId, profile.id)
-        ),
-      });
+      const [reg, sub] = await Promise.all([
+        db.query.eventRegistrations.findFirst({
+          where: and(
+            eq(eventRegistrations.eventId, event.id),
+            eq(eventRegistrations.profileId, profile.id)
+          ),
+        }),
+        db.query.eventSubmissions.findFirst({
+          where: and(
+            eq(eventSubmissions.eventId, event.id),
+            eq(eventSubmissions.profileId, profile.id)
+          ),
+          columns: { id: true },
+        }),
+      ]);
       isRegistered = !!reg;
+      hasSubmission = !!sub;
+
+      if (hasSubmission && reviewOpen) {
+        [userReviewCount, totalSubmissionCount] = await Promise.all([
+          getUserReviewCount(profile.id, event.id),
+          getEventSubmissionCount(event.id),
+        ]);
+      }
     }
   }
 
@@ -105,7 +136,7 @@ export default async function HackathonDetailPage({
       )}
 
       {/* Judging banner */}
-      {state === "judging" && (
+      {state === "judging" && !reviewOpen && (
         <div className="mt-8 border border-border p-4">
           <p className="text-sm font-medium text-foreground">
             Judging in progress
@@ -113,6 +144,32 @@ export default async function HackathonDetailPage({
           <p className="text-xs text-muted-foreground mt-1">
             Submissions are being reviewed. Results coming soon.
           </p>
+        </div>
+      )}
+
+      {/* Peer review CTA */}
+      {reviewOpen && hasSubmission && (
+        <div className="mt-8 border border-buildstory-500/30 bg-buildstory-500/5 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-foreground">
+              Peer review is open
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Review submissions and highlight fellow builders.
+              {userReviewCount > 0 && (
+                <span className="ml-1">
+                  You&apos;ve reviewed {userReviewCount} of{" "}
+                  {Math.max(0, totalSubmissionCount - 1)} submissions.
+                </span>
+              )}
+            </p>
+          </div>
+          <Link
+            href={`/hackathons/${slug}/review`}
+            className="inline-flex items-center gap-1 text-sm font-mono text-buildstory-500 hover:text-foreground transition-colors whitespace-nowrap"
+          >
+            Start Reviewing &rarr;
+          </Link>
         </div>
       )}
 
@@ -128,6 +185,7 @@ export default async function HackathonDetailPage({
             page={submissions.page}
             totalPages={submissions.totalPages}
             basePath={`/hackathons/${slug}`}
+            highlightAggregates={Object.fromEntries(highlightAggregates)}
           />
         </div>
       )}

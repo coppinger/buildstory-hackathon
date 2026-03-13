@@ -155,6 +155,13 @@
       "when": 1773042934631,
       "tag": "0021_freezing_susan_delgado",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1773371018836,
+      "tag": "0022_bumpy_slayback",
+      "breakpoints": true
     }
   ]
 }
