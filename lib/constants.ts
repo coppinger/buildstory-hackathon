@@ -5,7 +5,7 @@ export const DISCORD_INVITE_URL = "https://discord.gg/buildstory";
 export const X_URL = "https://x.com/buildstorycom";
 export const TWITCH_URL = "https://twitch.tv/thecoppinger";
 export const VOLUNTEER_URL = "#"; // TODO: replace with real URL
-export const SPONSOR_URL = "/sponsor-apply";
+export const SPONSOR_URL = "/support-us";
 export const SPONSOR_CREDITS_URL = "#"; // TODO: replace with real URL
 export const DOCS_URL = "#"; // TODO: replace with real URL
 
