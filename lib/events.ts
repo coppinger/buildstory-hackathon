@@ -15,11 +15,14 @@ export const JUDGING_DURATION_MS = 48 * 60 * 60 * 1000;
 /**
  * Derives the current state of an event from its dates and status.
  * Date-driven — no manual status toggling needed for the happy path.
+ * Explicit DB status for "draft" and "judging" is always respected,
+ * allowing admins to hold judging open beyond the automatic 48-hour window.
  */
 export function getComputedEventState(
   event: Pick<Event, "status" | "startsAt" | "endsAt">
 ): ComputedEventState {
   if (event.status === "draft") return "draft";
+  if (event.status === "judging") return "judging";
 
   const now = new Date();
 
