@@ -9,6 +9,7 @@ import { ensureProfile } from "@/lib/db/ensure-profile";
 import { projects, events, eventProjects, projectMembers, teamInvites } from "@/lib/db/schema";
 import { isUniqueViolation } from "@/lib/db/errors";
 import { createProjectSchema, parseInput } from "@/lib/db/validations";
+import { isSubmissionOpen } from "@/lib/events";
 
 type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -67,9 +68,9 @@ export async function createProject(data: {
     if (data.eventId) {
       const event = await db.query.events.findFirst({
         where: eq(events.id, data.eventId),
-        columns: { id: true, status: true },
+        columns: { id: true, status: true, startsAt: true, endsAt: true },
       });
-      if (event && (event.status === "open" || event.status === "active" || event.status === "judging")) {
+      if (event && isSubmissionOpen(event)) {
         await db
           .insert(eventProjects)
           .values({ eventId: event.id, projectId: project.id })
