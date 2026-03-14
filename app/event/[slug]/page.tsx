@@ -16,6 +16,7 @@ import { Header } from "@/components/header";
 import { BlurFade } from "@/components/blur-fade";
 import { EventDashboard } from "./event-dashboard";
 import { ogMeta, notFoundMeta } from "@/lib/metadata";
+import { getComputedEventState, getEventStateLabel } from "@/lib/events";
 
 const getEvent = cache((slug: string) =>
   db.query.events.findFirst({ where: eq(events.slug, slug) }),
@@ -85,13 +86,7 @@ export default async function EventPage({
         <div className="mx-auto max-w-8xl border-x border-border px-6 md:px-12 lg:px-24">
           <BlurFade delay={0.1}>
             <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
-              {event.status === "open"
-                ? "Registration open"
-                : event.status === "active"
-                  ? "Live now"
-                  : event.status === "judging"
-                    ? "Judging in progress"
-                    : event.status}
+              {getEventStateLabel(getComputedEventState(event))}
             </span>
           </BlurFade>
 
