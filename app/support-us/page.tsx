@@ -3,6 +3,8 @@ import Link from "next/link";
 import { BlurFade } from "@/components/blur-fade";
 import { Button } from "@/components/ui/button";
 import { ogMeta } from "@/lib/metadata";
+import { getHackathonEvent } from "@/lib/admin/queries";
+import { getPublicStats, getLatestOpenEvent } from "@/lib/queries";
 
 const CONTACT_EMAIL = "charlie@buildstory.com";
 const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}`;
@@ -12,7 +14,27 @@ export const metadata = ogMeta(
   "Arm real builders with real tools. Support free monthly AI hackathons and put your product in the hands of people who actually build with it."
 );
 
-export default function SupportUsPage() {
+function formatEventDateRange(startsAt: Date, endsAt: Date): string {
+  const startMonth = startsAt.toLocaleString("en-US", { month: "long" });
+  const endMonth = endsAt.toLocaleString("en-US", { month: "long" });
+  const startDay = startsAt.getDate();
+  const endDay = endsAt.getDate();
+  const year = endsAt.getFullYear();
+
+  if (startMonth === endMonth) {
+    return `${startMonth} ${startDay} – ${endDay}, ${year}`;
+  }
+  return `${startMonth} ${startDay} – ${endMonth} ${endDay}, ${year}`;
+}
+
+export default async function SupportUsPage() {
+  const event = await getHackathonEvent();
+  const [publicStats, nextEvent] = await Promise.all([
+    event
+      ? getPublicStats(event.id)
+      : Promise.resolve({ signups: 0, countryCount: 0 }),
+    getLatestOpenEvent(),
+  ]);
   return (
     <div className="relative min-h-screen">
       {/* Nav */}
@@ -88,8 +110,8 @@ export default function SupportUsPage() {
           <BlurFade inView>
             <div className="grid grid-cols-2 md:grid-cols-4">
               {[
-                { value: "77", label: "builders" },
-                { value: "24", label: "countries" },
+                { value: String(publicStats.signups), label: "builders" },
+                { value: String(publicStats.countryCount), label: "countries" },
                 { value: "7-day", label: "format" },
                 { value: "Monthly", label: "cadence" },
               ].map((stat) => (
@@ -345,9 +367,11 @@ export default function SupportUsPage() {
 
             <BlurFade inView delay={0.2}>
               <p className="mt-6 max-w-xl font-mono text-base text-neutral-500 leading-relaxed">
-                Next event: March 28 – April 4, 2026. We&apos;re looking for
-                tool makers who want their product in the hands of people who
-                actually build. No contracts, no minimums.
+                {nextEvent
+                  ? `Next event: ${formatEventDateRange(nextEvent.startsAt, nextEvent.endsAt)}. `
+                  : ""}
+                We&apos;re looking for tool makers who want their product in the
+                hands of people who actually build. No contracts, no minimums.
               </p>
             </BlurFade>
 
