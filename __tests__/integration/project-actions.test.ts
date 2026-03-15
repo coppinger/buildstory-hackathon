@@ -134,8 +134,8 @@ beforeAll(async () => {
       description: "Event for project tests",
       startsAt: yesterday,
       endsAt: nextWeek,
-      registrationOpensAt: new Date("2025-01-01"),
-      registrationClosesAt: new Date("2027-12-31"),
+      registrationOpensAt: yesterday,
+      registrationClosesAt: nextWeek,
       status: "open",
     })
     .returning();
