@@ -122,15 +122,18 @@ beforeAll(async () => {
   const otherProfile = await ensureProfile(otherClerk);
   otherProfileId = otherProfile!.id;
 
-  // Create a test event
+  // Create a test event with dates that make it "active" (now is between start and end)
+  const now = new Date();
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const [event] = await db
     .insert(events)
     .values({
       name: "Project Test Event",
       slug: `${TEST_PREFIX}event-${crypto.randomUUID().slice(0, 8)}`,
       description: "Event for project tests",
-      startsAt: new Date("2026-03-01"),
-      endsAt: new Date("2026-03-08"),
+      startsAt: yesterday,
+      endsAt: nextWeek,
       registrationOpensAt: new Date("2025-01-01"),
       registrationClosesAt: new Date("2027-12-31"),
       status: "open",
