@@ -17,12 +17,18 @@ export const JUDGING_DURATION_MS = 48 * 60 * 60 * 1000;
  * Date-driven — no manual status toggling needed for the happy path.
  * Explicit DB status for "draft" and "judging" is always respected,
  * allowing admins to hold judging open beyond the automatic 48-hour window.
+ * When status is "judging" and reviewClosesAt is set and has passed,
+ * the event transitions to "complete" automatically.
  */
 export function getComputedEventState(
-  event: Pick<Event, "status" | "startsAt" | "endsAt">
+  event: Pick<Event, "status" | "startsAt" | "endsAt" | "reviewClosesAt">
 ): ComputedEventState {
   if (event.status === "draft") return "draft";
-  if (event.status === "judging") return "judging";
+  if (event.status === "judging") {
+    if (event.reviewClosesAt && new Date() >= event.reviewClosesAt)
+      return "complete";
+    return "judging";
+  }
 
   const now = new Date();
 
@@ -36,7 +42,7 @@ export function getComputedEventState(
 
 /** Registration is open when event is upcoming or active */
 export function isRegistrationOpen(
-  event: Pick<Event, "status" | "startsAt" | "endsAt">
+  event: Pick<Event, "status" | "startsAt" | "endsAt" | "reviewClosesAt">
 ): boolean {
   const state = getComputedEventState(event);
   return state === "upcoming" || state === "active";
@@ -44,7 +50,7 @@ export function isRegistrationOpen(
 
 /** Submissions are open during active and judging phases */
 export function isSubmissionOpen(
-  event: Pick<Event, "status" | "startsAt" | "endsAt">
+  event: Pick<Event, "status" | "startsAt" | "endsAt" | "reviewClosesAt">
 ): boolean {
   const state = getComputedEventState(event);
   return state === "active" || state === "judging";
@@ -100,7 +106,7 @@ export function getEventStateBadgeVariant(
  * Uses getComputedEventState internally.
  */
 export function getEventStatusLabel(
-  event: Pick<Event, "status" | "startsAt" | "endsAt">
+  event: Pick<Event, "status" | "startsAt" | "endsAt" | "reviewClosesAt">
 ): string {
   return getEventStateLabel(getComputedEventState(event));
 }
