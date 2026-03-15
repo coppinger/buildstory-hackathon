@@ -169,6 +169,13 @@
       "when": 1773372789509,
       "tag": "0023_classy_garia",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1773776400000,
+      "tag": "0024_extend_hackathon_00_judging",
+      "breakpoints": true
     }
   ]
 }
