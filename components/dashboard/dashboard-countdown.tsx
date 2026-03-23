@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-const START_DATE = new Date("2026-03-01T20:00:00Z").getTime();
-const END_DATE = new Date("2026-03-08T20:00:00Z").getTime();
+const START_DATE = new Date("2026-03-29T19:00:00Z").getTime();
+const END_DATE = new Date("2026-04-04T19:00:00Z").getTime();
 
 type Phase = "before" | "live" | "ended";
 

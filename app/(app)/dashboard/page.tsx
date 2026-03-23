@@ -114,9 +114,9 @@ export default async function DashboardPage() {
       statusLabel: getEventStatusLabel(data.event),
     }
     : {
-      name: "Hackathon 00",
+      name: "Hackathon #01",
       description:
-        "A one-week, fully remote AI building event. Build something real, share your process, and connect with builders worldwide.",
+        "The second Buildstory hackathon. One week, fully remote. Build something real with AI tools, share your process, and connect with builders worldwide.",
       statusLabel: "Upcoming Event",
     };
 
@@ -137,7 +137,7 @@ export default async function DashboardPage() {
                 {hackathon.name}
               </h1>
               <p className="mt-1 text-muted-foreground font-mono">
-                March 1–8, 2026 · Fully remote
+                March 29 – April 4, 2026 · Fully remote
               </p>
             </div>
 
@@ -185,7 +185,7 @@ export default async function DashboardPage() {
                   Join the hackathon
                 </h2>
                 <p className="mt-1 text-muted-foreground">
-                  Register now to participate in Hackathon 00. Solo or team — all
+                  Register now to participate in Hackathon #01. Solo or team — all
                   skill levels welcome.
                 </p>
               </div>
