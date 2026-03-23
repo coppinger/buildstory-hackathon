@@ -137,7 +137,7 @@ export default async function DashboardPage() {
                 {hackathon.name}
               </h1>
               <p className="mt-1 text-muted-foreground font-mono">
-                March 29 – April 4, 2026 · Fully remote
+                March 29 – April 5, 2026 · Fully remote
               </p>
             </div>
 
