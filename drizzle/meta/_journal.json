@@ -176,6 +176,13 @@
       "when": 1773776400000,
       "tag": "0024_extend_hackathon_00_judging",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1774483200000,
+      "tag": "0025_fix_hackathon_01_name",
+      "breakpoints": true
     }
   ]
 }
