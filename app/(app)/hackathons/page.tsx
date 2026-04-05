@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { getAllPublicEvents, getEventRegistrationCount } from "@/lib/queries";
-import { getComputedEventState, type ComputedEventState } from "@/lib/events";
 import { HackathonListCard } from "@/components/hackathons/hackathon-list-card";
 
 export const metadata: Metadata = {
@@ -12,7 +11,7 @@ export default async function HackathonsPage() {
 
   const eventsWithState = await Promise.all(
     allEvents.map(async (event) => {
-      const state = getComputedEventState(event);
+      const state = event.status;
       const participantCount = await getEventRegistrationCount(event.id);
       return { event, state, participantCount };
     })
@@ -21,7 +20,7 @@ export default async function HackathonsPage() {
   const current = eventsWithState.filter(
     (e) => e.state === "active" || e.state === "judging"
   );
-  const upcoming = eventsWithState.filter((e) => e.state === "upcoming");
+  const upcoming = eventsWithState.filter((e) => e.state === "open");
   const previous = eventsWithState.filter((e) => e.state === "complete");
 
   return (

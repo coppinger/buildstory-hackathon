@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
-  type ComputedEventState,
+  type EventStatus,
   getEventStateLabel,
   getEventStateBadgeVariant,
 } from "@/lib/events";
@@ -14,7 +14,7 @@ interface HackathonHistoryEntry {
     startsAt: Date;
     endsAt: Date;
   };
-  state: ComputedEventState;
+  state: EventStatus;
   submission: {
     whatBuilt: string;
     demoUrl: string | null;

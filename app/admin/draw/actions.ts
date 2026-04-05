@@ -5,14 +5,13 @@ import { eq, and, isNull, isNotNull, desc } from "drizzle-orm";
 import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
 import {
-  events,
   eventRegistrations,
   profiles,
   prizeDraws,
 } from "@/lib/db/schema";
 import { isAdmin } from "@/lib/admin";
 import { ensureProfile } from "@/lib/db/ensure-profile";
-import { HACKATHON_SLUG } from "@/lib/constants";
+import { getFeaturedEventId } from "@/lib/queries";
 
 export interface DrawWinner {
   username: string;
@@ -70,13 +69,10 @@ export async function drawWinners(count: number): Promise<ActionResult> {
       return { success: false, error: "Count must be a positive integer" };
     }
 
-    // Get hackathon event ID
-    const event = await db.query.events.findFirst({
-      where: eq(events.slug, HACKATHON_SLUG),
-      columns: { id: true },
-    });
-    if (!event) {
-      return { success: false, error: "Hackathon event not found" };
+    // Get featured event ID
+    const eventId = await getFeaturedEventId();
+    if (!eventId) {
+      return { success: false, error: "No featured hackathon event" };
     }
 
     // Query eligible profiles: registered, not banned/hidden, has username
@@ -90,7 +86,7 @@ export async function drawWinners(count: number): Promise<ActionResult> {
       .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
       .where(
         and(
-          eq(eventRegistrations.eventId, event.id),
+          eq(eventRegistrations.eventId, eventId),
           isNull(profiles.bannedAt),
           isNull(profiles.hiddenAt),
           isNotNull(profiles.username)

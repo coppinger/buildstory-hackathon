@@ -26,8 +26,6 @@ import {
   isNull,
   aliasedTable,
 } from "drizzle-orm";
-import { HACKATHON_SLUG } from "@/lib/constants";
-import { getComputedEventState } from "@/lib/events";
 import { getCountryName } from "@/lib/countries";
 import { getRegionName } from "@/lib/regions";
 import { DEFAULT_PAGE_SIZE, type SortOrder } from "@/lib/search-params";
@@ -89,9 +87,15 @@ export interface ActivityFeedItem {
   timestamp: Date;
 }
 
-async function getHackathonEventId(): Promise<string | null> {
+export async function getFeaturedEvent() {
+  return db.query.events.findFirst({
+    where: eq(events.featured, true),
+  });
+}
+
+export async function getFeaturedEventId(): Promise<string | null> {
   const event = await db.query.events.findFirst({
-    where: eq(events.slug, HACKATHON_SLUG),
+    where: eq(events.featured, true),
     columns: { id: true },
   });
   return event?.id ?? null;
@@ -108,7 +112,7 @@ function isProfileVisible(profile: {
 export async function getHackathonProjects(
   params?: SearchSortParams
 ) {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
   if (!params) {
     // Non-paginated path (backward compat)
     if (!eventId) return [];
@@ -202,7 +206,7 @@ export async function getHackathonProjects(
 
 /** Get all hackathon projects owned by or joined by a specific profile */
 export async function getUserHackathonProjects(profileId: string) {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
   if (!eventId) return [];
 
   // Get projects owned by the user that are linked to the hackathon
@@ -281,7 +285,7 @@ export async function getProjectBySlug(slug: string) {
 export async function getHackathonProfiles(
   params?: SearchSortParams
 ) {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
   if (!params) {
     // Non-paginated path (backward compat)
     if (!eventId) return [];
@@ -359,7 +363,7 @@ export async function getHackathonProfiles(
 }
 
 export async function getProfileByUsername(username: string) {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
 
   const profile = await db.query.profiles.findFirst({
     where: eq(profiles.username, username),
@@ -575,7 +579,7 @@ export async function getSenderPendingInviteCount(profileId: string) {
 export async function getPublicActivityFeed(
   limit = 50
 ): Promise<ActivityFeedItem[]> {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
   if (!eventId) return [];
 
   const notBannedOrHidden = and(
@@ -789,7 +793,7 @@ export async function getSubmissionByProjectSlug(slug: string): Promise<{
   country: string | null;
   region: string | null;
 } | null> {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
   if (!eventId) return null;
 
   const project = await db.query.projects.findFirst({
@@ -830,7 +834,7 @@ export async function getSubmissionByProjectSlug(slug: string): Promise<{
 
 /** Check if a project has a submission for the hackathon event */
 export async function hasHackathonSubmission(projectId: string): Promise<boolean> {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
   if (!eventId) return false;
 
   const row = await db.query.eventSubmissions.findFirst({
@@ -949,7 +953,7 @@ export async function getProjectEventHistory(projectId: string) {
     const submission = submissionsByEventId.get(ep.eventId);
     return {
       event: ep.event,
-      state: getComputedEventState(ep.event),
+      state: ep.event.status,
       submission: submission
         ? {
             whatBuilt: submission.whatBuilt,
@@ -971,8 +975,7 @@ export async function getLatestOpenEvent() {
   });
 
   return allEvents.find((e) => {
-    const state = getComputedEventState(e);
-    return state === "upcoming" || state === "active";
+    return e.status === "open" || e.status === "active";
   }) ?? null;
 }
 

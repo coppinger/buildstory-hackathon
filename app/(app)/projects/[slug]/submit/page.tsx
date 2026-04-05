@@ -3,11 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { events, eventProjects, projects, projectMembers } from "@/lib/db/schema";
+import { eventProjects, projects, projectMembers } from "@/lib/db/schema";
 import { ensureProfile } from "@/lib/db/ensure-profile";
-import { HACKATHON_SLUG } from "@/lib/constants";
+import { getFeaturedEvent, getSubmissionForProjectEvent } from "@/lib/queries";
 import { isSubmissionOpen } from "@/lib/events";
-import { getSubmissionForProjectEvent } from "@/lib/queries";
 import { SubmissionForm } from "@/components/submissions/submission-form";
 
 export const metadata: Metadata = {
@@ -47,7 +46,7 @@ export default async function SubmitPage({
 
   // Fetch event and tools in parallel (independent queries)
   const [event, allTools] = await Promise.all([
-    db.query.events.findFirst({ where: eq(events.slug, HACKATHON_SLUG) }),
+    getFeaturedEvent(),
     db.query.aiTools.findMany({
       orderBy: (t, { asc }) => [asc(t.category), asc(t.name)],
     }),

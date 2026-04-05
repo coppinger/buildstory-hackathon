@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  type ComputedEventState,
+  type EventStatus,
   getEventStateLabel,
   getEventStateBadgeVariant,
 } from "@/lib/events";
@@ -14,7 +14,7 @@ interface HackathonListCardProps {
   description: string;
   startsAt: Date;
   endsAt: Date;
-  state: ComputedEventState;
+  state: EventStatus;
   participantCount: number;
 }
 

@@ -3,9 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { events, eventProjects, projects, projectMembers } from "@/lib/db/schema";
+import { eventProjects, projects, projectMembers } from "@/lib/db/schema";
 import { ensureProfile } from "@/lib/db/ensure-profile";
-import { HACKATHON_SLUG } from "@/lib/constants";
+import { getFeaturedEvent } from "@/lib/queries";
 import { getSubmissionForProjectEvent } from "@/lib/queries";
 import { SubmissionCelebration } from "@/components/submissions/submission-celebration";
 
@@ -27,7 +27,7 @@ export default async function SubmissionSuccessPage({
   const [profile, project, event] = await Promise.all([
     ensureProfile(userId),
     db.query.projects.findFirst({ where: eq(projects.slug, slug) }),
-    db.query.events.findFirst({ where: eq(events.slug, HACKATHON_SLUG) }),
+    getFeaturedEvent(),
   ]);
   if (!profile) redirect("/hackathon");
   if (!project) notFound();

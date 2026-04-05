@@ -14,7 +14,6 @@ import {
   getEventSubmissionCount,
 } from "@/lib/queries";
 import {
-  getComputedEventState,
   isRegistrationOpen,
   isReviewOpen,
 } from "@/lib/events";
@@ -49,7 +48,7 @@ export default async function HackathonDetailPage({
   const event = await getEventBySlug(slug);
   if (!event) notFound();
 
-  const state = getComputedEventState(event);
+  const state = event.status;
   const showSubmissions = state === "active" || state === "judging" || state === "complete";
 
   const reviewOpen = isReviewOpen(event);
