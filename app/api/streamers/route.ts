@@ -5,11 +5,10 @@ import { db } from "@/lib/db";
 import {
   profiles,
   eventRegistrations,
-  events,
   twitchCategories,
 } from "@/lib/db/schema";
 import { eq, and, isNotNull, isNull } from "drizzle-orm";
-import { HACKATHON_SLUG } from "@/lib/constants";
+import { getFeaturedEventId } from "@/lib/queries";
 import {
   extractTwitchUsername,
   getLiveStreams,
@@ -40,12 +39,9 @@ export async function GET() {
   }
 
   try {
-    // 1. Get hackathon event ID
-    const event = await db.query.events.findFirst({
-      where: eq(events.slug, HACKATHON_SLUG),
-      columns: { id: true },
-    });
-    if (!event) {
+    // 1. Get featured event ID
+    const eventId = await getFeaturedEventId();
+    if (!eventId) {
       return NextResponse.json({ streamers: [] });
     }
 
@@ -76,7 +72,7 @@ export async function GET() {
       )
       .where(
         and(
-          eq(eventRegistrations.eventId, event.id),
+          eq(eventRegistrations.eventId, eventId),
           isNotNull(profiles.twitchUrl),
           isNull(profiles.bannedAt),
           isNull(profiles.hiddenAt)

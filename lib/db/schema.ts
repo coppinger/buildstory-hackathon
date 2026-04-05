@@ -171,6 +171,7 @@ export const events = pgTable("events", {
   reviewOpensAt: timestamp("review_opens_at"),
   reviewClosesAt: timestamp("review_closes_at"),
   status: eventStatusEnum("status").notNull(),
+  featured: boolean("featured").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

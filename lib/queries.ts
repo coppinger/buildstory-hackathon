@@ -26,8 +26,6 @@ import {
   isNull,
   aliasedTable,
 } from "drizzle-orm";
-import { HACKATHON_SLUG } from "@/lib/constants";
-import { getComputedEventState } from "@/lib/events";
 import { getCountryName } from "@/lib/countries";
 import { getRegionName } from "@/lib/regions";
 import { DEFAULT_PAGE_SIZE, type SortOrder } from "@/lib/search-params";
@@ -89,9 +87,15 @@ export interface ActivityFeedItem {
   timestamp: Date;
 }
 
-async function getHackathonEventId(): Promise<string | null> {
+export async function getFeaturedEvent() {
+  return db.query.events.findFirst({
+    where: eq(events.featured, true),
+  });
+}
+
+export async function getFeaturedEventId(): Promise<string | null> {
   const event = await db.query.events.findFirst({
-    where: eq(events.slug, HACKATHON_SLUG),
+    where: eq(events.featured, true),
     columns: { id: true },
   });
   return event?.id ?? null;
@@ -949,7 +953,7 @@ export async function getProjectEventHistory(projectId: string) {
     const submission = submissionsByEventId.get(ep.eventId);
     return {
       event: ep.event,
-      state: getComputedEventState(ep.event),
+      state: ep.event.status,
       submission: submission
         ? {
             whatBuilt: submission.whatBuilt,
@@ -971,8 +975,7 @@ export async function getLatestOpenEvent() {
   });
 
   return allEvents.find((e) => {
-    const state = getComputedEventState(e);
-    return state === "upcoming" || state === "active";
+    return e.status === "open" || e.status === "active";
   }) ?? null;
 }
 

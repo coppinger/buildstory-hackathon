@@ -54,6 +54,12 @@ export default async function AdminLayout({
             {session.role === "admin" && (
               <>
                 <Link
+                  href="/admin/hackathons"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Hackathons
+                </Link>
+                <Link
                   href="/admin/mentors"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >

@@ -12,12 +12,42 @@ import {
   twitchCategories,
 } from "@/lib/db/schema";
 import { eq, and, gte, count, desc, sql, isNotNull } from "drizzle-orm";
-import { HACKATHON_SLUG } from "@/lib/constants";
 
 export async function getHackathonEvent() {
   return db.query.events.findFirst({
-    where: eq(events.slug, HACKATHON_SLUG),
+    where: eq(events.featured, true),
   });
+}
+
+export async function getAdminEventList() {
+  const allEvents = await db.query.events.findMany({
+    orderBy: [desc(events.createdAt)],
+  });
+
+  const stats = await Promise.all(
+    allEvents.map(async (event) => {
+      const [regCount] = await db
+        .select({ count: count() })
+        .from(eventRegistrations)
+        .where(eq(eventRegistrations.eventId, event.id));
+      const [projCount] = await db
+        .select({ count: count() })
+        .from(eventProjects)
+        .where(eq(eventProjects.eventId, event.id));
+      const [subCount] = await db
+        .select({ count: count() })
+        .from(eventSubmissions)
+        .where(eq(eventSubmissions.eventId, event.id));
+      return {
+        ...event,
+        registrationCount: regCount.count,
+        projectCount: projCount.count,
+        submissionCount: subCount.count,
+      };
+    })
+  );
+
+  return stats;
 }
 
 export async function getTotalSignups(eventId: string) {

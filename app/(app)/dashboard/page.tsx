@@ -4,7 +4,6 @@ import { eq, and } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import {
-  events,
   eventProjects,
   eventRegistrations,
   eventSubmissions,
@@ -19,18 +18,15 @@ import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-c
 import { DashboardStreamsCard } from "@/components/dashboard/dashboard-streams-card";
 import { DashboardSubmissionsFeed } from "@/components/dashboard/dashboard-submissions-feed";
 import { DiscordCard } from "@/components/dashboard/discord-card";
-import { getPublicStats, getPublicActivityFeed, getSubmissionsFeed } from "@/lib/queries";
-import { HACKATHON_SLUG } from "@/lib/constants";
-import { getEventStatusLabel, isSubmissionOpen } from "@/lib/events";
+import { getPublicStats, getPublicActivityFeed, getSubmissionsFeed, getFeaturedEvent } from "@/lib/queries";
+import { getEventStateLabel, isSubmissionOpen } from "@/lib/events";
 
 export const metadata: Metadata = {
   title: "Dashboard",
 };
 
 async function getHackathonData() {
-  const event = await db.query.events.findFirst({
-    where: eq(events.slug, HACKATHON_SLUG),
-  });
+  const event = await getFeaturedEvent();
 
   if (!event) return null;
 
@@ -111,7 +107,7 @@ export default async function DashboardPage() {
     ? {
       name: data.event.name,
       description: data.event.description,
-      statusLabel: getEventStatusLabel(data.event),
+      statusLabel: getEventStateLabel(data.event.status),
     }
     : {
       name: "Hackathon #01",

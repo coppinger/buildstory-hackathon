@@ -1,67 +1,30 @@
 import type { Event } from "@/lib/db/schema";
 
-// --- Computed Event State Machine ---
+// --- Event Status (admin-controlled, stored in DB) ---
 
-export type ComputedEventState =
-  | "draft"
-  | "upcoming"
-  | "active"
-  | "judging"
-  | "complete";
+export type EventStatus = Event["status"];
 
-/** 48-hour judging window after event ends */
-export const JUDGING_DURATION_MS = 48 * 60 * 60 * 1000;
-
-/**
- * Derives the current state of an event from its dates and status.
- * Date-driven — no manual status toggling needed for the happy path.
- * Explicit DB status for "draft" and "judging" is always respected,
- * allowing admins to hold judging open beyond the automatic 48-hour window.
- * When status is "judging" and reviewClosesAt is set and has passed,
- * the event transitions to "complete" automatically.
- */
-export function getComputedEventState(
-  event: Pick<Event, "status" | "startsAt" | "endsAt" | "reviewClosesAt">
-): ComputedEventState {
-  if (event.status === "draft") return "draft";
-  if (event.status === "judging") {
-    if (event.reviewClosesAt && new Date() >= event.reviewClosesAt)
-      return "complete";
-    return "judging";
-  }
-
-  const now = new Date();
-
-  if (now < event.startsAt) return "upcoming";
-  if (now < event.endsAt) return "active";
-  if (now.getTime() < event.endsAt.getTime() + JUDGING_DURATION_MS)
-    return "judging";
-
-  return "complete";
-}
-
-/** Registration is open when event is upcoming or active */
-export function isRegistrationOpen(
-  event: Pick<Event, "status" | "startsAt" | "endsAt" | "reviewClosesAt">
-): boolean {
-  const state = getComputedEventState(event);
-  return state === "upcoming" || state === "active";
+/** Registration is open when event is open or active */
+export function isRegistrationOpen(event: Pick<Event, "status">): boolean {
+  return event.status === "open" || event.status === "active";
 }
 
 /** Submissions are open during active and judging phases */
-export function isSubmissionOpen(
-  event: Pick<Event, "status" | "startsAt" | "endsAt" | "reviewClosesAt">
-): boolean {
-  const state = getComputedEventState(event);
-  return state === "active" || state === "judging";
+export function isSubmissionOpen(event: Pick<Event, "status">): boolean {
+  return event.status === "active" || event.status === "judging";
 }
 
-/** Human-readable label for a computed event state */
-export function getEventStateLabel(state: ComputedEventState): string {
-  switch (state) {
+/** Reviews are open during judging phase */
+export function isReviewOpen(event: Pick<Event, "status">): boolean {
+  return event.status === "judging";
+}
+
+/** Human-readable label for an event status */
+export function getEventStateLabel(status: EventStatus): string {
+  switch (status) {
     case "draft":
       return "Draft";
-    case "upcoming":
+    case "open":
       return "Upcoming Event";
     case "active":
       return "On-Going Event";
@@ -72,25 +35,14 @@ export function getEventStateLabel(state: ComputedEventState): string {
   }
 }
 
-/** Reviews are open between reviewOpensAt (or endsAt if unset) and reviewClosesAt */
-export function isReviewOpen(
-  event: Pick<Event, "endsAt" | "reviewOpensAt" | "reviewClosesAt">
-): boolean {
-  const now = new Date();
-  const opensAt = event.reviewOpensAt ?? event.endsAt;
-  if (now < opensAt) return false;
-  if (event.reviewClosesAt && now >= event.reviewClosesAt) return false;
-  return true;
-}
-
-/** Badge color variant for a computed event state */
+/** Badge color variant for an event status */
 export function getEventStateBadgeVariant(
-  state: ComputedEventState
+  status: EventStatus
 ): "default" | "secondary" | "outline" | "destructive" {
-  switch (state) {
+  switch (status) {
     case "active":
       return "default";
-    case "upcoming":
+    case "open":
       return "secondary";
     case "judging":
       return "outline";
@@ -99,14 +51,4 @@ export function getEventStateBadgeVariant(
     case "draft":
       return "outline";
   }
-}
-
-/**
- * Returns a human-readable label for an event's current status.
- * Uses getComputedEventState internally.
- */
-export function getEventStatusLabel(
-  event: Pick<Event, "status" | "startsAt" | "endsAt" | "reviewClosesAt">
-): string {
-  return getEventStateLabel(getComputedEventState(event));
 }

@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import {
-  type ComputedEventState,
+  type EventStatus,
   getEventStateLabel,
   getEventStateBadgeVariant,
 } from "@/lib/events";
@@ -11,7 +11,7 @@ interface HackathonDetailHeaderProps {
   description: string;
   startsAt: Date;
   endsAt: Date;
-  state: ComputedEventState;
+  state: EventStatus;
   participantCount: number;
   projectCount: number;
   submissionCount: number;

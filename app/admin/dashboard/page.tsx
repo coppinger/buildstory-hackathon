@@ -13,7 +13,7 @@ export default async function AdminDashboardPage() {
       <div className="text-center py-20 text-muted-foreground">
         <p className="text-lg">No hackathon event found.</p>
         <p className="text-sm mt-1">
-          Create an event with slug &quot;hackathon-00&quot; to get started.
+          Set an event as featured in the Hackathons section to get started.
         </p>
       </div>
     );
