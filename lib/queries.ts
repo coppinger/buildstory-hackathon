@@ -112,7 +112,7 @@ function isProfileVisible(profile: {
 export async function getHackathonProjects(
   params?: SearchSortParams
 ) {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
   if (!params) {
     // Non-paginated path (backward compat)
     if (!eventId) return [];
@@ -206,7 +206,7 @@ export async function getHackathonProjects(
 
 /** Get all hackathon projects owned by or joined by a specific profile */
 export async function getUserHackathonProjects(profileId: string) {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
   if (!eventId) return [];
 
   // Get projects owned by the user that are linked to the hackathon
@@ -285,7 +285,7 @@ export async function getProjectBySlug(slug: string) {
 export async function getHackathonProfiles(
   params?: SearchSortParams
 ) {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
   if (!params) {
     // Non-paginated path (backward compat)
     if (!eventId) return [];
@@ -363,7 +363,7 @@ export async function getHackathonProfiles(
 }
 
 export async function getProfileByUsername(username: string) {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
 
   const profile = await db.query.profiles.findFirst({
     where: eq(profiles.username, username),
@@ -579,7 +579,7 @@ export async function getSenderPendingInviteCount(profileId: string) {
 export async function getPublicActivityFeed(
   limit = 50
 ): Promise<ActivityFeedItem[]> {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
   if (!eventId) return [];
 
   const notBannedOrHidden = and(
@@ -793,7 +793,7 @@ export async function getSubmissionByProjectSlug(slug: string): Promise<{
   country: string | null;
   region: string | null;
 } | null> {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
   if (!eventId) return null;
 
   const project = await db.query.projects.findFirst({
@@ -834,7 +834,7 @@ export async function getSubmissionByProjectSlug(slug: string): Promise<{
 
 /** Check if a project has a submission for the hackathon event */
 export async function hasHackathonSubmission(projectId: string): Promise<boolean> {
-  const eventId = await getHackathonEventId();
+  const eventId = await getFeaturedEventId();
   if (!eventId) return false;
 
   const row = await db.query.eventSubmissions.findFirst({
