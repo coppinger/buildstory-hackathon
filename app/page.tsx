@@ -16,16 +16,31 @@ import { getSponsors, getVolunteerRoles } from "@/lib/sanity/queries";
 import { urlFor } from "@/lib/sanity/image";
 
 export default async function Home() {
-  const event = await getHackathonEvent();
-  const [publicStats, sponsors, volunteerRoles, activityFeed, participantCountryCodes] = await Promise.all([
-    event
-      ? getPublicStats(event.id)
-      : Promise.resolve({ signups: 0, teamCount: 0, soloCount: 0, countryCount: 0, projectCount: 0 }),
-    getSponsors(),
-    getVolunteerRoles(),
-    getPublicActivityFeed(),
-    event ? getParticipantCountries(event.id) : Promise.resolve([]),
-  ]);
+  let publicStats = { signups: 0, teamCount: 0, soloCount: 0, countryCount: 0, projectCount: 0 };
+  let sponsors: Awaited<ReturnType<typeof getSponsors>> = [];
+  let volunteerRoles: Awaited<ReturnType<typeof getVolunteerRoles>> = [];
+  let activityFeed: Awaited<ReturnType<typeof getPublicActivityFeed>> = [];
+  let participantCountryCodes: string[] = [];
+
+  try {
+    const event = await getHackathonEvent();
+    const results = await Promise.all([
+      event
+        ? getPublicStats(event.id)
+        : Promise.resolve({ signups: 0, teamCount: 0, soloCount: 0, countryCount: 0, projectCount: 0 }),
+      getSponsors(),
+      getVolunteerRoles(),
+      getPublicActivityFeed(),
+      event ? getParticipantCountries(event.id) : Promise.resolve([]),
+    ]);
+    publicStats = results[0];
+    sponsors = results[1];
+    volunteerRoles = results[2];
+    activityFeed = results[3];
+    participantCountryCodes = results[4];
+  } catch {
+    // DB unavailable at build time — render with defaults, revalidate on first request
+  }
 
   const globeLocations = getCoordinatesForCountries(participantCountryCodes);
 
