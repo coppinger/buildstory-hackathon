@@ -83,7 +83,7 @@ export function ImageCropDialog({
               <Slider.Track className="relative h-1.5 w-full grow rounded-full bg-muted">
                 <Slider.Range className="absolute h-full rounded-full bg-primary" />
               </Slider.Track>
-              <Slider.Thumb className="block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+              <Slider.Thumb className="block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring" />
             </Slider.Root>
             <Icon name="add" size="4" className="text-muted-foreground shrink-0" />
           </div>

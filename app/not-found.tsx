@@ -6,7 +6,7 @@ export const metadata = notFoundMeta;
 
 export default function NotFound() {
   return (
-    <div className="dark min-h-screen bg-background text-foreground flex items-center justify-center px-6">
+    <div className="dark min-h-dvh bg-background text-foreground flex items-center justify-center px-6">
       <div className="max-w-md text-center space-y-6">
         <Link href="/">
           <Image

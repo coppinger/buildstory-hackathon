@@ -10,7 +10,7 @@ export const metadata = ogMeta(
 
 export default function SponsorApplyPage() {
   return (
-    <div className="dark min-h-screen bg-background text-foreground">
+    <div className="dark min-h-dvh bg-background text-foreground">
       <div className="p-6">
         <Link href="/">
           <Image

@@ -138,7 +138,7 @@ export function CommentInput({
         }
         rows={isReply ? 2 : 3}
         maxLength={5000}
-        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring resize-none"
       />
 
       {showMentions && mentionResults.length > 0 && (

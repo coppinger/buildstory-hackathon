@@ -22,7 +22,7 @@ export default async function AdminLayout({
   if (!session) redirect("/");
 
   return (
-    <div className="dark min-h-screen bg-background text-foreground">
+    <div className="dark min-h-dvh bg-background text-foreground">
       <header className="border-b border-border">
         <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
