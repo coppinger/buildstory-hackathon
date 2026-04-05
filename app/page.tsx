@@ -57,7 +57,7 @@ export default async function Home() {
     `${publicStats.projectCount} projects`,
   ];
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-dvh">
       <Header />
       {/* Hero */}
       <section className="flex flex-col items-center px-6 pt-32 md:pt-48 pb-48 md:pb-96 gap-10 text-center border-b border-border overflow-hidden max-h-screen">

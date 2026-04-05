@@ -83,7 +83,7 @@ export function ToolSelector({
               handleAddCustom();
             }
           }}
-          className="flex-1 px-3 py-2 text-xs font-mono bg-background border border-border text-foreground placeholder:text-muted-foreground/40 focus:border-buildstory-500 focus:outline-none transition-colors"
+          className="flex-1 px-3 py-2 text-xs font-mono bg-background border border-border text-foreground placeholder:text-muted-foreground/40 focus:border-buildstory-500 focus:outline-hidden transition-colors"
         />
         <span className="text-[10px] font-mono text-muted-foreground/40">
           \u21B5 to add

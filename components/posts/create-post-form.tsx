@@ -54,7 +54,7 @@ export function CreatePostForm({
               ? "Share a project update..."
               : "Start a discussion..."
           }
-          className="w-full resize-none bg-transparent text-base text-foreground placeholder:text-muted-foreground/50 focus:outline-none min-h-[48px]"
+          className="w-full resize-none bg-transparent text-base text-foreground placeholder:text-muted-foreground/50 focus:outline-hidden min-h-[48px]"
           rows={2}
           disabled={isPending}
         />
@@ -69,7 +69,7 @@ export function CreatePostForm({
               value={linkUrl}
               onChange={(e) => setLinkUrl(e.target.value)}
               placeholder="https://..."
-              className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
+              className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-hidden"
               disabled={isPending}
             />
           </div>

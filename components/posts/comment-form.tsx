@@ -54,7 +54,7 @@ export function CommentForm({
             }
           }}
           placeholder={parentCommentId ? "Write a reply..." : "Add a comment..."}
-          className="flex-1 border border-border/50 p-4 bg-transparent text-base text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
+          className="flex-1 border border-border/50 p-4 bg-transparent text-base text-foreground placeholder:text-muted-foreground/40 focus:outline-hidden"
           disabled={isPending}
           maxLength={POST_BODY_MAX_LENGTH}
         />

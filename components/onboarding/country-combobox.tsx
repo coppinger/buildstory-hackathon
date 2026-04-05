@@ -143,7 +143,7 @@ export function CountryCombobox({ value, onChange }: CountryComboboxProps) {
           onKeyDown={handleKeyDown}
           placeholder="Search for your country..."
           autoComplete="off"
-          className="flex h-9 w-full rounded-md border border-neutral-700 bg-white/5 px-3 py-1 text-base text-white shadow-sm transition-colors placeholder:text-neutral-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="flex h-9 w-full rounded-md border border-neutral-700 bg-white/5 px-3 py-1 text-base text-white shadow-sm transition-colors placeholder:text-neutral-600 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
           <Icon
