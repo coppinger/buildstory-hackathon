@@ -68,7 +68,7 @@ export async function createProject(data: {
     if (data.eventId) {
       const event = await db.query.events.findFirst({
         where: eq(events.id, data.eventId),
-        columns: { id: true, status: true, startsAt: true, endsAt: true, reviewClosesAt: true },
+        columns: { id: true, status: true },
       });
       if (event && isSubmissionOpen(event)) {
         await db

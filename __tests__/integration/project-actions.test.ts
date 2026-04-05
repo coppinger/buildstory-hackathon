@@ -122,7 +122,7 @@ beforeAll(async () => {
   const otherProfile = await ensureProfile(otherClerk);
   otherProfileId = otherProfile!.id;
 
-  // Create a test event with dates that make it "active" (now is between start and end)
+  // Create a test event in "active" status (submissions are open)
   const now = new Date();
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -136,7 +136,7 @@ beforeAll(async () => {
       endsAt: nextWeek,
       registrationOpensAt: yesterday,
       registrationClosesAt: nextWeek,
-      status: "open",
+      status: "active",
     })
     .returning();
   testEventId = event.id;
