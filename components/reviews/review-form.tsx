@@ -78,7 +78,7 @@ export function ReviewForm({ onSubmit, onSkip, isPending }: ReviewFormProps) {
           maxLength={MAX_FEEDBACK_LENGTH}
           rows={4}
           placeholder="Share your thoughts. Keep it kind and constructive."
-          className="w-full border bg-background text-foreground text-sm p-3 resize-none focus:outline-none focus:ring-1 focus:ring-buildstory-500"
+          className="w-full border bg-background text-foreground text-sm p-3 resize-none focus:outline-hidden focus:ring-1 focus:ring-buildstory-500"
           disabled={isPending}
         />
         <p className="text-xs text-muted-foreground mt-1 text-right font-mono">
@@ -152,7 +152,7 @@ export function ReviewForm({ onSubmit, onSkip, isPending }: ReviewFormProps) {
                     maxLength={MAX_HIGHLIGHT_TEXT}
                     rows={2}
                     placeholder={`What makes this project stand out for ${meta?.label.toLowerCase()}?`}
-                    className="w-full border bg-background text-foreground text-sm p-3 resize-none focus:outline-none focus:ring-1 focus:ring-buildstory-500"
+                    className="w-full border bg-background text-foreground text-sm p-3 resize-none focus:outline-hidden focus:ring-1 focus:ring-buildstory-500"
                     disabled={isPending}
                   />
                 </div>

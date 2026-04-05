@@ -86,7 +86,7 @@ function ColorSwatch({
 
 export default function DesignSystemPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       {/* Header */}
       <header className="border-b">
         <div className="mx-auto max-w-8xl px-6 py-12 md:py-20">

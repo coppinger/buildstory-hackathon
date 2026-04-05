@@ -56,7 +56,7 @@ export function AdminStatusDropdown({
               key={status}
               onClick={() => handleStatusChange(status)}
               className={cn(
-                "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer outline-none hover:bg-accent",
+                "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer outline-hidden hover:bg-accent",
                 status === currentStatus && "bg-accent"
               )}
             >

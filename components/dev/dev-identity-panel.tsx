@@ -286,10 +286,10 @@ export function DevIdentityPanel() {
                   <img
                     src={profile.avatarUrl}
                     alt=""
-                    className="size-6 rounded-full flex-shrink-0"
+                    className="size-6 rounded-full shrink-0"
                   />
                 ) : (
-                  <div className="size-6 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-400 text-[10px] flex-shrink-0">
+                  <div className="size-6 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-400 text-[10px] shrink-0">
                     {profile.displayName[0]}
                   </div>
                 )}

@@ -78,7 +78,7 @@ export default async function EventPage({
   const endsFormatted = event.endsAt.toLocaleDateString("en-US", dateOpts);
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-dvh">
       <Header />
 
       {/* Event header */}

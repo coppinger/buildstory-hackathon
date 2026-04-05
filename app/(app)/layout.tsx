@@ -4,7 +4,7 @@ import { DevIdentityPanel } from "@/components/dev/dev-identity-panel";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className="flex flex-col justify-stretch min-h-screen">
+    <main className="flex flex-col justify-stretch min-h-dvh">
       <AppTopbar />
       <div className="mx-auto w-full max-w-8xl border-border h-full flex flex-1">
         <AppSidebar />
