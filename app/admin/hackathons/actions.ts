@@ -59,7 +59,7 @@ export async function createEvent(formData: {
 
     const parsed = eventSchema.safeParse(formData);
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0].message };
+      return { success: false, error: parsed.error.issues[0].message };
     }
 
     const { name, slug, description, startsAt, endsAt } = parsed.data;
@@ -108,7 +108,7 @@ export async function updateEvent(data: {
 
     const parsed = eventSchema.safeParse(data);
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0].message };
+      return { success: false, error: parsed.error.issues[0].message };
     }
 
     const { name, slug, description, startsAt, endsAt } = parsed.data;
