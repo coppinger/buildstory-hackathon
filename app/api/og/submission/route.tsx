@@ -7,7 +7,7 @@ import { getSubmissionByProjectSlug } from "@/lib/queries";
 const fontsDir = join(process.cwd(), "lib/og/fonts");
 
 let fontsCachePromise: Promise<{
-  dmSans: Buffer;
+  figtree: Buffer;
   advercase: Buffer;
   dmMono: Buffer;
 }> | null = null;
@@ -15,11 +15,11 @@ let fontsCachePromise: Promise<{
 function loadFonts() {
   if (!fontsCachePromise) {
     fontsCachePromise = Promise.all([
-      readFile(join(fontsDir, "DMSans-Regular.ttf")),
+      readFile(join(fontsDir, "Figtree-Regular.ttf")),
       readFile(join(fontsDir, "AdvercaseFont-Regular.ttf")),
       readFile(join(fontsDir, "DMMono-Regular.ttf")),
-    ]).then(([dmSans, advercase, dmMono]) => ({
-      dmSans,
+    ]).then(([figtree, advercase, dmMono]) => ({
+      figtree,
       advercase,
       dmMono,
     }));
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { dmSans, advercase, dmMono } = await loadFonts();
+    const { figtree, advercase, dmMono } = await loadFonts();
 
     const { projectName, whatBuilt, lessonLearned, tools, country, region } =
       data;
@@ -107,7 +107,7 @@ export async function GET(request: Request) {
             {/* What I built */}
             <div
               style={{
-                fontFamily: "DM Sans",
+                fontFamily: "Figtree",
                 fontSize: 18,
                 color: "#a09890",
                 marginTop: 16,
@@ -181,7 +181,7 @@ export async function GET(request: Request) {
                 </div>
                 <div
                   style={{
-                    fontFamily: "DM Sans",
+                    fontFamily: "Figtree",
                     fontSize: 15,
                     color: "#a09890",
                     fontStyle: "italic",
@@ -236,8 +236,8 @@ export async function GET(request: Request) {
         height: 675,
         fonts: [
           {
-            name: "DM Sans",
-            data: dmSans,
+            name: "Figtree",
+            data: figtree,
             style: "normal" as const,
             weight: 400 as const,
           },
