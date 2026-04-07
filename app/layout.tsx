@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { DM_Sans, DM_Mono } from "next/font/google";
+import { Figtree, DM_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
+const figtree = Figtree({
+  variable: "--font-figtree",
   subsets: ["latin"],
 });
 
@@ -80,7 +80,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`dark ${dmSans.variable} ${advercase.variable} ${dmMono.variable}`}>
+      <html lang="en" className={`dark ${figtree.variable} ${advercase.variable} ${dmMono.variable}`}>
         <body className="antialiased">
           <NuqsAdapter>{children}</NuqsAdapter>
         </body>
