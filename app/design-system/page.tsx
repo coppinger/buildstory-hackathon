@@ -165,7 +165,7 @@ export default function DesignSystemPage() {
         {/* Typography */}
         <Section
           title="Typography"
-          description="Advercase for headings, DM Sans for body, DM Mono for code. Tight tracking at large sizes, open at small."
+          description="Advercase for headings, Figtree for body, DM Mono for code. Tight tracking at large sizes, open at small."
         >
           <Subsection title="Fonts">
             <div className="space-y-6">
@@ -179,7 +179,7 @@ export default function DesignSystemPage() {
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-mono text-muted-foreground">
-                  font-sans — DM Sans
+                  font-sans — Figtree
                 </p>
                 <p className="font-sans text-4xl">
                   The quick brown fox jumps over the lazy dog
@@ -537,7 +537,7 @@ export default function DesignSystemPage() {
               {
                 icon: "format_size",
                 title: "Serif + Sans",
-                text: "Advercase for headings, DM Sans for body. The pairing balances editorial elegance with technical clarity.",
+                text: "Advercase for headings, Figtree for body. The pairing balances editorial elegance with technical clarity.",
               },
               {
                 icon: "palette",
