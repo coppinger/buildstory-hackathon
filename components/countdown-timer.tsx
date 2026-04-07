@@ -2,25 +2,34 @@
 
 import { useEffect, useState } from "react";
 
-// March 1st, 12:00 PM PST (UTC-8) = 20:00 UTC
-const START_DATE = new Date("2026-03-01T20:00:00Z").getTime();
-// One week later exactly
-const END_DATE = new Date("2026-03-08T20:00:00Z").getTime();
-
 type Phase = "before" | "live" | "ended";
 
-function getState() {
-  const now = Date.now();
+export interface CountdownState {
+  phase: Phase;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
 
+/**
+ * Pure function — given a current timestamp and event boundaries, compute
+ * the countdown state. Exported for unit testing.
+ */
+export function computeCountdownState(
+  now: number,
+  startsAt: number,
+  endsAt: number,
+): CountdownState {
   let phase: Phase;
   let diff: number;
 
-  if (now < START_DATE) {
+  if (now < startsAt) {
     phase = "before";
-    diff = START_DATE - now;
-  } else if (now < END_DATE) {
+    diff = startsAt - now;
+  } else if (now < endsAt) {
     phase = "live";
-    diff = END_DATE - now;
+    diff = endsAt - now;
   } else {
     phase = "ended";
     diff = 0;
@@ -40,39 +49,49 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-export function CountdownTimer() {
-  const [state, setState] = useState<ReturnType<typeof getState> | null>(null);
+const dateLabelFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  day: "numeric",
+  timeZone: "America/Los_Angeles",
+});
+
+function formatLabel(state: CountdownState, startsAt: number, endsAt: number): string {
+  if (state.phase === "before") {
+    return `Starts ${dateLabelFormatter.format(new Date(startsAt))}, 12 pm PST`;
+  }
+  return `Live now — ends ${dateLabelFormatter.format(new Date(endsAt))}, 12 pm PST`;
+}
+
+export interface CountdownTimerProps {
+  startsAt: string;
+  endsAt: string;
+}
+
+export function CountdownTimer({ startsAt, endsAt }: CountdownTimerProps) {
+  const startMs = new Date(startsAt).getTime();
+  const endMs = new Date(endsAt).getTime();
+
+  // Derive initial state during render so SSR and first client paint agree
+  // (no `--` placeholder flicker). The effect ticks every second after mount.
+  const [state, setState] = useState<CountdownState>(() =>
+    computeCountdownState(Date.now(), startMs, endMs),
+  );
 
   useEffect(() => {
-    const tick = () => setState(getState());
+    const tick = () => setState(computeCountdownState(Date.now(), startMs, endMs));
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [startMs, endMs]);
 
-  const placeholder = [
-    { value: "--", label: "days" },
-    { value: "--", label: "hrs" },
-    { value: "--", label: "min" },
-    { value: "--", label: "sec" },
+  if (state.phase === "ended") return null;
+
+  const segments = [
+    { value: pad(state.days), label: "days" },
+    { value: pad(state.hours), label: "hrs" },
+    { value: pad(state.minutes), label: "min" },
+    { value: pad(state.seconds), label: "sec" },
   ];
-
-  const segments = state
-    ? [
-        { value: pad(state.days), label: "days" },
-        { value: pad(state.hours), label: "hrs" },
-        { value: pad(state.minutes), label: "min" },
-        { value: pad(state.seconds), label: "sec" },
-      ]
-    : placeholder;
-
-  if (state?.phase === "ended") return null;
-
-  const label = !state
-    ? "Starts March 1st, 12 pm PST"
-    : state.phase === "before"
-      ? "Starts March 1st, 12 pm PST"
-      : "Live now \u2014 ends March 8th, 12 pm PST";
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -96,7 +115,7 @@ export function CountdownTimer() {
         ))}
       </div>
       <p className="text-xs uppercase tracking-[0.2em] text-white/40">
-        {label}
+        {formatLabel(state, startMs, endMs)}
       </p>
     </div>
   );
