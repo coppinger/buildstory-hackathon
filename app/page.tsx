@@ -21,9 +21,10 @@ export default async function Home() {
   let volunteerRoles: Awaited<ReturnType<typeof getVolunteerRoles>> = [];
   let activityFeed: Awaited<ReturnType<typeof getPublicActivityFeed>> = [];
   let participantCountryCodes: string[] = [];
+  let event: Awaited<ReturnType<typeof getHackathonEvent>> = undefined;
 
   try {
-    const event = await getHackathonEvent();
+    event = await getHackathonEvent();
     const results = await Promise.all([
       event
         ? getPublicStats(event.id)
@@ -85,9 +86,14 @@ export default async function Home() {
         </BlurFade>
 
         {/* Countdown */}
-        <BlurFade delay={0.55}>
-          <CountdownTimer />
-        </BlurFade>
+        {event && (
+          <BlurFade delay={0.55}>
+            <CountdownTimer
+              startsAt={event.startsAt.toISOString()}
+              endsAt={event.endsAt.toISOString()}
+            />
+          </BlurFade>
+        )}
 
         {/* CTAs */}
         <BlurFade delay={0.7}>
