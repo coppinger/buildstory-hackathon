@@ -4,41 +4,53 @@ import { Globe } from "@/components/globe";
 import { Button } from "@/components/ui/button";
 import { ActivityFeed } from "@/components/activity-feed";
 import { FAQ } from "@/components/faq";
-import { Badge } from "@/components/ui/badge"
-import { BlurFade } from "@/components/blur-fade"
+import { BlurFade } from "@/components/blur-fade";
 import Link from "next/link";
 import { getHackathonEvent } from "@/lib/admin/queries";
-import { getPublicStats, getPublicActivityFeed, getParticipantCountries } from "@/lib/queries";
+import {
+  getPublicStats,
+  getPublicActivityFeed,
+  getParticipantCountries,
+  getParticipantNames,
+} from "@/lib/queries";
 import { getCoordinatesForCountries } from "@/lib/country-coordinates";
-import { VOLUNTEER_URL, SPONSOR_URL } from "@/lib/constants";
-import { TeamSection } from "@/components/landing/team-section";
-import { getSponsors, getVolunteerRoles } from "@/lib/sanity/queries";
-import { urlFor } from "@/lib/sanity/image";
+import { DISCORD_INVITE_URL } from "@/lib/constants";
 
 export default async function Home() {
-  let publicStats = { signups: 0, teamCount: 0, soloCount: 0, countryCount: 0, projectCount: 0 };
-  let sponsors: Awaited<ReturnType<typeof getSponsors>> = [];
-  let volunteerRoles: Awaited<ReturnType<typeof getVolunteerRoles>> = [];
+  let publicStats = {
+    signups: 0,
+    teamCount: 0,
+    soloCount: 0,
+    countryCount: 0,
+    projectCount: 0,
+    submissionCount: 0,
+  };
   let activityFeed: Awaited<ReturnType<typeof getPublicActivityFeed>> = [];
   let participantCountryCodes: string[] = [];
   let event: Awaited<ReturnType<typeof getHackathonEvent>> = undefined;
+  let participantNames: Awaited<ReturnType<typeof getParticipantNames>> = [];
 
   try {
     event = await getHackathonEvent();
     const results = await Promise.all([
       event
         ? getPublicStats(event.id)
-        : Promise.resolve({ signups: 0, teamCount: 0, soloCount: 0, countryCount: 0, projectCount: 0 }),
-      getSponsors(),
-      getVolunteerRoles(),
+        : Promise.resolve({
+            signups: 0,
+            teamCount: 0,
+            soloCount: 0,
+            countryCount: 0,
+            projectCount: 0,
+            submissionCount: 0,
+          }),
       getPublicActivityFeed(),
       event ? getParticipantCountries(event.id) : Promise.resolve([]),
+      getParticipantNames(),
     ]);
     publicStats = results[0];
-    sponsors = results[1];
-    volunteerRoles = results[2];
-    activityFeed = results[3];
-    participantCountryCodes = results[4];
+    activityFeed = results[1];
+    participantCountryCodes = results[2];
+    participantNames = results[3];
   } catch {
     // DB unavailable at build time — render with defaults, revalidate on first request
   }
@@ -50,44 +62,45 @@ export default async function Home() {
     timestamp: a.timestamp.toISOString(),
   }));
 
-  const stats = [
-    `${publicStats.signups} people`,
-    `${publicStats.teamCount} teams`,
-    `${publicStats.soloCount} solo`,
-    `${publicStats.countryCount} countries`,
-    `${publicStats.projectCount} projects`,
-  ];
   return (
     <div className="relative min-h-dvh">
       <Header />
-      {/* Hero */}
-      <section className="flex flex-col items-center px-6 pt-32 md:pt-48 pb-48 md:pb-96 gap-10 text-center border-b border-border overflow-hidden max-h-screen">
-        {/* Label */}
+
+      {/* ── Hero ── */}
+      <section className="relative flex flex-col items-center px-6 pt-32 md:pt-48 pb-48 md:pb-96 gap-8 text-center border-b border-border overflow-hidden max-h-screen">
         <BlurFade delay={0.1}>
-          <span className="text-xs uppercase tracking-[0.2em] text-white/40">
-            an open source, AI-first hackathon
+          <span className="text-xs uppercase tracking-[0.2em] text-white/40 font-mono">
+            community &amp; hackathons for builders
           </span>
         </BlurFade>
 
-        {/* Headline */}
         <BlurFade delay={0.25} blur="16px">
-          <h1 className="font-heading font-normal text-4xl sm:text-5xl md:text-7xl max-w-4xl text-white leading-tight">
-            One week. Build your thing.
-            <br className="hidden sm:block" /> Share your story.
+          <h1 className="font-heading font-normal text-4xl sm:text-5xl md:text-7xl max-w-3xl text-white leading-tight">
+            Build something real.
+            <br className="hidden sm:block" />{" "}
+            <span className="text-buildstory-500">Show the world.</span>
           </h1>
         </BlurFade>
 
-        {/* Subline */}
         <BlurFade delay={0.4}>
-          <p className="max-w-2xl text-lg text-white/50">
-            A global, fully remote hackathon focused on good vibes and good
-            practices.
+          <p className="max-w-xl text-lg text-white/50">
+            We&apos;re a friendly community of builders that hosts hackathons to
+            help everyone grow.
           </p>
         </BlurFade>
 
-        {/* Countdown */}
+        {/* Stats */}
+        <BlurFade delay={0.55}>
+          <p className="text-sm text-white/30 tracking-wide font-mono">
+            {publicStats.signups} builders &middot;{" "}
+            {publicStats.countryCount} countries &middot;{" "}
+            {publicStats.projectCount} projects
+          </p>
+        </BlurFade>
+
+        {/* Countdown — only if there's an active/upcoming event */}
         {event && (
-          <BlurFade delay={0.55}>
+          <BlurFade delay={0.65}>
             <CountdownTimer
               startsAt={event.startsAt.toISOString()}
               endsAt={event.endsAt.toISOString()}
@@ -95,8 +108,8 @@ export default async function Home() {
           </BlurFade>
         )}
 
-        {/* CTAs */}
-        <BlurFade delay={0.7}>
+        {/* CTA */}
+        <BlurFade delay={0.75}>
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
@@ -104,65 +117,196 @@ export default async function Home() {
               asChild
               className="border-white/20 text-white bg-transparent hover:bg-white/5 hover:text-white px-8 h-12 text-sm font-medium"
             >
-              <a href="#why">tell me more ↓</a>
+              <a href="#community">learn more &#8595;</a>
             </Button>
-          <Link href="/sign-up">
-            <Button
-              size="lg"
-              className="bg-buildstory-500 text-black hover:bg-white/90 px-8 h-12 text-sm font-medium ease-in duration-200"
-            >
-              I&apos;m in, register now
-            </Button>
-          </Link>
+            <Link href="/sign-up">
+              <Button
+                size="lg"
+                className="bg-buildstory-500 text-black hover:bg-white/90 px-8 h-12 text-sm font-medium ease-in duration-200"
+              >
+                join us
+              </Button>
+            </Link>
           </div>
-        </BlurFade>
-
-        {/* Stats bar */}
-        <BlurFade delay={0.85}>
-          <p className="text-base text-white/35 tracking-wide">
-            {stats.join(" \u00B7 ")}
-          </p>
         </BlurFade>
 
         {/* Globe */}
         <Globe locations={globeLocations} />
       </section>
 
-      {/* Why */}
-      <section id="why" className="relative z-10 px-6 border-b border-border bg-neutral-950">
+      {/* ── Participants wall ── */}
+      {participantNames.length > 0 && (
+        <section className="relative z-10 px-6 border-b border-border bg-neutral-950">
+          <div className="mx-auto max-w-5xl py-16 md:py-24">
+            <BlurFade inView>
+              <p className="text-center text-sm uppercase tracking-[0.2em] text-buildstory-500 font-mono mb-8">
+                {publicStats.signups}+ builders and counting
+              </p>
+            </BlurFade>
+
+            <BlurFade inView delay={0.1}>
+              <p className="text-center text-base md:text-lg leading-relaxed text-white/40">
+                {participantNames.map((p, i) => (
+                  <span key={i}>
+                    {i > 0 && (
+                      <span className="text-white/20">, </span>
+                    )}
+                    {p.username ? (
+                      <Link
+                        href={`/profiles/${p.username}`}
+                        className="text-white/60 hover:text-buildstory-400 transition-colors"
+                      >
+                        {p.displayName}
+                      </Link>
+                    ) : (
+                      <span className="text-white/60">{p.displayName}</span>
+                    )}
+                  </span>
+                ))}
+              </p>
+            </BlurFade>
+
+            <BlurFade inView delay={0.2}>
+              <div className="mt-10 flex justify-center">
+                <Link href="/sign-up">
+                  <Button
+                    variant="outline"
+                    className="border-white/15 text-white/60 bg-transparent hover:bg-white/5 hover:text-white px-6 h-10 text-sm font-mono"
+                  >
+                    add your name &#8594;
+                  </Button>
+                </Link>
+              </div>
+            </BlurFade>
+          </div>
+        </section>
+      )}
+
+      {/* ── Community + event teaser ── */}
+      <section
+        id="community"
+        className="relative z-10 px-6 border-b border-border bg-neutral-950"
+      >
         <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-6 md:px-12 lg:px-24">
           {/* Left — copy */}
-          <div className="py-16 md:py-40">
+          <div className="py-16 md:py-32">
             <BlurFade inView>
-              <span className="text-xs uppercase tracking-[0.25em] text-white/30">
-                why
+              <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500 font-mono">
+                how it works
               </span>
             </BlurFade>
 
-            <div className="mt-12 flex flex-col gap-10 font-heading text-3xl md:text-5xl">
-              <BlurFade inView delay={0.1}>
-                <p className="text-white/85">
-                  Timelines are filling up with people who have things to sell
-                  you.
-                </p>
+            <BlurFade inView delay={0.1}>
+              <h2 className="mt-10 font-heading text-3xl md:text-4xl text-[#e8e4de] leading-snug">
+                Sign up. Pick a project. Ship it.
+              </h2>
+            </BlurFade>
+
+            <div className="mt-8 flex flex-col gap-6">
+              <BlurFade inView delay={0.15}>
+                <div className="flex gap-4 items-start">
+                  <span className="shrink-0 w-7 h-7 rounded-full border border-buildstory-500/40 flex items-center justify-center text-xs text-buildstory-400 font-mono">
+                    1
+                  </span>
+                  <div>
+                    <p className="text-white/80 font-medium">
+                      Join the community
+                    </p>
+                    <p className="text-white/40 text-sm mt-1">
+                      Create a profile. Tell us what you&apos;re building (or
+                      want to build).
+                    </p>
+                  </div>
+                </div>
               </BlurFade>
+
               <BlurFade inView delay={0.2}>
-                <p className="text-white/85">
-                  The builders with insights to share? Lost in the noise.
-                </p>
+                <div className="flex gap-4 items-start">
+                  <span className="shrink-0 w-7 h-7 rounded-full border border-buildstory-500/40 flex items-center justify-center text-xs text-buildstory-400 font-mono">
+                    2
+                  </span>
+                  <div>
+                    <p className="text-white/80 font-medium">
+                      Build during hackathons
+                    </p>
+                    <p className="text-white/40 text-sm mt-1">
+                      Regular week-long events. Solo or team. Any tools, any
+                      skill level. AI encouraged.
+                    </p>
+                  </div>
+                </div>
               </BlurFade>
-              <BlurFade inView delay={0.3}>
-                <p className="text-white/85">
-                  We want to see that change, so we&apos;re going to do something
-                  about it.
-                </p>
-              </BlurFade>
-              <BlurFade inView delay={0.4}>
-                <p className=" font-medium leading-snug text-buildstory-500">
-                  Let&apos;s put builders back in the spotlight.
-                </p>
+
+              <BlurFade inView delay={0.25}>
+                <div className="flex gap-4 items-start">
+                  <span className="shrink-0 w-7 h-7 rounded-full border border-buildstory-500/40 flex items-center justify-center text-xs text-buildstory-400 font-mono">
+                    3
+                  </span>
+                  <div>
+                    <p className="text-white/80 font-medium">
+                      Get recognized for shipping
+                    </p>
+                    <p className="text-white/40 text-sm mt-1">
+                      Peer reviews, community highlights, and a track record
+                      that speaks for itself.
+                    </p>
+                  </div>
+                </div>
               </BlurFade>
             </div>
+
+            {/* Event teaser */}
+            {event && (
+              <BlurFade inView delay={0.3}>
+                <div className="mt-10 border border-buildstory-500/20 bg-buildstory-500/5 p-5">
+                  <p className="text-xs uppercase tracking-[0.2em] text-buildstory-400 font-mono">
+                    {event.status === "active"
+                      ? "happening now"
+                      : event.status === "open"
+                        ? "next event"
+                        : event.name}
+                  </p>
+                  <p className="mt-2 text-lg font-heading text-[#e8e4de]">
+                    {event.name}
+                  </p>
+                  <p className="mt-1 text-sm text-white/40">
+                    {event.startsAt.toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                    })}{" "}
+                    &rarr;{" "}
+                    {event.endsAt.toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <Link
+                    href="/sign-up"
+                    className="mt-3 inline-block font-mono text-sm text-buildstory-400 underline underline-offset-4"
+                  >
+                    register &rarr;
+                  </Link>
+                </div>
+              </BlurFade>
+            )}
+
+            {/* Discord link */}
+            <BlurFade inView delay={0.35}>
+              <a
+                href={DISCORD_INVITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex items-center gap-2 font-mono text-sm text-white/40 hover:text-white/60 transition-colors"
+              >
+                <img
+                  src="/discord.svg"
+                  alt="Discord"
+                  className="w-4 h-4 invert opacity-40"
+                />
+                join the Discord
+              </a>
+            </BlurFade>
           </div>
 
           {/* Right — activity feed */}
@@ -174,518 +318,18 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* What */}
-      <section id="what" className="relative z-10 px-6 border-b border-border bg-neutral-950">
-        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-6 md:px-12 lg:px-24">
-          <div className="py-16 md:py-40">
-            <BlurFade inView>
-              <span className="text-xs uppercase tracking-[0.25em] text-white/30">
-                what
-              </span>
-            </BlurFade>
-
-            <div className="mt-12 flex flex-col gap-10 font-heading text-3xl md:text-5xl">
-              <BlurFade inView delay={0.1}>
-                <p className="text-white/85 ">
-                  A one week hackathon, by builders for builders.
-                </p>
-              </BlurFade>
-              <BlurFade inView delay={0.2}>
-                <p className="text-white/85 ">
-                  We won&apos;t make you use a certain tool: use whatever you like.
-                </p>
-              </BlurFade>
-              <BlurFade inView delay={0.3}>
-                <p className="text-white/85 ">
-                  Oh, and there&apos;s nothing to sell you.
-                </p>
-              </BlurFade>
-              <BlurFade inView delay={0.4}>
-                <p className=" text-buildstory-500">
-                  We&apos;re all here to build and learn.
-                </p>
-              </BlurFade>
-            </div>
-          </div>
-          {/* Left — info cards */}
-          <div className="py-16 md:py-40 flex items-start">
-            <div className="w-full flex flex-col gap-3">
-              <BlurFade inView delay={0.1}>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="w-full  border border-white/10 px-6 py-5">
-                    <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Format</span>
-                    <p className="text-white/85 mt-1">7 days, solo or team</p>
-                  </div>
-                  <div className="w-full  border border-white/10 px-6 py-5">
-                    <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Judging</span>
-                    <p className="text-white/85 mt-1">Peer-to-peer voting + panel favorites</p>
-                  </div>
-                </div>
-              </BlurFade>
-              <BlurFade inView delay={0.2}>
-                <div className=" border border-white/10 px-6 py-5">
-                  <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Categories</span>
-                  <ul className="text-white/85 mt-1 list-disc list-inside space-y-0.5 pl-1">
-                    <li>Creativity</li>
-                    <li>Business Case</li>
-                    <li>Technical Challenge</li>
-                    <li>Impact</li>
-                    <li>Design</li>
-                  </ul>
-                </div>
-              </BlurFade>
-              <BlurFade inView delay={0.3}>
-                <div className=" border border-white/10 px-6 py-5">
-                  <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Recognition</span>
-                  <p className="text-white/85 mt-1">By category, by country, by region, overall</p>
-                </div>
-              </BlurFade>
-              <BlurFade inView delay={0.4}>
-                <div className=" border border-white/10 px-6 py-5">
-                  <span className="text-sm font-semibold text-white/50 uppercase tracking-wide">Prizes</span>
-                  <p className="text-white/85 mt-1">None! Recognition is the reward.</p>
-                </div>
-              </BlurFade>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Rules */}
-      <section id="rules" className="relative z-10 px-6 border-b border-border bg-neutral-950">
-        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-6 md:px-12 lg:px-24">
-          {/* Left — copy */}
-          <div className="py-16 md:py-40">
-            <BlurFade inView>
-              <span className="text-xs uppercase tracking-[0.25em] text-white/30">
-                rules
-              </span>
-            </BlurFade>
-
-            <div className="mt-12 flex flex-col gap-10 font-heading text-3xl md:text-5xl">
-              <BlurFade inView delay={0.1}>
-                <p className="text-white/85">
-                  A few ground rules to keep things fair and fun.
-                </p>
-              </BlurFade>
-              <BlurFade inView delay={0.2}>
-                <p className="text-white/85">
-                  No fine print. No gotchas.
-                </p>
-              </BlurFade>
-              <BlurFade inView delay={0.3}>
-                <p className="text-buildstory-500">
-                  Just build something real.
-                </p>
-              </BlurFade>
-            </div>
-          </div>
-
-          {/* Right — rule cards */}
-          <div className="py-16 md:py-40 flex items-start">
-            <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <BlurFade inView delay={0.1}>
-                <div className="border border-white/10 px-6 py-5">
-                  <p className="text-lg font-medium text-[#e8e4de]">Ship something</p>
-                  <p className="text-white/50 mt-1">Submit a working project by the end of the week. It doesn&apos;t have to be perfect.</p>
-                </div>
-              </BlurFade>
-              <BlurFade inView delay={0.15}>
-                <div className="border border-white/10 px-6 py-5">
-                  <p className="text-lg font-medium text-[#e8e4de]">Start or continue</p>
-                  <p className="text-white/50 mt-1">New project or existing — both welcome. Just make meaningful progress this week.</p>
-                </div>
-              </BlurFade>
-              <BlurFade inView delay={0.2}>
-                <div className="border border-white/10 px-6 py-5">
-                  <p className="text-lg font-medium text-[#e8e4de]">Use any tools</p>
-                  <p className="text-white/50 mt-1">Any language, framework, or platform. We&apos;re not here to limit what you build with.</p>
-                </div>
-              </BlurFade>
-              <BlurFade inView delay={0.25}>
-                <div className="border border-white/10 px-6 py-5">
-                  <p className="text-lg font-medium text-[#e8e4de]">AI is encouraged</p>
-                  <p className="text-white/50 mt-1">Use AI tools freely — coding assistants, image generators, whatever helps you build.</p>
-                </div>
-              </BlurFade>
-              <BlurFade inView delay={0.3}>
-                <div className="border border-white/10 px-6 py-5">
-                  <p className="text-lg font-medium text-[#e8e4de]">Be honest</p>
-                  <p className="text-white/50 mt-1">Represent your work truthfully. Credit collaborators. Don&apos;t claim others&apos; work as your own.</p>
-                </div>
-              </BlurFade>
-              <BlurFade inView delay={0.35}>
-                <div className="border border-white/10 px-6 py-5">
-                  <p className="text-lg font-medium text-[#e8e4de]">Be kind</p>
-                  <p className="text-white/50 mt-1">Constructive feedback only. Respect everyone&apos;s experience level. We&apos;re all here to learn.</p>
-                </div>
-              </BlurFade>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* When */}
-      <section className="relative z-10 px-6 border-b border-border ">
-        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-6 md:px-12 lg:px-24">
-          {/* Left — copy */}
-          <div className="py-16 md:py-40">
-            <BlurFade inView>
-              <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
-                when
-              </span>
-            </BlurFade>
-
-            <BlurFade inView delay={0.1}>
-              <h2 className="mt-12 font-heading italic text-3xl md:text-5xl text-[#e8e4de]">
-                March 1 &rarr; March 7
-              </h2>
-            </BlurFade>
-
-            <BlurFade inView delay={0.2}>
-              <p className="mt-2 font-heading italic text-2xl md:text-3xl text-neutral-500">
-                Seven days. Set your own pace.
-              </p>
-            </BlurFade>
-
-            <BlurFade inView delay={0.3}>
-              <p className="mt-6 font-mono text-base text-neutral-500 leading-relaxed">
-                Not everyone can clear their calendar for a week. That&apos;s
-                fine. Tell us how you&apos;re planning to show up.
-              </p>
-            </BlurFade>
-          </div>
-
-          {/* Right — commitment cards */}
-          <div className="py-16 md:py-40 flex items-center">
-            <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* All-in */}
-              <BlurFade inView delay={0.1}>
-                <div className="border border-border p-5">
-                  <div className="flex gap-1 mb-4">
-                    <span className="w-5 h-[3px] bg-buildstory-400" />
-                    <span className="w-5 h-[3px] bg-buildstory-400" />
-                    <span className="w-5 h-[3px] bg-buildstory-400" />
-                    <span className="w-5 h-[3px] bg-buildstory-400" />
-                  </div>
-                  <p className="text-lg font-medium text-[#e8e4de]">All-in</p>
-                  <p className="mt-1 text-base text-neutral-500">
-                    Full days, full week. Clearing the decks.
-                  </p>
-                </div>
-              </BlurFade>
-
-              {/* Daily */}
-              <BlurFade inView delay={0.2}>
-                <div className="border border-border p-5">
-                  <div className="flex gap-1 mb-4">
-                    <span className="w-5 h-[3px] bg-buildstory-400" />
-                    <span className="w-5 h-[3px] bg-buildstory-400" />
-                    <span className="w-5 h-[3px] bg-buildstory-400" />
-                    <span className="w-5 h-[3px] bg-[#3d3a36]" />
-                  </div>
-                  <p className="text-lg font-medium text-[#e8e4de]">Daily</p>
-                  <p className="mt-1 text-base text-neutral-500">
-                    A few focused hours each day.
-                  </p>
-                </div>
-              </BlurFade>
-
-              {/* Nights & Weekends */}
-              <BlurFade inView delay={0.3}>
-                <div className="border border-border p-5">
-                  <div className="flex gap-1 mb-4">
-                    <span className="w-5 h-[3px] bg-buildstory-400" />
-                    <span className="w-5 h-[3px] bg-buildstory-400" />
-                    <span className="w-5 h-[3px] bg-[#3d3a36]" />
-                    <span className="w-5 h-[3px] bg-[#3d3a36]" />
-                  </div>
-                  <p className="text-lg font-medium text-[#e8e4de]">
-                    Nights &amp; Weekends
-                  </p>
-                  <p className="mt-1 text-base text-neutral-500">
-                    Building around a day job.
-                  </p>
-                </div>
-              </BlurFade>
-
-              {/* Unsure */}
-              <BlurFade inView delay={0.4}>
-                <div className="border border-border p-5">
-                  <div className="flex gap-1 mb-4">
-                    <span className="w-5 h-[3px] bg-buildstory-400" />
-                    <span className="w-5 h-[3px] bg-[#3d3a36]" />
-                    <span className="w-5 h-[3px] bg-[#3d3a36]" />
-                    <span className="w-5 h-[3px] bg-[#3d3a36]" />
-                  </div>
-                  <p className="text-lg font-medium text-[#e8e4de]">Unsure</p>
-                  <p className="mt-1 text-base text-neutral-500">
-                    You&apos;ll figure it out as you go. That&apos;s fine, too.
-                  </p>
-                </div>
-              </BlurFade>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Where */}
-      <section className="relative z-10 px-6 border-b border-border ">
-        <div className="mx-auto grid max-w-8xl gap-16 md:grid-cols-2 md:gap-20 items-stretch border-x border-border px-6 md:px-12 lg:px-24">
-          {/* Left — copy */}
-          <div className="py-16 md:py-40">
-            <BlurFade inView>
-              <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
-                where
-              </span>
-            </BlurFade>
-
-            <BlurFade inView delay={0.1}>
-              <h2 className="mt-12 font-heading italic text-3xl md:text-5xl text-[#e8e4de]">
-                Everywhere.
-              </h2>
-            </BlurFade>
-            <BlurFade inView delay={0.15}>
-              <h2 className="mt-2 font-heading italic text-2xl md:text-3xl text-neutral-500">
-                Online, open, global.
-              </h2>
-            </BlurFade>
-
-            <BlurFade inView delay={0.25}>
-              <p className="mt-10 font-mono text-base text-neutral-500 leading-relaxed">
-                Build from wherever you are. The community lives on Discord,
-                builds are tracked through the Buildstory CLI, and streaming
-                happens on Twitch and/or X with a guide on doitlive.club.
-              </p>
-            </BlurFade>
-
-            <BlurFade inView delay={0.35}>
-              <p className="mt-6 font-mono text-base text-neutral-500 leading-relaxed">
-                You&apos;re competing globally but recognised locally &mdash;
-                projects are grouped by country and region so standout work gets
-                seen no matter where you are.
-              </p>
-            </BlurFade>
-          </div>
-
-          {/* Right — platform cards */}
-          <div className="py-16 md:py-40 flex items-center">
-            <div className="w-full flex flex-col gap-3">
-              {/* Discord */}
-              <BlurFade inView delay={0.1}>
-                <div className="border border-border p-8">
-                  <div className="flex items-center gap-3">
-                    <img src="/discord.svg" alt="Discord" className="w-6 h-6 invert opacity-50" />
-                  </div>
-                  <p className="mt-3 text-lg font-medium text-[#e8e4de]">
-                    Discord
-                  </p>
-                  <p className="mt-1 text-neutral-500">
-                    Find teammates, share progress, get help, hang out.
-                  </p>
-                </div>
-              </BlurFade>
-
-              {/* Stream it */}
-              <BlurFade inView delay={0.2}>
-                <div className="border border-border p-8">
-                  <div className="flex items-center gap-4">
-                    <img src="/twitch.svg" alt="Twitch" className="w-6 h-6 invert opacity-50" />
-                    <img src="/x.svg" alt="X" className="w-6 h-6 invert opacity-50" />
-                  </div>
-                  <div className="flex gap-4 items-center mt-3">
-                    <p className="text-lg font-medium text-[#e8e4de]">
-                    Stream it
-                  </p>
-                  <Badge variant={"secondary"}>Optional</Badge>
-                  </div>
-                  <p className="mt-1 text-neutral-500">
-                    Stream your build. Get real-time feedback. Inspire others.
-                  </p>
-                  <a
-                    href="https://doitlive.club"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-block font-mono text-buildstory-400 underline underline-offset-4"
-                  >
-                    doitlive.club &rarr;
-                  </a>
-                </div>
-              </BlurFade>
-
-              {/* Buildstory CLI */}
-              <BlurFade inView delay={0.3}>
-                <div className="border border-border p-8">
-                  <div className="flex items-center gap-3">
-                    <img src="/npm.svg" alt="NPM" className="w-6 h-6 invert opacity-50" />
-                  </div>
-                  <p className="mt-3 text-lg font-medium text-[#e8e4de]">
-                    Buildstory CLI
-                  </p>
-                  <p className="mt-1 text-neutral-500">
-                    Auto-log your progress from your terminal as you build.
-                  </p>
-                  <div className="mt-4 border border-buildstory-500/30 border-dashed p-4">
-                    <p className="text-neutral-500">
-                    npm i -g buildstory
-                  </p>
-                  </div>
-                </div>
-              </BlurFade>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Who */}
-      <section className="relative z-10 px-6 border-b border-border ">
+      {/* ── FAQ ── */}
+      <section className="relative z-10 px-6 border-b border-border bg-neutral-950">
         <div className="mx-auto max-w-8xl border-x border-border px-6 md:px-12 lg:px-24">
-          {/* Top — full width intro */}
-          <div className="pt-16 pb-12 md:pt-40 md:pb-24">
+          <div className="py-16 md:py-24">
             <BlurFade inView>
-              <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
-                who
-              </span>
-            </BlurFade>
-
-            <BlurFade inView delay={0.1}>
-              <h2 className="mt-12 font-heading italic text-3xl md:text-5xl text-[#e8e4de]">
-                First-time builders &amp; seasoned shippers.
-              </h2>
-            </BlurFade>
-            <BlurFade inView delay={0.15}>
-              <h2 className="mt-2 font-heading italic text-2xl md:text-3xl text-neutral-500">
-                If you want to build something, this is your week.
-              </h2>
-            </BlurFade>
-
-            <BlurFade inView delay={0.25}>
-              <p className="mt-10 font-mono text-base text-neutral-500 leading-relaxed max-w-3xl">
-                Whether you&apos;re writing your first line of code with an AI
-                assistant or you&apos;ve shipped ten products this year. Solo or
-                team &mdash; bring your own or find collaborators through the
-                hackathon.
-              </p>
-            </BlurFade>
-
-            <BlurFade inView delay={0.35}>
-              <Link
-                href="/sign-up"
-                className="mt-8 inline-block border border-[#3d3a36] bg-transparent font-mono text-sm text-[#e8e4de] px-8 py-4 hover:border-neutral-500 text-neutral-500 transition-colors"
-              >
-                Register &rarr;
-              </Link>
-            </BlurFade>
-          </div>
-
-          {/* Bottom — two-column grid */}
-          <div className="grid gap-16 md:grid-cols-2 md:gap-20 pb-16 md:pb-40">
-            {/* Left — Help run this */}
-            <div>
-              <BlurFade inView>
-                <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
-                  help run this
-                </span>
-              </BlurFade>
-
-              <BlurFade inView delay={0.1}>
-                <p className="mt-6 font-mono text-base text-neutral-500 leading-relaxed">
-                  This hackathon is open-source and community-powered.
-                  Here&apos;s how to get involved.
-                </p>
-              </BlurFade>
-
-              <BlurFade inView delay={0.2}>
-                <div className="mt-8">
-                  {volunteerRoles.map((role, i) => (
-                    <div
-                      key={role._id}
-                      className={`flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-t ${i === volunteerRoles.length - 1 ? "border-b" : ""} border-border py-6`}
-                    >
-                      <span className="text-lg font-medium text-[#e8e4de]">{role.title}</span>
-                      <span className="text-base text-neutral-500">{role.description}</span>
-                    </div>
-                  ))}
-                </div>
-              </BlurFade>
-
-              <BlurFade inView delay={0.3}>
-                <a
-                  href={VOLUNTEER_URL}
-                  className="mt-8 inline-block border border-[#3d3a36] bg-transparent font-mono text-sm text-[#e8e4de] px-8 py-4 hover:border-neutral-500 text-neutral-500 transition-colors"
-                >
-                  Volunteer &rarr;
-                </a>
-              </BlurFade>
-            </div>
-
-            {/* Right — Sponsors */}
-            <div>
-              <BlurFade inView>
-                <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
-                  sponsors
-                </span>
-              </BlurFade>
-
-              <BlurFade inView delay={0.1}>
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  {sponsors.length > 0
-                    ? sponsors.map((sponsor) => (
-                        <a
-                          key={sponsor._id}
-                          href={sponsor.websiteUrl || "#"}
-                          target={sponsor.websiteUrl ? "_blank" : undefined}
-                          rel={sponsor.websiteUrl ? "noopener noreferrer" : undefined}
-                          className="border border-border h-20 flex items-center justify-center p-4 hover:border-neutral-500 transition-colors"
-                        >
-                          <img
-                            src={urlFor(sponsor.logo).width(160).height(60).fit("max").url()}
-                            alt={sponsor.name}
-                            className="max-h-12 w-auto object-contain invert opacity-70"
-                          />
-                        </a>
-                      ))
-                    : Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="border border-border h-20 border-dashed" />
-                      ))}
-                </div>
-              </BlurFade>
-
-              <BlurFade inView delay={0.2}>
-                <p className="mt-6 font-mono text-base text-neutral-500 leading-relaxed">
-                  Support builders with tool credits and resources.
-                </p>
-              </BlurFade>
-
-              <BlurFade inView delay={0.25}>
-                <a
-                  href={SPONSOR_URL}
-                  className="mt-4 inline-block font-mono text-base text-buildstory-400 underline underline-offset-4"
-                >
-                  Become a sponsor &rarr;
-                </a>
-              </BlurFade>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Team */}
-      <TeamSection />
-
-      {/* FAQ */}
-      <section id="faq" className="relative z-10 px-6 border-b border-border ">
-        <div className="mx-auto max-w-8xl border-x border-border px-6 md:px-12 lg:px-24">
-          <div className="py-16 md:py-40">
-            <BlurFade inView>
-              <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
+              <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500 font-mono">
                 faq
               </span>
             </BlurFade>
 
             <BlurFade inView delay={0.15}>
-              <div className="mt-12">
+              <div className="mt-10">
                 <FAQ />
               </div>
             </BlurFade>
@@ -693,53 +337,40 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section id="cta" className="relative z-10 px-6 border-b border-border">
+      {/* ── CTA ── */}
+      <section className="relative z-10 px-6 border-b border-border">
         <div className="mx-auto max-w-8xl border-x border-border px-6 md:px-12 lg:px-24">
-          <div className="py-16 md:py-40 flex flex-col items-center text-center">
+          <div className="py-16 md:py-24 flex flex-col items-center text-center">
             <BlurFade inView>
-              <span className="text-xs uppercase tracking-[0.25em] text-buildstory-500">
-                join us
-              </span>
-            </BlurFade>
-
-            <BlurFade inView delay={0.1} blur="16px">
-              <h2 className="mt-8 font-heading text-5xl md:text-6xl text-[#e8e4de] max-w-3xl leading-tight">
-                Stop planning. Start building.
+              <h2 className="font-heading text-4xl md:text-5xl text-[#e8e4de] max-w-2xl leading-tight">
+                Stop scrolling. Start building.
               </h2>
             </BlurFade>
 
-            <BlurFade inView delay={0.2}>
-              <p className="mt-6 max-w-xl font-mono text-base text-neutral-500 leading-relaxed">
-                One week, no gatekeeping, no prerequisites. Just you, your ideas, and a community
-                that actually wants to see you ship.
+            <BlurFade inView delay={0.1}>
+              <p className="mt-4 max-w-md font-mono text-sm text-white/40 leading-relaxed">
+                Free to join. All skill levels. Solo or team.
               </p>
             </BlurFade>
 
-            <BlurFade inView delay={0.3}>
-              <div className="mt-10 flex items-center gap-4">
+            <BlurFade inView delay={0.2}>
+              <div className="mt-8">
                 <Button
                   size="lg"
                   className="bg-buildstory-500 text-black hover:bg-white/90 px-8 h-12 text-sm font-medium ease-in duration-200"
                   asChild
                 >
-                  <Link href="/sign-up">I&apos;m in, register now</Link>
+                  <Link href="/sign-up">join the community</Link>
                 </Button>
               </div>
-            </BlurFade>
-
-            <BlurFade inView delay={0.4}>
-              <p className="mt-6 font-mono text-sm text-white/30">
-                Free to enter &middot; All skill levels &middot; Solo or team
-              </p>
             </BlurFade>
           </div>
         </div>
       </section>
 
-      <section className="border-border border-x flex justify-between max-w-8xl mx-auto px-6 py-8 ">
-        <p className="font-mono text-neutral-600">© 2026 Buildstory
-        </p>
+      {/* ── Footer ── */}
+      <section className="border-border border-x flex justify-between max-w-8xl mx-auto px-6 py-8">
+        <p className="font-mono text-neutral-600">&copy; 2026 Buildstory</p>
         <p className="font-mono text-neutral-600">Show, don&apos;t tell.</p>
       </section>
     </div>
