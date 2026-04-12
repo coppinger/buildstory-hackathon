@@ -79,7 +79,7 @@ export function Globe({ locations }: GlobeProps) {
           source: "participants",
           paint: {
             "circle-radius": 24,
-            "circle-color": "orange",
+            "circle-color": "#FF5001",
             "circle-opacity": 0.15,
             "circle-blur": 1,
           },
@@ -92,7 +92,7 @@ export function Globe({ locations }: GlobeProps) {
           source: "participants",
           paint: {
             "circle-radius": 4,
-            "circle-color": "orange",
+            "circle-color": "#FF5001",
             "circle-opacity": 0.9,
           },
         });

@@ -542,7 +542,7 @@ export default function DesignSystemPage() {
               {
                 icon: "palette",
                 title: "Brand Orange",
-                text: "Buildstory-500 (#ff980a) as the primary accent. Used sparingly for CTAs and highlights — never as decoration.",
+                text: "Buildstory-500 (#FF5001) as the primary accent. Used sparingly for CTAs and highlights — never as decoration.",
               },
               {
                 icon: "dark_mode",

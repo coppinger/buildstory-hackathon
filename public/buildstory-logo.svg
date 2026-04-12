@@ -22,8 +22,8 @@
 <feGaussianBlur stdDeviation="1.75" result="effect1_foregroundBlur_1_42"/>
 </filter>
 <linearGradient id="paint0_linear_1_42" x1="12" y1="2" x2="12" y2="34" gradientUnits="userSpaceOnUse">
-<stop stop-color="#FFC700"/>
-<stop offset="1" stop-color="#FF7A00"/>
+<stop stop-color="#FE8A4D"/>
+<stop offset="1" stop-color="#FF5001"/>
 </linearGradient>
 <linearGradient id="paint1_linear_1_42" x1="12.3775" y1="13.5031" x2="12.8827" y2="33.4386" gradientUnits="userSpaceOnUse">
 <stop stop-color="white" stop-opacity="0.64"/>
