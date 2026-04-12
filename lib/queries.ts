@@ -495,6 +495,31 @@ export async function getParticipantCountries(eventId: string) {
   return rows.map((r) => r.country).filter((c): c is string => c !== null);
 }
 
+// --- Participant Names (for landing page wall) ---
+
+export async function getParticipantNames() {
+  const eventId = await getFeaturedEventId();
+  if (!eventId) return [];
+
+  const rows = await db
+    .select({
+      displayName: profiles.displayName,
+      username: profiles.username,
+    })
+    .from(eventRegistrations)
+    .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
+    .where(
+      and(
+        eq(eventRegistrations.eventId, eventId),
+        isNull(profiles.bannedAt),
+        isNull(profiles.hiddenAt)
+      )
+    )
+    .orderBy(desc(eventRegistrations.registeredAt));
+
+  return rows;
+}
+
 // --- Team & Invite Queries ---
 
 export async function getPendingInvitesForUser(profileId: string) {
