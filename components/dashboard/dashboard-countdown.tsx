@@ -2,23 +2,20 @@
 
 import { useEffect, useState } from "react";
 
-const START_DATE = new Date("2026-03-29T19:00:00Z").getTime();
-const END_DATE = new Date("2026-04-05T19:00:00Z").getTime();
-
 type Phase = "before" | "live" | "ended";
 
-function getState() {
+function getState(startDate: number, endDate: number) {
   const now = Date.now();
 
   let phase: Phase;
   let diff: number;
 
-  if (now < START_DATE) {
+  if (now < startDate) {
     phase = "before";
-    diff = START_DATE - now;
-  } else if (now < END_DATE) {
+    diff = startDate - now;
+  } else if (now < endDate) {
     phase = "live";
-    diff = END_DATE - now;
+    diff = endDate - now;
   } else {
     phase = "ended";
     diff = 0;
@@ -38,13 +35,13 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-export function DashboardCountdown({ compact = false }: { compact?: boolean }) {
+export function DashboardCountdown({ startsAt, endsAt, compact = false }: { startsAt: number; endsAt: number; compact?: boolean }) {
   const [state, setState] = useState<ReturnType<typeof getState> | null>(null);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | null = null;
 
-    const tick = () => setState(getState());
+    const tick = () => setState(getState(startsAt, endsAt));
 
     const stop = () => {
       if (intervalId !== null) {
@@ -74,7 +71,7 @@ export function DashboardCountdown({ compact = false }: { compact?: boolean }) {
       stop();
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, []);
+  }, [startsAt, endsAt]);
 
   if (state?.phase === "ended") {
     return (

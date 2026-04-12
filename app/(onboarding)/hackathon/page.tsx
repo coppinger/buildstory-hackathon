@@ -52,6 +52,8 @@ export default async function HackathonOnboardingPage({
   return (
     <HackathonOnboarding
       eventId={event.id}
+      eventStartsAt={event.startsAt?.getTime() ?? null}
+      eventEndsAt={event.endsAt?.getTime() ?? null}
       initialDisplayName={profile.displayName}
       initialUsername={profile.username ?? ""}
       initialCountryCode={profile.country ?? ""}
