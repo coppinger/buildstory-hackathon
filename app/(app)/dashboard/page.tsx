@@ -108,12 +108,16 @@ export default async function DashboardPage() {
       name: data.event.name,
       description: data.event.description,
       statusLabel: getEventStateLabel(data.event.status),
+      startsAt: data.event.startsAt,
+      endsAt: data.event.endsAt,
     }
     : {
       name: "Hackathon #01",
       description:
         "The second Buildstory hackathon. One week, fully remote. Build something real with AI tools, share your process, and connect with builders worldwide.",
       statusLabel: "Upcoming Event",
+      startsAt: null,
+      endsAt: null,
     };
 
   const { isRegistered, project, hasSubmission, discordCardDismissed } = data
@@ -133,7 +137,9 @@ export default async function DashboardPage() {
                 {hackathon.name}
               </h1>
               <p className="mt-1 text-muted-foreground font-mono">
-                March 29 – April 5, 2026 · Fully remote
+                {hackathon.startsAt && hackathon.endsAt
+                  ? `${hackathon.startsAt.toLocaleDateString("en-US", { month: "long", day: "numeric" })} – ${hackathon.endsAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} · Fully remote`
+                  : "Fully remote"}
               </p>
             </div>
 
@@ -141,7 +147,9 @@ export default async function DashboardPage() {
               {hackathon.description}
             </p>
 
-            <DashboardCountdown />
+            {hackathon.startsAt && hackathon.endsAt && (
+              <DashboardCountdown startsAt={hackathon.startsAt.getTime()} endsAt={hackathon.endsAt.getTime()} />
+            )}
 
             <div className="flex flex-wrap gap-4 lg:gap-8 border-t border-border pt-6 w-full justify-between px-4 md:px-8">
               <div className="flex flex-col justify-center">

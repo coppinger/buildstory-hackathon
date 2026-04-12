@@ -180,6 +180,8 @@ function getSubStepIndex(step: StepId): number {
 
 interface HackathonOnboardingProps {
   eventId: string;
+  eventStartsAt: number | null;
+  eventEndsAt: number | null;
   initialDisplayName: string;
   initialUsername?: string;
   initialCountryCode?: string;
@@ -191,6 +193,8 @@ interface HackathonOnboardingProps {
 
 export function HackathonOnboarding({
   eventId,
+  eventStartsAt,
+  eventEndsAt,
   initialDisplayName,
   initialUsername = "",
   initialCountryCode = "",
@@ -684,6 +688,8 @@ export function HackathonOnboarding({
         {currentStep === "celebration" && (
           <CelebrationStep
             variant={celebrationVariant}
+            eventStartsAt={eventStartsAt}
+            eventEndsAt={eventEndsAt}
             state={{
               displayName: state.displayName,
               username: state.username,

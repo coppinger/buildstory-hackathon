@@ -190,6 +190,13 @@
       "when": 1775377874364,
       "tag": "0026_cheerful_nebula",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1744567200000,
+      "tag": "0027_update_hackathon_01_dates",
+      "breakpoints": true
     }
   ]
 }

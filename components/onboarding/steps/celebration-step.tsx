@@ -26,6 +26,8 @@ function buildCalendarUrl() {
 
 interface CelebrationStepProps {
   variant: CelebrationVariant;
+  eventStartsAt: number | null;
+  eventEndsAt: number | null;
   state: {
     displayName: string;
     username: string;
@@ -74,7 +76,7 @@ function fireConfetti() {
   frame();
 }
 
-export function CelebrationStep({ variant, state }: CelebrationStepProps) {
+export function CelebrationStep({ variant, eventStartsAt, eventEndsAt, state }: CelebrationStepProps) {
   const [copied, setCopied] = useState(false);
 
   // Enhanced confetti: first burst immediately, second burst at 500ms
@@ -181,7 +183,9 @@ export function CelebrationStep({ variant, state }: CelebrationStepProps) {
           <p className="text-sm uppercase tracking-[0.2em] text-neutral-500">
             Hackathon starts in
           </p>
-          <DashboardCountdown compact />
+          {eventStartsAt && eventEndsAt && (
+            <DashboardCountdown startsAt={eventStartsAt} endsAt={eventEndsAt} compact />
+          )}
           <p className="text-sm text-neutral-400">
             Live 30-min kickoff to welcome everyone and get you building.
           </p>
