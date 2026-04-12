@@ -55,11 +55,19 @@ const dateLabelFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Los_Angeles",
 });
 
+const timeLabelFormatter = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  timeZoneName: "short",
+  timeZone: "America/Los_Angeles",
+});
+
 function formatLabel(state: CountdownState, startsAt: number, endsAt: number): string {
-  if (state.phase === "before") {
-    return `Starts ${dateLabelFormatter.format(new Date(startsAt))}, 12 pm PST`;
-  }
-  return `Live now — ends ${dateLabelFormatter.format(new Date(endsAt))}, 12 pm PST`;
+  const ts = state.phase === "before" ? startsAt : endsAt;
+  const d = new Date(ts);
+  const date = dateLabelFormatter.format(d);
+  const time = timeLabelFormatter.format(d);
+  const prefix = state.phase === "before" ? "Starts" : "Live now — ends";
+  return `${prefix} ${date}, ${time}`;
 }
 
 export interface CountdownTimerProps {
@@ -99,7 +107,10 @@ export function CountdownTimer({ startsAt, endsAt }: CountdownTimerProps) {
         {segments.map((seg, i) => (
           <div key={seg.label} className="flex items-center gap-3 sm:gap-4">
             <div className="flex flex-col items-center">
-              <span className="font-mono text-4xl sm:text-5xl tabular-nums tracking-tight text-white">
+              <span
+                className="font-mono text-4xl sm:text-5xl tabular-nums tracking-tight text-white"
+                suppressHydrationWarning
+              >
                 {seg.value}
               </span>
               <span className="text-[11px] uppercase tracking-widest text-white/40 mt-1">
@@ -114,7 +125,7 @@ export function CountdownTimer({ startsAt, endsAt }: CountdownTimerProps) {
           </div>
         ))}
       </div>
-      <p className="text-xs uppercase tracking-[0.2em] text-white/40">
+      <p className="text-xs uppercase tracking-[0.2em] text-white/40" suppressHydrationWarning>
         {formatLabel(state, startMs, endMs)}
       </p>
     </div>
