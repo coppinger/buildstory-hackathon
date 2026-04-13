@@ -2,6 +2,7 @@ import { Header } from "@/components/header";
 import { CountdownTimer } from "@/components/countdown-timer";
 import { Globe } from "@/components/globe";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { ActivityFeed } from "@/components/activity-feed";
 import { FAQ } from "@/components/faq";
 import { BlurFade } from "@/components/blur-fade";
@@ -147,9 +148,17 @@ export default async function Home() {
             <BlurFade inView delay={0.1}>
               <p className="text-center text-base md:text-lg leading-relaxed text-white/40">
                 {participantNames.map((p, i) => (
-                  <span key={i}>
+                  <span key={i} className="inline-flex items-center">
                     {i > 0 && (
                       <span className="text-white/20">, </span>
+                    )}
+                    {p.avatarUrl && (
+                      <UserAvatar
+                        avatarUrl={p.avatarUrl}
+                        displayName={p.displayName}
+                        size="2xs"
+                        className="mr-1"
+                      />
                     )}
                     {p.username ? (
                       <Link

@@ -505,6 +505,7 @@ export async function getParticipantNames() {
     .select({
       displayName: profiles.displayName,
       username: profiles.username,
+      avatarUrl: profiles.avatarUrl,
     })
     .from(eventRegistrations)
     .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
