@@ -2,6 +2,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 const sizeMap = {
+  "2xs": { container: "size-5", text: "text-[10px]", pixels: 20 },
   xs: { container: "w-8 h-8", text: "text-xs", pixels: 32 },
   sm: { container: "w-10 h-10", text: "text-sm", pixels: 40 },
   md: { container: "w-14 h-14", text: "text-xl", pixels: 56 },
