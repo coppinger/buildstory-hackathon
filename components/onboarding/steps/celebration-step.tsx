@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { DashboardCountdown } from "@/components/dashboard/dashboard-countdown";
 import { DISCORD_INVITE_URL } from "@/lib/constants";
+import { fireConfetti } from "@/components/ui/confetti";
 
 type CelebrationVariant = "no_project" | "joining_team" | "with_project";
 
@@ -52,29 +52,6 @@ const teamLabels: Record<string, string> = {
   looking_for_team: "Looking for team",
 };
 
-function fireConfetti() {
-  const end = Date.now() + 1500;
-  const frame = () => {
-    confetti({
-      particleCount: 3,
-      angle: 60,
-      spread: 55,
-      origin: { x: 0, y: 0.7 },
-      colors: ["#fbbf24", "#f59e0b", "#ffffff"],
-    });
-    confetti({
-      particleCount: 3,
-      angle: 120,
-      spread: 55,
-      origin: { x: 1, y: 0.7 },
-      colors: ["#fbbf24", "#f59e0b", "#ffffff"],
-    });
-    if (Date.now() < end) {
-      requestAnimationFrame(frame);
-    }
-  };
-  frame();
-}
 
 export function CelebrationStep({ variant, eventStartsAt, eventEndsAt, state }: CelebrationStepProps) {
   const [copied, setCopied] = useState(false);

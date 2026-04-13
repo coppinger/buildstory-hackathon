@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import confetti from "canvas-confetti";
 
-const CONFETTI_COLORS = ["#fbbf24", "#f59e0b", "#ffffff"];
+const CONFETTI_COLORS = ["#FF5001", "#FE8A4D", "#ffffff"];
 
 export function fireConfetti() {
   const end = Date.now() + 1500;

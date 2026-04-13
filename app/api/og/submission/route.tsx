@@ -64,7 +64,7 @@ export async function GET(request: Request) {
             height: 675,
             display: "flex",
             padding: 40,
-            background: "linear-gradient(135deg, #ff980a 0%, #ff7a00 100%)",
+            background: "linear-gradient(135deg, #FF5001 0%, #E54700 100%)",
           }}
         >
           <div
@@ -135,8 +135,8 @@ export async function GET(request: Request) {
                     style={{
                       fontFamily: "DM Mono",
                       fontSize: 12,
-                      color: "#ff980a",
-                      background: "rgba(255, 152, 10, 0.1)",
+                      color: "#FF5001",
+                      background: "rgba(255, 80, 1, 0.1)",
                       padding: "6px 14px",
                       borderRadius: 4,
                       letterSpacing: "0.05em",
@@ -221,7 +221,7 @@ export async function GET(request: Request) {
                 style={{
                   fontFamily: "DM Mono",
                   fontSize: 13,
-                  color: "#ff980a",
+                  color: "#FF5001",
                   letterSpacing: "0.05em",
                 }}
               >

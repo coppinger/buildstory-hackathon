@@ -2,7 +2,6 @@
 
 import { useState, useTransition, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import confetti from "canvas-confetti";
 import {
   drawWinners,
   type DrawResult,
@@ -16,32 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { getInitials } from "@/lib/utils";
+import { fireConfetti } from "@/components/ui/confetti";
 
 type Phase = "idle" | "drawing" | "revealing" | "revealed";
 
-function fireConfetti() {
-  const end = Date.now() + 1500;
-  const frame = () => {
-    confetti({
-      particleCount: 3,
-      angle: 60,
-      spread: 55,
-      origin: { x: 0, y: 0.7 },
-      colors: ["#fbbf24", "#f59e0b", "#ffffff"],
-    });
-    confetti({
-      particleCount: 3,
-      angle: 120,
-      spread: 55,
-      origin: { x: 1, y: 0.7 },
-      colors: ["#fbbf24", "#f59e0b", "#ffffff"],
-    });
-    if (Date.now() < end) {
-      requestAnimationFrame(frame);
-    }
-  };
-  frame();
-}
 
 function WinnerCard({ winner }: { winner: DrawWinner }) {
   return (

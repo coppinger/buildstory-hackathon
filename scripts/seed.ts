@@ -741,7 +741,7 @@ async function seed() {
   // 7. Seed feature board categories
   const SEED_CATEGORIES = [
     { name: "Platform", color: "#6366f1", sortOrder: 0 },
-    { name: "Build Logs", color: "#f59e0b", sortOrder: 1 },
+    { name: "Build Logs", color: "#FF5001", sortOrder: 1 },
     { name: "Profiles", color: "#10b981", sortOrder: 2 },
     { name: "Events", color: "#ef4444", sortOrder: 3 },
     { name: "Discovery", color: "#8b5cf6", sortOrder: 4 },
