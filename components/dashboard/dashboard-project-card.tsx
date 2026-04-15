@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SectionLabel } from "@/components/ui/section-label";
 import { DISCORD_INVITE_URL } from "@/lib/constants";
 import { stripMarkdown } from "@/lib/markdown";
 import type { Project } from "@/lib/db/schema";
@@ -25,9 +26,7 @@ export function DashboardProjectCard({
       <Card className="w-full border-buildstory-500/30 bg-buildstory-900/20">
         <div className="flex flex-col gap-6">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              your project
-            </p>
+            <SectionLabel>your project</SectionLabel>
             <h2 className="mt-2 text-lg font-semibold text-foreground">
               Add your project
             </h2>
@@ -66,9 +65,7 @@ export function DashboardProjectCard({
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              your project
-            </p>
+            <SectionLabel>your project</SectionLabel>
             <h2 className="mt-2 font-heading text-lg text-foreground break-words">
               {project.slug ? (
                 <Link

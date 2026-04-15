@@ -56,7 +56,7 @@ export function SearchSortBar({ placeholder = "Search..." }: SearchSortBarProps)
 
   return (
     <div className="mt-6 flex items-center gap-3">
-      <div className="relative flex-1">
+      <div className="relative w-full max-w-sm">
         <Icon
           name="search"
           size="4"
@@ -68,7 +68,7 @@ export function SearchSortBar({ placeholder = "Search..." }: SearchSortBarProps)
           placeholder={placeholder}
           defaultValue={params.q}
           onChange={handleSearchChange}
-          className="pl-9 pr-9"
+          className="h-12 pl-9 pr-9"
         />
         {params.q && (
           <Button

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { SectionLabel } from "@/components/ui/section-label";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { TwitchIcon } from "@/components/icons";
 import { useLiveStreamers } from "@/lib/streamers/use-live-streamers";
@@ -28,9 +29,7 @@ export function DashboardStreamsCard() {
 
   return (
     <Card className="w-full">
-      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1">
-        Live Streams
-      </p>
+      <SectionLabel className="mb-1">Live Streams</SectionLabel>
 
       {/* Loading skeleton */}
       {loading && (

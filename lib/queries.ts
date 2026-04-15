@@ -60,6 +60,20 @@ const publicProfileColumns = {
   hiddenAt: true,
 } as const;
 
+const memberProfileColumns = {
+  id: true,
+  displayName: true,
+  username: true,
+  avatarUrl: true,
+} as const;
+
+const projectWithRelations = {
+  profile: { columns: publicProfileColumns },
+  members: {
+    with: { profile: { columns: memberProfileColumns } },
+  },
+} as const;
+
 export interface PaginationParams {
   page: number;
   pageSize?: number;
@@ -109,30 +123,27 @@ function isProfileVisible(profile: {
   return profile.bannedAt === null && profile.hiddenAt === null;
 }
 
+/** Fetch projects by IDs with full relations, preserving the input order. */
+async function hydrateProjectsByIds(ids: string[]) {
+  if (ids.length === 0) return [];
+  const hydrated = await db.query.projects.findMany({
+    where: inArray(projects.id, ids),
+    with: projectWithRelations,
+  });
+  const byId = new Map(hydrated.map((p) => [p.id, p]));
+  return ids.map((id) => byId.get(id)!);
+}
+
 export async function getHackathonProjects(
   params?: SearchSortParams
 ) {
   const eventId = await getFeaturedEventId();
   if (!params) {
-    // Non-paginated path (backward compat)
     if (!eventId) return [];
 
     const entries = await db.query.eventProjects.findMany({
       where: eq(eventProjects.eventId, eventId),
-      with: {
-        project: {
-          with: {
-            profile: { columns: publicProfileColumns },
-            members: {
-              with: {
-                profile: {
-                  columns: { id: true, displayName: true, username: true, avatarUrl: true },
-                },
-              },
-            },
-          },
-        },
-      },
+      with: { project: { with: projectWithRelations } },
       orderBy: [desc(eventProjects.submittedAt)],
     });
 
@@ -156,7 +167,6 @@ export async function getHackathonProjects(
     search ? ilike(projects.name, `%${escapeIlike(search)}%`) : undefined
   );
 
-  // 1. Get total count of visible projects
   const [{ totalCount }] = await db
     .select({ totalCount: count() })
     .from(eventProjects)
@@ -169,7 +179,6 @@ export async function getHackathonProjects(
 
   if (totalCount === 0) return emptyResult;
 
-  // 2. Get the paginated project IDs
   const paginatedIds = await db
     .select({ projectId: eventProjects.projectId })
     .from(eventProjects)
@@ -180,28 +189,74 @@ export async function getHackathonProjects(
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
-  const ids = paginatedIds.map((r) => r.projectId);
-
-  // 3. Hydrate with relational query (includes members)
-  const hydrated = await db.query.projects.findMany({
-    where: inArray(projects.id, ids),
-    with: {
-      profile: { columns: publicProfileColumns },
-      members: {
-        with: {
-          profile: {
-            columns: { id: true, displayName: true, username: true, avatarUrl: true },
-          },
-        },
-      },
-    },
-  });
-
-  // Preserve the original sort order from step 2
-  const byId = new Map(hydrated.map((p) => [p.id, p]));
-  const items = ids.map((id) => byId.get(id)!);
-
+  const items = await hydrateProjectsByIds(paginatedIds.map((r) => r.projectId));
   return { items, totalCount, page, pageSize, totalPages };
+}
+
+export async function getAllProjects(params: SearchSortParams) {
+  const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
+  const emptyResult = { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
+
+  const search = params.search?.trim();
+  const sortDir = params.sort === "oldest" ? asc : desc;
+
+  const visibilityFilter = and(
+    isNull(profiles.bannedAt),
+    isNull(profiles.hiddenAt),
+    search ? ilike(projects.name, `%${escapeIlike(search)}%`) : undefined
+  );
+
+  const [{ totalCount }] = await db
+    .select({ totalCount: count() })
+    .from(projects)
+    .innerJoin(profiles, eq(projects.profileId, profiles.id))
+    .where(visibilityFilter);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const page = Math.max(1, Math.min(params.page, totalPages));
+
+  if (totalCount === 0) return emptyResult;
+
+  const paginatedIds = await db
+    .select({ projectId: projects.id })
+    .from(projects)
+    .innerJoin(profiles, eq(projects.profileId, profiles.id))
+    .where(visibilityFilter)
+    .orderBy(sortDir(projects.createdAt))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+
+  const items = await hydrateProjectsByIds(paginatedIds.map((r) => r.projectId));
+  return { items, totalCount, page, pageSize, totalPages };
+}
+
+/** Get all projects owned by or joined by a specific profile */
+export async function getUserProjects(profileId: string) {
+  const [owned, joined] = await Promise.all([
+    db
+      .select({ projectId: projects.id })
+      .from(projects)
+      .where(eq(projects.profileId, profileId)),
+    db
+      .select({ projectId: projectMembers.projectId })
+      .from(projectMembers)
+      .where(eq(projectMembers.profileId, profileId)),
+  ]);
+
+  const allIds = [
+    ...new Set([
+      ...owned.map((r) => r.projectId),
+      ...joined.map((r) => r.projectId),
+    ]),
+  ];
+
+  if (allIds.length === 0) return [];
+
+  return db.query.projects.findMany({
+    where: inArray(projects.id, allIds),
+    with: projectWithRelations,
+    orderBy: [desc(projects.createdAt)],
+  });
 }
 
 /** Get all hackathon projects owned by or joined by a specific profile */
@@ -209,29 +264,28 @@ export async function getUserHackathonProjects(profileId: string) {
   const eventId = await getFeaturedEventId();
   if (!eventId) return [];
 
-  // Get projects owned by the user that are linked to the hackathon
-  const ownedEntries = await db
-    .select({ projectId: eventProjects.projectId })
-    .from(eventProjects)
-    .innerJoin(projects, eq(eventProjects.projectId, projects.id))
-    .where(
-      and(
-        eq(eventProjects.eventId, eventId),
-        eq(projects.profileId, profileId)
-      )
-    );
-
-  // Get projects the user is a member of that are linked to the hackathon
-  const memberEntries = await db
-    .select({ projectId: eventProjects.projectId })
-    .from(eventProjects)
-    .innerJoin(projectMembers, eq(eventProjects.projectId, projectMembers.projectId))
-    .where(
-      and(
-        eq(eventProjects.eventId, eventId),
-        eq(projectMembers.profileId, profileId)
-      )
-    );
+  const [ownedEntries, memberEntries] = await Promise.all([
+    db
+      .select({ projectId: eventProjects.projectId })
+      .from(eventProjects)
+      .innerJoin(projects, eq(eventProjects.projectId, projects.id))
+      .where(
+        and(
+          eq(eventProjects.eventId, eventId),
+          eq(projects.profileId, profileId)
+        )
+      ),
+    db
+      .select({ projectId: eventProjects.projectId })
+      .from(eventProjects)
+      .innerJoin(projectMembers, eq(eventProjects.projectId, projectMembers.projectId))
+      .where(
+        and(
+          eq(eventProjects.eventId, eventId),
+          eq(projectMembers.profileId, profileId)
+        )
+      ),
+  ]);
 
   const allIds = [
     ...new Set([
@@ -240,23 +294,7 @@ export async function getUserHackathonProjects(profileId: string) {
     ]),
   ];
 
-  if (allIds.length === 0) return [];
-
-  const hydrated = await db.query.projects.findMany({
-    where: inArray(projects.id, allIds),
-    with: {
-      profile: { columns: publicProfileColumns },
-      members: {
-        with: {
-          profile: {
-            columns: { id: true, displayName: true, username: true, avatarUrl: true },
-          },
-        },
-      },
-    },
-  });
-
-  return hydrated;
+  return hydrateProjectsByIds(allIds);
 }
 
 export async function getProjectBySlug(slug: string) {
@@ -273,8 +311,7 @@ export async function getProjectBySlug(slug: string) {
     },
   });
 
-  // Only return projects that are linked to at least one event
-  if (!project || project.eventProjects.length === 0) return null;
+  if (!project) return null;
 
   // Hide projects from banned/hidden users
   if (!isProfileVisible(project.profile)) return null;
