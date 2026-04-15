@@ -47,7 +47,7 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 
 // Pages that surface the featured event and need invalidation when
 // the featured event's name/dates/status/featured-flag change.
-const PUBLIC_EVENT_PATHS = ["/", SPONSOR_URL];
+const PUBLIC_EVENT_PATHS = ["/", "/support-us"];
 function revalidatePublicEventPages() {
   for (const path of PUBLIC_EVENT_PATHS) revalidatePath(path);
 }
