@@ -180,7 +180,10 @@ export default async function DashboardPage() {
         </div>
 
         {!isRegistered && (
-          <Card className="w-full bg-[url('/highlight-card-bg.jpg')] bg-cover bg-center p-0! min-h-64 flex flex-col justify-end">
+          <Card
+            className="w-full bg-cover bg-center p-0! min-h-64 flex flex-col justify-end"
+            style={{ backgroundImage: "url('/highlight-card-bg.jpg')" }}
+          >
             <div className="backdrop-blur-md bg-background/30 px-6 py-5 flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <h2 className="text-lg font-semibold text-white">
