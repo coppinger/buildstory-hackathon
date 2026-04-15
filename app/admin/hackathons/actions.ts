@@ -12,6 +12,7 @@ import {
   adminAuditLog,
 } from "@/lib/db/schema";
 import { isAdmin } from "@/lib/admin";
+import { SPONSOR_URL } from "@/lib/constants";
 import { z } from "zod";
 
 type ActionResult = { success: true } | { success: false; error: string };
@@ -43,6 +44,13 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   judging: ["complete", "active"],
   complete: ["judging"],
 };
+
+// Pages that surface the featured event and need invalidation when
+// the featured event's name/dates/status/featured-flag change.
+const PUBLIC_EVENT_PATHS = ["/", "/support-us"];
+function revalidatePublicEventPages() {
+  for (const path of PUBLIC_EVENT_PATHS) revalidatePath(path);
+}
 
 export async function createEvent(formData: {
   name: string;
@@ -135,6 +143,7 @@ export async function updateEvent(data: {
     });
 
     revalidatePath("/admin/hackathons");
+    revalidatePublicEventPages();
     return { success: true };
   } catch (error) {
     Sentry.captureException(error, {
@@ -189,6 +198,7 @@ export async function transitionEventStatus(data: {
     });
 
     revalidatePath("/admin/hackathons");
+    revalidatePublicEventPages();
     return { success: true };
   } catch (error) {
     Sentry.captureException(error, {
@@ -228,6 +238,7 @@ export async function setFeaturedEvent(data: {
 
     revalidatePath("/admin/hackathons");
     revalidatePath("/dashboard");
+    revalidatePublicEventPages();
     return { success: true };
   } catch (error) {
     Sentry.captureException(error, {
