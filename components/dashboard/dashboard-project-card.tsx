@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
+import { HighlightCtaCard } from "@/components/dashboard/highlight-cta-card";
 import { DISCORD_INVITE_URL } from "@/lib/constants";
 import { stripMarkdown } from "@/lib/markdown";
 import type { Project } from "@/lib/db/schema";
@@ -23,34 +24,26 @@ export function DashboardProjectCard({
 }) {
   if (!project) {
     return (
-      <Card
-        className="w-full bg-cover bg-center p-0! min-h-64 flex flex-col justify-end"
-        style={{ backgroundImage: "url('/highlight-card-bg.jpg')" }}
-      >
-        <div className="backdrop-blur-md bg-background/30 px-6 py-5 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-white">
-              Add your project
-            </h2>
-            <p className="mt-1 text-sm text-white/80">
-              Show the community what you&apos;re building. Add a project to get
-              started, or <a
-                href={DISCORD_INVITE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-white"
-              >find a team</a>.
-            </p>
-          </div>
-          <Button
-            asChild
-            className="shrink-0 bg-white text-black hover:bg-white/90 text-sm"
-            size="lg"
-          >
-            <Link href="/projects/new">Add a project</Link>
-          </Button>
-        </div>
-      </Card>
+      <HighlightCtaCard
+        title="Add your project"
+        description={
+          <>
+            Show the community what you&apos;re building. Add a project to get
+            started, or{" "}
+            <a
+              href={DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-white"
+            >
+              find a team
+            </a>
+            .
+          </>
+        }
+        ctaHref="/projects/new"
+        ctaLabel="Add a project"
+      />
     );
   }
 
