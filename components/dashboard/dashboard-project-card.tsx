@@ -25,7 +25,7 @@ export function DashboardProjectCard({
       <Card className="w-full border-buildstory-500/30 bg-buildstory-900/20">
         <div className="flex flex-col gap-6">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="text-xs uppercase tracking-[0.2em] font-semibold text-foreground/60">
               your project
             </p>
             <h2 className="mt-2 text-lg font-semibold text-foreground">
@@ -66,7 +66,7 @@ export function DashboardProjectCard({
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="text-xs uppercase tracking-[0.2em] font-semibold text-foreground/60">
               your project
             </p>
             <h2 className="mt-2 font-heading text-lg text-foreground break-words">

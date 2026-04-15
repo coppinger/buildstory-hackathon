@@ -28,7 +28,7 @@ export function DashboardStreamsCard() {
 
   return (
     <Card className="w-full">
-      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1">
+      <p className="text-xs uppercase tracking-[0.2em] font-semibold text-foreground/60 mb-1">
         Live Streams
       </p>
 

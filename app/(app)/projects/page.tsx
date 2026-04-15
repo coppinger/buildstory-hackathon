@@ -8,7 +8,7 @@ import { PaginatedList } from "@/components/paginated-list";
 import { SearchSortBar } from "@/components/search-sort-bar";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { stripMarkdown } from "@/lib/markdown";
-import { getHackathonProjects, getUserHackathonProjects } from "@/lib/queries";
+import { getAllProjects, getUserProjects } from "@/lib/queries";
 import { loadSearchSortParams, DEFAULT_PAGE_SIZE } from "@/lib/search-params";
 import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
@@ -16,12 +16,12 @@ import { ogMeta } from "@/lib/metadata";
 
 export const metadata = ogMeta(
   "Projects",
-  "See what people are building for Hackathon 00.",
+  "See what the community is building.",
 );
 
-type HackathonProject = Awaited<ReturnType<typeof getUserHackathonProjects>>[number];
+type ProjectWithRelations = Awaited<ReturnType<typeof getUserProjects>>[number];
 
-function ProjectCard({ project, pinned = false }: { project: HackathonProject; pinned?: boolean }) {
+function ProjectCard({ project, pinned = false }: { project: ProjectWithRelations; pinned?: boolean }) {
   return (
     <div
       className={`border p-6 flex flex-col gap-3 h-full ${
@@ -139,27 +139,28 @@ export default async function ProjectsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { page, q, sort } = await loadSearchSortParams(searchParams);
-  const result = await getHackathonProjects({
-    page,
-    pageSize: DEFAULT_PAGE_SIZE,
-    search: q || undefined,
-    sort,
-  });
+  const [result, { userId }] = await Promise.all([
+    getAllProjects({
+      page,
+      pageSize: DEFAULT_PAGE_SIZE,
+      search: q || undefined,
+      sort,
+    }),
+    auth(),
+  ]);
 
   if (!("items" in result)) return null;
 
   const { items: projects, ...pagination } = result;
 
-  // Fetch pinned projects for the authenticated user
-  let pinnedProjects: HackathonProject[] = [];
-  const { userId } = await auth();
+  let pinnedProjects: ProjectWithRelations[] = [];
   if (userId) {
     const profile = await db.query.profiles.findFirst({
       where: eq(profiles.clerkId, userId),
       columns: { id: true },
     });
     if (profile) {
-      pinnedProjects = await getUserHackathonProjects(profile.id);
+      pinnedProjects = await getUserProjects(profile.id);
     }
   }
 
@@ -171,7 +172,7 @@ export default async function ProjectsPage({
         <div>
           <h1 className="font-heading text-3xl text-foreground">Projects</h1>
           <p className="mt-2 text-muted-foreground">
-            See what people are building for Hackathon 00.
+            See what the community is building.
           </p>
         </div>
         <Button asChild>

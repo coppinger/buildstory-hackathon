@@ -13,7 +13,7 @@ import { ogMeta } from "@/lib/metadata";
 
 export const metadata = ogMeta(
   "Members",
-  "Discover builders participating in Hackathon 00.",
+  "Our global community of cool folks, building together.",
 );
 
 const experienceLabels: Record<string, string> = {
@@ -52,7 +52,7 @@ export default async function ProfilesPage({
     <div className="p-6 md:p-8 lg:p-12 w-full">
       <h1 className="font-heading text-3xl text-foreground">Members</h1>
       <p className="mt-2 text-muted-foreground">
-        Discover builders participating in Hackathon 00.
+        Our global community of cool folks, building together.
       </p>
 
       <SearchSortBar placeholder="Search by name or username..." />

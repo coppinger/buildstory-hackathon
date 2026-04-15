@@ -60,6 +60,20 @@ const publicProfileColumns = {
   hiddenAt: true,
 } as const;
 
+const memberProfileColumns = {
+  id: true,
+  displayName: true,
+  username: true,
+  avatarUrl: true,
+} as const;
+
+const projectWithRelations = {
+  profile: { columns: publicProfileColumns },
+  members: {
+    with: { profile: { columns: memberProfileColumns } },
+  },
+} as const;
+
 export interface PaginationParams {
   page: number;
   pageSize?: number;
@@ -204,6 +218,81 @@ export async function getHackathonProjects(
   return { items, totalCount, page, pageSize, totalPages };
 }
 
+export async function getAllProjects(params: SearchSortParams) {
+  const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
+  const emptyResult = { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
+
+  const search = params.search?.trim();
+  const sortDir = params.sort === "oldest" ? asc : desc;
+
+  const visibilityFilter = and(
+    isNull(profiles.bannedAt),
+    isNull(profiles.hiddenAt),
+    search ? ilike(projects.name, `%${escapeIlike(search)}%`) : undefined
+  );
+
+  const [{ totalCount }] = await db
+    .select({ totalCount: count() })
+    .from(projects)
+    .innerJoin(profiles, eq(projects.profileId, profiles.id))
+    .where(visibilityFilter);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const page = Math.max(1, Math.min(params.page, totalPages));
+
+  if (totalCount === 0) return emptyResult;
+
+  const paginatedIds = await db
+    .select({ projectId: projects.id })
+    .from(projects)
+    .innerJoin(profiles, eq(projects.profileId, profiles.id))
+    .where(visibilityFilter)
+    .orderBy(sortDir(projects.createdAt))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+
+  const ids = paginatedIds.map((r) => r.projectId);
+
+  const hydrated = await db.query.projects.findMany({
+    where: inArray(projects.id, ids),
+    with: projectWithRelations,
+  });
+
+  const byId = new Map(hydrated.map((p) => [p.id, p]));
+  const items = ids.map((id) => byId.get(id)!);
+
+  return { items, totalCount, page, pageSize, totalPages };
+}
+
+/** Get all projects owned by or joined by a specific profile */
+export async function getUserProjects(profileId: string) {
+  const [owned, joined] = await Promise.all([
+    db
+      .select({ projectId: projects.id })
+      .from(projects)
+      .where(eq(projects.profileId, profileId)),
+    db
+      .select({ projectId: projectMembers.projectId })
+      .from(projectMembers)
+      .where(eq(projectMembers.profileId, profileId)),
+  ]);
+
+  const allIds = [
+    ...new Set([
+      ...owned.map((r) => r.projectId),
+      ...joined.map((r) => r.projectId),
+    ]),
+  ];
+
+  if (allIds.length === 0) return [];
+
+  return db.query.projects.findMany({
+    where: inArray(projects.id, allIds),
+    with: projectWithRelations,
+    orderBy: [desc(projects.createdAt)],
+  });
+}
+
 /** Get all hackathon projects owned by or joined by a specific profile */
 export async function getUserHackathonProjects(profileId: string) {
   const eventId = await getFeaturedEventId();
@@ -273,8 +362,7 @@ export async function getProjectBySlug(slug: string) {
     },
   });
 
-  // Only return projects that are linked to at least one event
-  if (!project || project.eventProjects.length === 0) return null;
+  if (!project) return null;
 
   // Hide projects from banned/hidden users
   if (!isProfileVisible(project.profile)) return null;
