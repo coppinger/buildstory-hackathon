@@ -23,36 +23,32 @@ export function DashboardProjectCard({
 }) {
   if (!project) {
     return (
-      <Card className="w-full border-buildstory-500/30 bg-buildstory-900/20">
-        <div className="flex flex-col gap-6">
-          <div>
-            <SectionLabel>your project</SectionLabel>
-            <h2 className="mt-2 text-lg font-semibold text-foreground">
+      <Card
+        className="w-full bg-cover bg-center p-0! min-h-64 flex flex-col justify-end"
+        style={{ backgroundImage: "url('/highlight-card-bg.jpg')" }}
+      >
+        <div className="backdrop-blur-md bg-background/30 px-6 py-5 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold text-white">
               Add your project
             </h2>
-            <p className="mt-1 text-muted-foreground">
+            <p className="mt-1 text-sm text-white/80">
               Show the community what you&apos;re building. Add a project to get
-              started.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              asChild
-              className="shrink-0 w-fit bg-buildstory-500 text-background text-sm"
-              size="lg"
-            >
-              <Link href="/projects/new">Add a project</Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <a
+              started, or <a
                 href={DISCORD_INVITE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-              >
-                Find a team
-              </a>
-            </Button>
+                className="underline hover:text-white"
+              >find a team</a>.
+            </p>
           </div>
+          <Button
+            asChild
+            className="shrink-0 bg-white text-black hover:bg-white/90 text-sm"
+            size="lg"
+          >
+            <Link href="/projects/new">Add a project</Link>
+          </Button>
         </div>
       </Card>
     );
