@@ -38,8 +38,8 @@ export function UserMenu({ imageUrl, displayName, username }: UserMenuProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="gap-2">
-            <Avatar className="size-6 md:size-7">
+          <Button variant="ghost" className="gap-2 pl-1!">
+            <Avatar className="size-7 md:size-8">
               <AvatarImage src={imageUrl} alt={displayName} />
               <AvatarFallback className="text-xs">{initials}</AvatarFallback>
             </Avatar>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SectionLabel } from "@/components/ui/section-label";
 import { getCountryName } from "@/lib/countries";
 import { timeAgo } from "@/lib/time";
 
@@ -36,9 +37,7 @@ export function DashboardSubmissionsFeed({
 
   return (
     <Card className="w-full">
-      <p className="text-xs uppercase tracking-[0.2em] font-semibold text-foreground/60 mb-4">
-        Recent Submissions
-      </p>
+      <SectionLabel className="mb-4">Recent Submissions</SectionLabel>
 
       <div className="flex flex-col gap-4">
         {items.map((item, i) => (

@@ -18,6 +18,7 @@ import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-c
 import { DashboardStreamsCard } from "@/components/dashboard/dashboard-streams-card";
 import { DashboardSubmissionsFeed } from "@/components/dashboard/dashboard-submissions-feed";
 import { DiscordCard } from "@/components/dashboard/discord-card";
+import { SectionLabel } from "@/components/ui/section-label";
 import { getPublicStats, getPublicActivityFeed, getSubmissionsFeed, getFeaturedEvent } from "@/lib/queries";
 import { getEventStateLabel, isSubmissionOpen } from "@/lib/events";
 
@@ -130,9 +131,7 @@ export default async function DashboardPage() {
         <div className="w-full">
           <div className="flex flex-col gap-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-foreground/60">
-                {hackathon.statusLabel}
-              </p>
+              <SectionLabel>{hackathon.statusLabel}</SectionLabel>
               <h1 className="mt-5 font-heading text-3xl md:text-5xl text-foreground">
                 {hackathon.name}
               </h1>
@@ -215,9 +214,7 @@ export default async function DashboardPage() {
         {!discordCardDismissed && <DiscordCard />}
 
         <Card className="w-full relative overflow-hidden flex flex-col flex-1 max-h-96">
-          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-foreground/60 mb-2">
-            Recent Activity
-          </p>
+          <SectionLabel className="mb-2">Recent Activity</SectionLabel>
           <DashboardActivityFeed activities={serializedActivities} />
         </Card>
       </aside>
