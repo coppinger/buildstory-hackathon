@@ -17,6 +17,11 @@ import {
 import { getCoordinatesForCountries } from "@/lib/country-coordinates";
 import { DISCORD_INVITE_URL } from "@/lib/constants";
 
+// Statically rendered (no dynamic functions); without ISR the featured-event
+// snapshot freezes at build time. Admin event actions also revalidate "/" for
+// instant updates — this is the backstop.
+export const revalidate = 60;
+
 export default async function Home() {
   let publicStats = {
     signups: 0,

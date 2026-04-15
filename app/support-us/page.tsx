@@ -14,6 +14,10 @@ export const metadata = ogMeta(
   "Arm real builders with real tools. Support free monthly AI hackathons and put your product in the hands of people who actually build with it."
 );
 
+// Same reason as `app/page.tsx` — static by default, so without ISR the
+// featured-event copy drifts out of sync with admin changes.
+export const revalidate = 60;
+
 function formatEventDateRange(startsAt: Date, endsAt: Date): string {
   const startMonth = startsAt.toLocaleString("en-US", { month: "long" });
   const endMonth = endsAt.toLocaleString("en-US", { month: "long" });
