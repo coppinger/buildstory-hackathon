@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
+import { HighlightCtaCard } from "@/components/dashboard/highlight-cta-card";
 import { DISCORD_INVITE_URL } from "@/lib/constants";
 import { stripMarkdown } from "@/lib/markdown";
 import type { Project } from "@/lib/db/schema";
@@ -23,38 +24,26 @@ export function DashboardProjectCard({
 }) {
   if (!project) {
     return (
-      <Card className="w-full border-buildstory-500/30 bg-buildstory-900/20">
-        <div className="flex flex-col gap-6">
-          <div>
-            <SectionLabel>your project</SectionLabel>
-            <h2 className="mt-2 text-lg font-semibold text-foreground">
-              Add your project
-            </h2>
-            <p className="mt-1 text-muted-foreground">
-              Show the community what you&apos;re building. Add a project to get
-              started.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              asChild
-              className="shrink-0 w-fit bg-buildstory-500 text-background text-sm"
-              size="lg"
+      <HighlightCtaCard
+        title="Add your project"
+        description={
+          <>
+            Show the community what you&apos;re building. Add a project to get
+            started, or{" "}
+            <a
+              href={DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-white"
             >
-              <Link href="/projects/new">Add a project</Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <a
-                href={DISCORD_INVITE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Find a team
-              </a>
-            </Button>
-          </div>
-        </div>
-      </Card>
+              find a team
+            </a>
+            .
+          </>
+        }
+        ctaHref="/projects/new"
+        ctaLabel="Add a project"
+      />
     );
   }
 

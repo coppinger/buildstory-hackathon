@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
-import Link from "next/link";
 import { db } from "@/lib/db";
 import {
   eventProjects,
@@ -11,13 +10,13 @@ import {
   projects,
 } from "@/lib/db/schema";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { DashboardCountdown } from "@/components/dashboard/dashboard-countdown";
 import { DashboardActivityFeed } from "@/components/dashboard/dashboard-activity-feed";
 import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card";
 import { DashboardStreamsCard } from "@/components/dashboard/dashboard-streams-card";
 import { DashboardSubmissionsFeed } from "@/components/dashboard/dashboard-submissions-feed";
 import { DiscordCard } from "@/components/dashboard/discord-card";
+import { HighlightCtaCard } from "@/components/dashboard/highlight-cta-card";
 import { SectionLabel } from "@/components/ui/section-label";
 import { getPublicStats, getPublicActivityFeed, getSubmissionsFeed, getFeaturedEvent } from "@/lib/queries";
 import { getEventStateLabel, isSubmissionOpen } from "@/lib/events";
@@ -180,26 +179,12 @@ export default async function DashboardPage() {
         </div>
 
         {!isRegistered && (
-          <Card className="w-full bg-[url('/highlight-card-bg.jpg')] bg-cover bg-center p-0! min-h-64 flex flex-col justify-end">
-            <div className="backdrop-blur-md bg-background/30 px-6 py-5 flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <h2 className="text-lg font-semibold text-white">
-                  Join the hackathon
-                </h2>
-                <p className="mt-1 text-sm text-white/80">
-                  Register now to participate in Hackathon #01. Solo or team — all
-                  skill levels welcome.
-                </p>
-              </div>
-              <Button
-                asChild
-                className="shrink-0 bg-white text-black hover:bg-white/90 text-sm"
-                size={"lg"}
-              >
-                <Link href="/hackathon">Register now</Link>
-              </Button>
-            </div>
-          </Card>
+          <HighlightCtaCard
+            title="Join the hackathon"
+            description="Register now to participate in Hackathon #01. Solo or team — all skill levels welcome."
+            ctaHref="/hackathon"
+            ctaLabel="Register now"
+          />
         )}
 
         {isRegistered && <DashboardProjectCard project={project} hasSubmission={hasSubmission} submissionOpen={data ? isSubmissionOpen(data.event) : false} />}
