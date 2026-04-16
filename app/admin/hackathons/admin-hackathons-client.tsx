@@ -54,6 +54,161 @@ const ALLOWED_TRANSITIONS: Record<string, { label: string; status: string }[]> =
   complete: [{ label: "Re-open Judging", status: "judging" }],
 };
 
+const LOCAL_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+const eventRangeFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  timeZoneName: "short",
+});
+
+function formatEventRange(startsAt: string, endsAt: string) {
+  return `${eventRangeFormatter.format(new Date(startsAt))} – ${eventRangeFormatter.format(new Date(endsAt))}`;
+}
+
+function toLocalDatetimeValue(utcIso: string): string {
+  const d = new Date(utcIso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function localDatetimeToUtcIso(localValue: string): string {
+  return new Date(localValue).toISOString();
+}
+
+function DatetimeField({
+  name,
+  label,
+  value,
+  onChange,
+}: {
+  name: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const parsed = value ? new Date(value) : null;
+  const utcPreview =
+    parsed && !Number.isNaN(parsed.getTime()) ? parsed.toISOString() : null;
+  return (
+    <div>
+      <label className="text-sm text-muted-foreground">{label}</label>
+      <Input
+        name={name}
+        type="datetime-local"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required
+      />
+      <p className="text-xs text-muted-foreground mt-1 font-mono">
+        {LOCAL_TIMEZONE}
+        {utcPreview && ` · stored as ${utcPreview}`}
+      </p>
+    </div>
+  );
+}
+
+type EventFormData = {
+  name: string;
+  slug: string;
+  description: string;
+  startsAt: string;
+  endsAt: string;
+};
+
+function EventForm({
+  event,
+  onCancel,
+  onSubmit,
+  isPending,
+}: {
+  event?: SerializedEvent;
+  onCancel: () => void;
+  onSubmit: (data: EventFormData) => void;
+  isPending: boolean;
+}) {
+  const [startsAt, setStartsAt] = useState(() =>
+    event ? toLocalDatetimeValue(event.startsAt) : ""
+  );
+  const [endsAt, setEndsAt] = useState(() =>
+    event ? toLocalDatetimeValue(event.endsAt) : ""
+  );
+
+  function handleAction(formData: FormData) {
+    onSubmit({
+      name: formData.get("name") as string,
+      slug: formData.get("slug") as string,
+      description: formData.get("description") as string,
+      startsAt: localDatetimeToUtcIso(startsAt),
+      endsAt: localDatetimeToUtcIso(endsAt),
+    });
+  }
+
+  return (
+    <form action={handleAction}>
+      <CardHeader>
+        <CardTitle>{event ? "Edit Hackathon" : "New Hackathon"}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm text-muted-foreground">Name</label>
+            <Input
+              name="name"
+              placeholder="Hackathon #02"
+              defaultValue={event?.name}
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm text-muted-foreground">Slug</label>
+            <Input
+              name="slug"
+              placeholder="hackathon-02"
+              defaultValue={event?.slug}
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <label className="text-sm text-muted-foreground">Description</label>
+          <Textarea
+            name="description"
+            placeholder="A 7-day building event..."
+            defaultValue={event?.description}
+            required
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <DatetimeField
+            name="startsAt"
+            label="Starts at"
+            value={startsAt}
+            onChange={setStartsAt}
+          />
+          <DatetimeField
+            name="endsAt"
+            label="Ends at"
+            value={endsAt}
+            onChange={setEndsAt}
+          />
+        </div>
+      </CardContent>
+      <CardFooter className="justify-end gap-2">
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isPending}>
+          {event ? "Save" : "Create"}
+        </Button>
+      </CardFooter>
+    </form>
+  );
+}
+
 export function AdminHackathonsClient({
   events,
 }: {
@@ -71,16 +226,10 @@ export function AdminHackathonsClient({
     complete: events.filter((e) => e.status === "complete").length,
   };
 
-  function handleCreate(formData: FormData) {
+  function handleCreate(data: EventFormData) {
     setError(null);
     startTransition(async () => {
-      const result = await createEvent({
-        name: formData.get("name") as string,
-        slug: formData.get("slug") as string,
-        description: formData.get("description") as string,
-        startsAt: formData.get("startsAt") as string,
-        endsAt: formData.get("endsAt") as string,
-      });
+      const result = await createEvent(data);
       if (!result.success) {
         setError(result.error);
       } else {
@@ -89,17 +238,10 @@ export function AdminHackathonsClient({
     });
   }
 
-  function handleUpdate(eventId: string, formData: FormData) {
+  function handleUpdate(eventId: string, data: EventFormData) {
     setError(null);
     startTransition(async () => {
-      const result = await updateEvent({
-        eventId,
-        name: formData.get("name") as string,
-        slug: formData.get("slug") as string,
-        description: formData.get("description") as string,
-        startsAt: formData.get("startsAt") as string,
-        endsAt: formData.get("endsAt") as string,
-      });
+      const result = await updateEvent({ eventId, ...data });
       if (!result.success) {
         setError(result.error);
       } else {
@@ -134,16 +276,16 @@ export function AdminHackathonsClient({
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-heading">Hackathons</h1>
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <h1 className="font-heading text-3xl">Hackathons</h1>
         <Button onClick={() => setShowCreate(!showCreate)} disabled={isPending}>
           {showCreate ? "Cancel" : "Create Hackathon"}
         </Button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-4 gap-4">
         {[
           { label: "Total", value: stats.total },
           { label: "Active", value: stats.active },
@@ -162,57 +304,19 @@ export function AdminHackathonsClient({
       </div>
 
       {error && (
-        <div className="mb-4 p-3 text-sm text-destructive bg-destructive/10 rounded-lg">
+        <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-lg">
           {error}
         </div>
       )}
 
       {/* Create form */}
       {showCreate && (
-        <Card className="mb-6">
-          <form action={handleCreate}>
-            <CardHeader>
-              <CardTitle>New Hackathon</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-muted-foreground">Name</label>
-                  <Input name="name" placeholder="Hackathon #02" required />
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground">Slug</label>
-                  <Input name="slug" placeholder="hackathon-02" required />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground">Description</label>
-                <Textarea name="description" placeholder="A 7-day building event..." required />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-muted-foreground">Starts at</label>
-                  <Input name="startsAt" type="datetime-local" required />
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground">Ends at</label>
-                  <Input name="endsAt" type="datetime-local" required />
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setShowCreate(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isPending}>
-                Create
-              </Button>
-            </CardFooter>
-          </form>
+        <Card>
+          <EventForm
+            onCancel={() => setShowCreate(false)}
+            onSubmit={handleCreate}
+            isPending={isPending}
+          />
         </Card>
       )}
 
@@ -221,63 +325,13 @@ export function AdminHackathonsClient({
         {events.map((event) => (
           <Card key={event.id}>
             {editingId === event.id ? (
-              <form action={(fd) => handleUpdate(event.id, fd)}>
-                <CardHeader>
-                  <CardTitle>Edit Hackathon</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm text-muted-foreground">Name</label>
-                      <Input name="name" defaultValue={event.name} required />
-                    </div>
-                    <div>
-                      <label className="text-sm text-muted-foreground">Slug</label>
-                      <Input name="slug" defaultValue={event.slug} required />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm text-muted-foreground">Description</label>
-                    <Textarea
-                      name="description"
-                      defaultValue={event.description}
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm text-muted-foreground">Starts at</label>
-                      <Input
-                        name="startsAt"
-                        type="datetime-local"
-                        defaultValue={event.startsAt.slice(0, 16)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm text-muted-foreground">Ends at</label>
-                      <Input
-                        name="endsAt"
-                        type="datetime-local"
-                        defaultValue={event.endsAt.slice(0, 16)}
-                        required
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setEditingId(null)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    Save
-                  </Button>
-                </CardFooter>
-              </form>
+              <EventForm
+                key={event.id}
+                event={event}
+                onCancel={() => setEditingId(null)}
+                onSubmit={(data) => handleUpdate(event.id, data)}
+                isPending={isPending}
+              />
             ) : (
               <>
                 <CardHeader>
@@ -321,11 +375,8 @@ export function AdminHackathonsClient({
                   <p className="text-sm text-muted-foreground mb-4">
                     {event.description}
                   </p>
-                  <div className="flex items-center gap-6 text-xs text-muted-foreground font-mono">
-                    <span>
-                      {new Date(event.startsAt).toLocaleDateString()} &ndash;{" "}
-                      {new Date(event.endsAt).toLocaleDateString()}
-                    </span>
+                  <div className="flex items-center gap-6 text-xs text-muted-foreground font-mono flex-wrap">
+                    <span>{formatEventRange(event.startsAt, event.endsAt)}</span>
                     <span>{event.registrationCount} registrations</span>
                     <span>{event.projectCount} projects</span>
                     <span>{event.submissionCount} submissions</span>
