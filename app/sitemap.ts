@@ -40,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const { getHackathonProjects, getHackathonProfiles } = await import(
+    const { getHackathonProjects, getAllProfiles } = await import(
       "@/lib/queries"
     );
 
@@ -49,7 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const slug = p.slug as string | null;
         return slug ? `${base}/projects/${slug}` : null;
       }),
-      collectAllPages(getHackathonProfiles, (entry) => {
+      collectAllPages(getAllProfiles, (entry) => {
         const profile = entry.profile as { username: string | null } | undefined;
         return profile?.username ? `${base}/members/${profile.username}` : null;
       }),

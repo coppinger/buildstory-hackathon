@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { db } from "@/lib/db";
 import {
   events,
@@ -101,19 +102,19 @@ export interface ActivityFeedItem {
   timestamp: Date;
 }
 
-export async function getFeaturedEvent() {
+export const getFeaturedEvent = cache(async () => {
   return db.query.events.findFirst({
     where: eq(events.featured, true),
   });
-}
+});
 
-export async function getFeaturedEventId(): Promise<string | null> {
+export const getFeaturedEventId = cache(async (): Promise<string | null> => {
   const event = await db.query.events.findFirst({
     where: eq(events.featured, true),
     columns: { id: true },
   });
   return event?.id ?? null;
-}
+});
 
 /** Profile is visible when not banned and not hidden */
 function isProfileVisible(profile: {
@@ -319,35 +320,14 @@ export async function getProjectBySlug(slug: string) {
   return project;
 }
 
-export async function getHackathonProfiles(
-  params?: SearchSortParams
-) {
-  const eventId = await getFeaturedEventId();
-  if (!params) {
-    // Non-paginated path (backward compat)
-    if (!eventId) return [];
-
-    const registrations = await db.query.eventRegistrations.findMany({
-      where: eq(eventRegistrations.eventId, eventId),
-      with: { profile: { columns: publicProfileColumns } },
-      orderBy: [desc(eventRegistrations.registeredAt)],
-    });
-
-    return registrations
-      .filter((r) => isProfileVisible(r.profile))
-      .map((r) => ({ profile: r.profile, teamPreference: r.teamPreference }));
-  }
-
+export async function getAllProfiles(params: SearchSortParams) {
   const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
   const emptyResult = { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
-
-  if (!eventId) return emptyResult;
 
   const search = params.search?.trim();
   const sortDir = params.sort === "oldest" ? asc : desc;
 
   const visibilityFilter = and(
-    eq(eventRegistrations.eventId, eventId),
     isNull(profiles.bannedAt),
     isNull(profiles.hiddenAt),
     search
@@ -360,8 +340,7 @@ export async function getHackathonProfiles(
 
   const [{ totalCount }] = await db
     .select({ totalCount: count() })
-    .from(eventRegistrations)
-    .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
+    .from(profiles)
     .where(visibilityFilter);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -369,39 +348,47 @@ export async function getHackathonProfiles(
 
   if (totalCount === 0) return emptyResult;
 
-  const rows = await db
-    .select({
-      profileId: eventRegistrations.profileId,
-      teamPreference: eventRegistrations.teamPreference,
-    })
-    .from(eventRegistrations)
-    .innerJoin(profiles, eq(eventRegistrations.profileId, profiles.id))
-    .where(visibilityFilter)
-    .orderBy(sortDir(eventRegistrations.registeredAt))
-    .limit(pageSize)
-    .offset((page - 1) * pageSize);
-
-  const profileIds = rows.map((r) => r.profileId);
-  const teamPrefMap = new Map(rows.map((r) => [r.profileId, r.teamPreference]));
-
-  const hydratedProfiles = await db.query.profiles.findMany({
-    where: inArray(profiles.id, profileIds),
+  const paginatedProfiles = await db.query.profiles.findMany({
+    where: visibilityFilter,
     columns: publicProfileColumns,
+    orderBy: [sortDir(profiles.createdAt)],
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
   });
 
-  // Preserve the sort order from the paginated query
-  const byId = new Map(hydratedProfiles.map((p) => [p.id, p]));
-  const items = profileIds.map((id) => ({
-    profile: byId.get(id)!,
-    teamPreference: teamPrefMap.get(id)!,
+  const featuredEventId = await getFeaturedEventId();
+  type TeamPreference = (typeof eventRegistrations.$inferSelect)["teamPreference"];
+  const teamPrefByProfileId = new Map<string, TeamPreference>();
+  if (featuredEventId && paginatedProfiles.length > 0) {
+    const registrations = await db
+      .select({
+        profileId: eventRegistrations.profileId,
+        teamPreference: eventRegistrations.teamPreference,
+      })
+      .from(eventRegistrations)
+      .where(
+        and(
+          eq(eventRegistrations.eventId, featuredEventId),
+          inArray(
+            eventRegistrations.profileId,
+            paginatedProfiles.map((p) => p.id)
+          )
+        )
+      );
+    for (const r of registrations) {
+      teamPrefByProfileId.set(r.profileId, r.teamPreference);
+    }
+  }
+
+  const items = paginatedProfiles.map((profile) => ({
+    profile,
+    teamPreference: teamPrefByProfileId.get(profile.id) ?? null,
   }));
 
   return { items, totalCount, page, pageSize, totalPages };
 }
 
 export async function getProfileByUsername(username: string) {
-  const eventId = await getFeaturedEventId();
-
   const profile = await db.query.profiles.findFirst({
     where: eq(profiles.username, username),
     columns: { ...publicProfileColumns, clerkId: true },
@@ -413,7 +400,6 @@ export async function getProfileByUsername(username: string) {
           },
         },
       },
-      eventRegistrations: true,
     },
   });
 
@@ -421,14 +407,6 @@ export async function getProfileByUsername(username: string) {
 
   // Hide banned/hidden profiles
   if (!isProfileVisible(profile)) return null;
-
-  // Only return the profile if they are registered for the hackathon
-  if (eventId) {
-    const isRegistered = profile.eventRegistrations.some(
-      (r) => r.eventId === eventId
-    );
-    if (!isRegistered) return null;
-  }
 
   // Filter projects to only those linked to an event
   const visibleProjects = profile.projects.filter(
