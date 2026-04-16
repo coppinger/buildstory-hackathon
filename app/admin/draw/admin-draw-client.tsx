@@ -284,11 +284,9 @@ export function AdminDrawClient({
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-heading font-semibold tracking-tight">
-          Prize Drawing
-        </h1>
+        <h1 className="font-heading text-3xl">Prize Drawing</h1>
         <p className="text-muted-foreground mt-1">
           Randomly select winners from registered hackathon participants.
           Provably fair using a seeded PRNG.

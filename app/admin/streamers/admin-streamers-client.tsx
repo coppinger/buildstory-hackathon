@@ -94,7 +94,7 @@ export function AdminStreamersClient({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold">Twitch Categories</h1>
+        <h1 className="font-heading text-3xl">Twitch Categories</h1>
         <p className="mt-1 text-muted-foreground">
           Configure which Twitch categories to track for the streamers page.
           Only streams in these categories will appear.

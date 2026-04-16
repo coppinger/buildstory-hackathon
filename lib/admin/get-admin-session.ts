@@ -2,6 +2,8 @@ import { cache } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { getRole, canAccessAdmin } from "@/lib/admin";
 
+export type AdminRole = "admin" | "moderator";
+
 export const getAdminSession = cache(async () => {
   const { userId } = await auth();
   if (!userId) return null;
@@ -11,5 +13,5 @@ export const getAdminSession = cache(async () => {
 
   const role = await getRole(userId);
   // canAccessAdmin guarantees role is "admin" or "moderator"
-  return { userId, role: role as "admin" | "moderator" };
+  return { userId, role: role as AdminRole };
 });

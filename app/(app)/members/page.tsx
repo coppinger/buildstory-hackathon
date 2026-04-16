@@ -5,7 +5,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { PaginatedList } from "@/components/paginated-list";
 import { SearchSortBar } from "@/components/search-sort-bar";
 import { stripMarkdown } from "@/lib/markdown";
-import { getHackathonProfiles } from "@/lib/queries";
+import { getAllProfiles } from "@/lib/queries";
 import { loadSearchSortParams, DEFAULT_PAGE_SIZE } from "@/lib/search-params";
 import { getCountryByCode, formatLocation } from "@/lib/countries";
 import { getRegionName } from "@/lib/regions";
@@ -35,14 +35,12 @@ export default async function ProfilesPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { page, q, sort } = await loadSearchSortParams(searchParams);
-  const result = await getHackathonProfiles({
+  const result = await getAllProfiles({
     page,
     pageSize: DEFAULT_PAGE_SIZE,
     search: q || undefined,
     sort,
   });
-
-  if (!("items" in result)) return null;
 
   const { items: entries, ...pagination } = result;
 
