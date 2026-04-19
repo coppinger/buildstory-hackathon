@@ -50,33 +50,47 @@ export async function createProject(data: {
     if (!parsed.success) return parsed;
     const v = parsed.data;
 
-    const [project] = await db
-      .insert(projects)
-      .values({
-        profileId,
-        name: v.name,
-        slug: v.slug || null,
-        description: v.description,
-        startingPoint: v.startingPoint,
-        goalText: v.goalText || null,
-        githubUrl: v.githubUrl || null,
-        liveUrl: v.liveUrl || null,
-      })
-      .returning();
-
-    // Optionally link to event — validate server-side that event exists and is open
+    // Validate event before inserting the project so we don't orphan a row
     if (data.eventId) {
       const event = await db.query.events.findFirst({
         where: eq(events.id, data.eventId),
         columns: { id: true, status: true },
       });
-      if (event && isSubmissionOpen(event)) {
-        await db
-          .insert(eventProjects)
-          .values({ eventId: event.id, projectId: project.id })
-          .onConflictDoNothing();
+      if (!event) {
+        return { success: false, error: "Event not found" };
+      }
+      if (!isSubmissionOpen(event)) {
+        return {
+          success: false,
+          error: "Submissions are not open for this event yet",
+        };
       }
     }
+
+    const project = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(projects)
+        .values({
+          profileId,
+          name: v.name,
+          slug: v.slug || null,
+          description: v.description,
+          startingPoint: v.startingPoint,
+          goalText: v.goalText || null,
+          githubUrl: v.githubUrl || null,
+          liveUrl: v.liveUrl || null,
+        })
+        .returning();
+
+      if (data.eventId) {
+        await tx
+          .insert(eventProjects)
+          .values({ eventId: data.eventId, projectId: created.id })
+          .onConflictDoNothing();
+      }
+
+      return created;
+    });
 
     revalidatePath("/projects");
     return { success: true, data: { slug: project.slug } };
