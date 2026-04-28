@@ -16,6 +16,11 @@ import {
   eventRegistrations,
   projectMembers,
   teamInvites,
+  eventSubmissions,
+  hackathonReviews,
+  posts,
+  postComments,
+  reactions,
 } from "@/lib/db/schema";
 import { eq, like, and, inArray } from "drizzle-orm";
 
@@ -50,11 +55,13 @@ vi.mock("@sentry/nextjs", () => ({
 vi.mock("@/lib/discord", () => ({
   notifySignup: vi.fn(),
   notifyProject: vi.fn(),
+  notifySubmission: vi.fn(),
 }));
 
 vi.mock("@/lib/milestones", () => ({
   checkSignupMilestone: vi.fn(),
   checkProjectMilestone: vi.fn(),
+  checkSubmissionMilestone: vi.fn(),
 }));
 
 // Import actions AFTER mocks
@@ -63,6 +70,7 @@ import {
   updateProject,
   deleteProject,
 } from "@/app/(app)/projects/actions";
+import { submitProject } from "@/app/(app)/projects/[slug]/submit/actions";
 
 // --- Constants & helpers ---
 
@@ -154,11 +162,15 @@ afterAll(async () => {
   for (const pid of createdProjectIds) {
     await db.delete(projectMembers).where(eq(projectMembers.projectId, pid));
     await db.delete(teamInvites).where(eq(teamInvites.projectId, pid));
+    await db.delete(eventSubmissions).where(eq(eventSubmissions.projectId, pid));
+    await db.delete(hackathonReviews).where(eq(hackathonReviews.projectId, pid));
     await db.delete(eventProjects).where(eq(eventProjects.projectId, pid));
     await db.delete(projects).where(eq(projects.id, pid));
   }
   for (const eid of createdEventIds) {
     await db.delete(eventRegistrations).where(eq(eventRegistrations.eventId, eid));
+    await db.delete(eventSubmissions).where(eq(eventSubmissions.eventId, eid));
+    await db.delete(hackathonReviews).where(eq(hackathonReviews.eventId, eid));
     await db.delete(eventProjects).where(eq(eventProjects.eventId, eid));
     await db.delete(events).where(eq(events.id, eid));
   }
@@ -175,11 +187,59 @@ afterAll(async () => {
       .where(inArray(projects.profileId, profileIds));
     const ownedProjectIds = ownedProjects.map((p) => p.id);
     if (ownedProjectIds.length > 0) {
+      // Posts/comments/reactions referencing these projects are polymorphic
+      // (no FK) — clean them up explicitly.
+      const orphanPosts = await db
+        .select({ id: posts.id })
+        .from(posts)
+        .where(
+          and(
+            eq(posts.contextType, "project"),
+            inArray(posts.contextId, ownedProjectIds)
+          )
+        );
+      const orphanPostIds = orphanPosts.map((p) => p.id);
+      if (orphanPostIds.length > 0) {
+        const orphanComments = await db
+          .select({ id: postComments.id })
+          .from(postComments)
+          .where(inArray(postComments.postId, orphanPostIds));
+        const orphanCommentIds = orphanComments.map((c) => c.id);
+        if (orphanCommentIds.length > 0) {
+          await db
+            .delete(reactions)
+            .where(
+              and(
+                eq(reactions.targetType, "comment"),
+                inArray(reactions.targetId, orphanCommentIds)
+              )
+            );
+        }
+        await db
+          .delete(reactions)
+          .where(
+            and(
+              eq(reactions.targetType, "post"),
+              inArray(reactions.targetId, orphanPostIds)
+            )
+          );
+        await db.delete(postComments).where(inArray(postComments.postId, orphanPostIds));
+        await db.delete(posts).where(inArray(posts.id, orphanPostIds));
+      }
       await db.delete(projectMembers).where(inArray(projectMembers.projectId, ownedProjectIds));
       await db.delete(teamInvites).where(inArray(teamInvites.projectId, ownedProjectIds));
+      await db.delete(eventSubmissions).where(inArray(eventSubmissions.projectId, ownedProjectIds));
+      await db.delete(hackathonReviews).where(inArray(hackathonReviews.projectId, ownedProjectIds));
       await db.delete(eventProjects).where(inArray(eventProjects.projectId, ownedProjectIds));
       await db.delete(projects).where(inArray(projects.id, ownedProjectIds));
     }
+    // Drop any reactions/posts authored by test profiles outside their own
+    // projects (e.g., reactions left on the cleanup target rows above).
+    await db.delete(reactions).where(inArray(reactions.profileId, profileIds));
+    await db.delete(postComments).where(inArray(postComments.authorId, profileIds));
+    await db.delete(posts).where(inArray(posts.authorId, profileIds));
+    await db.delete(eventSubmissions).where(inArray(eventSubmissions.profileId, profileIds));
+    await db.delete(hackathonReviews).where(inArray(hackathonReviews.reviewerProfileId, profileIds));
     await db.delete(eventRegistrations).where(inArray(eventRegistrations.profileId, profileIds));
   }
   await db.delete(profiles).where(like(profiles.clerkId, `${TEST_PREFIX}%`));
@@ -585,5 +645,227 @@ describe("deleteProject", () => {
     });
     expect(result.success).toBe(false);
     expect(mockCaptureException).toHaveBeenCalled();
+  });
+
+  it("deletes a submitted+reviewed project and cleans up submissions, reviews, posts, comments, and reactions", async () => {
+    // Owner project linked to the test event with a submission, a review by
+    // another profile, a post in the project context with a comment, and
+    // reactions on both the post and the comment.
+    const [project] = await db
+      .insert(projects)
+      .values({
+        profileId: testProfileId,
+        name: "Submitted+Reviewed Project",
+        description: "Has all the related rows",
+      })
+      .returning();
+
+    await db
+      .insert(eventProjects)
+      .values({ eventId: testEventId, projectId: project.id });
+
+    const [submission] = await db
+      .insert(eventSubmissions)
+      .values({
+        eventId: testEventId,
+        projectId: project.id,
+        profileId: testProfileId,
+        whatBuilt: "A thing",
+      })
+      .returning();
+
+    const [review] = await db
+      .insert(hackathonReviews)
+      .values({
+        eventId: testEventId,
+        reviewerProfileId: otherProfileId,
+        projectId: project.id,
+        feedback: "Nice work",
+      })
+      .returning();
+
+    const [post] = await db
+      .insert(posts)
+      .values({
+        authorId: testProfileId,
+        body: "Update on the project",
+        contextType: "project",
+        contextId: project.id,
+      })
+      .returning();
+
+    const [comment] = await db
+      .insert(postComments)
+      .values({
+        postId: post.id,
+        authorId: otherProfileId,
+        body: "Looks great",
+      })
+      .returning();
+
+    const [postReaction] = await db
+      .insert(reactions)
+      .values({
+        profileId: otherProfileId,
+        targetType: "post",
+        targetId: post.id,
+        emoji: "fire",
+      })
+      .returning();
+
+    const [commentReaction] = await db
+      .insert(reactions)
+      .values({
+        profileId: testProfileId,
+        targetType: "comment",
+        targetId: comment.id,
+        emoji: "fire",
+      })
+      .returning();
+
+    const result = await deleteProject({ projectId: project.id });
+    expect(result).toEqual({ success: true });
+
+    const remainingProject = await db.query.projects.findFirst({
+      where: eq(projects.id, project.id),
+    });
+    expect(remainingProject).toBeUndefined();
+
+    const remainingSubmission = await db.query.eventSubmissions.findFirst({
+      where: eq(eventSubmissions.id, submission.id),
+    });
+    expect(remainingSubmission).toBeUndefined();
+
+    const remainingReview = await db.query.hackathonReviews.findFirst({
+      where: eq(hackathonReviews.id, review.id),
+    });
+    expect(remainingReview).toBeUndefined();
+
+    const remainingPost = await db.query.posts.findFirst({
+      where: eq(posts.id, post.id),
+    });
+    expect(remainingPost).toBeUndefined();
+
+    const remainingComment = await db.query.postComments.findFirst({
+      where: eq(postComments.id, comment.id),
+    });
+    expect(remainingComment).toBeUndefined();
+
+    const remainingPostReaction = await db.query.reactions.findFirst({
+      where: eq(reactions.id, postReaction.id),
+    });
+    expect(remainingPostReaction).toBeUndefined();
+
+    const remainingCommentReaction = await db.query.reactions.findFirst({
+      where: eq(reactions.id, commentReaction.id),
+    });
+    expect(remainingCommentReaction).toBeUndefined();
+
+    const remainingLink = await db.query.eventProjects.findFirst({
+      where: and(
+        eq(eventProjects.eventId, testEventId),
+        eq(eventProjects.projectId, project.id)
+      ),
+    });
+    expect(remainingLink).toBeUndefined();
+  });
+});
+
+// ========================================================================
+// submitProject
+// ========================================================================
+
+describe("submitProject", () => {
+  it("creates the event_projects link lazily when the project isn't linked yet", async () => {
+    // Project deliberately created WITHOUT an eventProjects row — this is the
+    // exact case the production fix targets (older projects that were never
+    // linked to the event but whose owners should still be able to submit).
+    const [project] = await db
+      .insert(projects)
+      .values({
+        profileId: testProfileId,
+        name: "Unlinked Submission Project",
+        description: "No eventProjects row",
+      })
+      .returning();
+    createdProjectIds.push(project.id);
+
+    // Sanity check: no link exists yet.
+    const before = await db.query.eventProjects.findFirst({
+      where: and(
+        eq(eventProjects.eventId, testEventId),
+        eq(eventProjects.projectId, project.id)
+      ),
+    });
+    expect(before).toBeUndefined();
+
+    const result = await submitProject({
+      projectId: project.id,
+      eventId: testEventId,
+      whatBuilt: "Built the thing",
+      demoUrl: null,
+      demoMediaUrl: null,
+      demoMediaType: null,
+      repoUrl: null,
+      lessonLearned: null,
+      toolIds: [],
+    });
+    expect(result).toEqual({ success: true });
+
+    // Link should now exist.
+    const after = await db.query.eventProjects.findFirst({
+      where: and(
+        eq(eventProjects.eventId, testEventId),
+        eq(eventProjects.projectId, project.id)
+      ),
+    });
+    expect(after).toBeDefined();
+
+    // Submission row should exist.
+    const submission = await db.query.eventSubmissions.findFirst({
+      where: and(
+        eq(eventSubmissions.eventId, testEventId),
+        eq(eventSubmissions.projectId, project.id)
+      ),
+    });
+    expect(submission).toBeDefined();
+    expect(submission!.whatBuilt).toBe("Built the thing");
+  });
+
+  it("succeeds when the event_projects link already exists", async () => {
+    const [project] = await db
+      .insert(projects)
+      .values({
+        profileId: testProfileId,
+        name: "Pre-Linked Submission Project",
+        description: "Has an eventProjects row already",
+      })
+      .returning();
+    createdProjectIds.push(project.id);
+
+    await db
+      .insert(eventProjects)
+      .values({ eventId: testEventId, projectId: project.id });
+
+    const result = await submitProject({
+      projectId: project.id,
+      eventId: testEventId,
+      whatBuilt: "Already linked",
+      demoUrl: null,
+      demoMediaUrl: null,
+      demoMediaType: null,
+      repoUrl: null,
+      lessonLearned: null,
+      toolIds: [],
+    });
+    expect(result).toEqual({ success: true });
+
+    const submission = await db.query.eventSubmissions.findFirst({
+      where: and(
+        eq(eventSubmissions.eventId, testEventId),
+        eq(eventSubmissions.projectId, project.id)
+      ),
+    });
+    expect(submission).toBeDefined();
   });
 });

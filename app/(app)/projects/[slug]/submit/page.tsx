@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { eventProjects, projects, projectMembers } from "@/lib/db/schema";
+import { projects, projectMembers } from "@/lib/db/schema";
 import { ensureProfile } from "@/lib/db/ensure-profile";
 import { getFeaturedEvent, getSubmissionForProjectEvent } from "@/lib/queries";
 import { isSubmissionOpen } from "@/lib/events";
@@ -53,17 +53,14 @@ export default async function SubmitPage({
   ]);
   if (!event) notFound();
 
-  // Verify event link and check existing submission in parallel
-  const [eventProject, existingSubmission] = await Promise.all([
-    db.query.eventProjects.findFirst({
-      where: and(
-        eq(eventProjects.projectId, project.id),
-        eq(eventProjects.eventId, event.id)
-      ),
-    }),
-    getSubmissionForProjectEvent(project.id, event.id),
-  ]);
-  if (!eventProject) notFound();
+  // Check existing submission. The event link (eventProjects row) is enforced
+  // inside the submitProject server action — older projects created before the
+  // event-link flow was reliable can still be submitted, the action will
+  // create the link as long as the event is open.
+  const existingSubmission = await getSubmissionForProjectEvent(
+    project.id,
+    event.id
+  );
 
   // Deadline check
   if (!isSubmissionOpen(event)) {

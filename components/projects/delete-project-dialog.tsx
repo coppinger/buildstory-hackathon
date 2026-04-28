@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, type ReactNode } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AlertDialog } from "radix-ui";
 import { Button } from "@/components/ui/button";
@@ -19,12 +19,16 @@ export function DeleteProjectDialog({
 }: DeleteProjectDialogProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function handleDelete() {
+    setError(null);
     startTransition(async () => {
       const result = await deleteProject({ projectId });
       if (result.success) {
         router.push("/projects");
+      } else {
+        setError(result.error);
       }
     });
   }
@@ -43,6 +47,11 @@ export function DeleteProjectDialog({
             <span className="font-medium text-foreground">{projectName}</span>?
             This action cannot be undone.
           </AlertDialog.Description>
+          {error && (
+            <div className="mt-4 border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </div>
+          )}
           <div className="mt-6 flex items-center justify-end gap-3">
             <AlertDialog.Cancel asChild>
               <Button variant="outline" disabled={isPending}>
