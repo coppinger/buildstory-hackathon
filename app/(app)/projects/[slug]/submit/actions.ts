@@ -68,9 +68,6 @@ export async function submitProject(
     ]);
     if (!project) return { success: false, error: "Project not found" };
     if (!event) return { success: false, error: "Event not found" };
-    if (!eventProject) {
-      return { success: false, error: "Project is not linked to this event" };
-    }
 
     // Deadline check
     if (!isSubmissionOpen(event)) {
@@ -93,8 +90,18 @@ export async function submitProject(
 
     const data = parsed.data;
 
-    // Upsert submission and replace tools in a transaction
+    // Upsert submission and replace tools in a transaction. Also lazily
+    // create the event<->project link if it doesn't exist yet — some projects
+    // were created without being linked to the event, and gating submission
+    // on a pre-existing link blocked those owners from submitting.
     const submission = await db.transaction(async (tx) => {
+      if (!eventProject) {
+        await tx
+          .insert(eventProjects)
+          .values({ eventId, projectId })
+          .onConflictDoNothing();
+      }
+
       const [sub] = await tx
         .insert(eventSubmissions)
         .values({

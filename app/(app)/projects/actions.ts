@@ -6,7 +6,15 @@ import { revalidatePath } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
 import { ensureProfile } from "@/lib/db/ensure-profile";
-import { projects, events, eventProjects, projectMembers, teamInvites } from "@/lib/db/schema";
+import {
+  projects,
+  events,
+  eventProjects,
+  projectMembers,
+  teamInvites,
+  eventSubmissions,
+  hackathonReviews,
+} from "@/lib/db/schema";
 import { isUniqueViolation } from "@/lib/db/errors";
 import { createProjectSchema, parseInput } from "@/lib/db/validations";
 import { isSubmissionOpen } from "@/lib/events";
@@ -194,7 +202,10 @@ export async function deleteProject(data: {
       return { success: false, error: "You do not own this project" };
     }
 
-    // Delete related rows in FK order within a transaction
+    // Delete related rows in FK order within a transaction.
+    // eventSubmissions and hackathonReviews don't have ON DELETE CASCADE on
+    // their FK to projects, so we must delete them explicitly. Their child
+    // rows (eventSubmissionTools, hackathonReviewHighlights) cascade.
     await db.transaction(async (tx) => {
       await tx
         .delete(projectMembers)
@@ -202,6 +213,12 @@ export async function deleteProject(data: {
       await tx
         .delete(teamInvites)
         .where(eq(teamInvites.projectId, data.projectId));
+      await tx
+        .delete(eventSubmissions)
+        .where(eq(eventSubmissions.projectId, data.projectId));
+      await tx
+        .delete(hackathonReviews)
+        .where(eq(hackathonReviews.projectId, data.projectId));
       await tx
         .delete(eventProjects)
         .where(eq(eventProjects.projectId, data.projectId));
