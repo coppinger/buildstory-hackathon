@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
@@ -14,6 +14,9 @@ import {
   teamInvites,
   eventSubmissions,
   hackathonReviews,
+  posts,
+  postComments,
+  reactions,
 } from "@/lib/db/schema";
 import { isUniqueViolation } from "@/lib/db/errors";
 import { createProjectSchema, parseInput } from "@/lib/db/validations";
@@ -203,10 +206,63 @@ export async function deleteProject(data: {
     }
 
     // Delete related rows in FK order within a transaction.
-    // eventSubmissions and hackathonReviews don't have ON DELETE CASCADE on
-    // their FK to projects, so we must delete them explicitly. Their child
-    // rows (eventSubmissionTools, hackathonReviewHighlights) cascade.
+    // - eventSubmissions and hackathonReviews don't have ON DELETE CASCADE on
+    //   their FK to projects, so we must delete them explicitly. Their child
+    //   rows (eventSubmissionTools, hackathonReviewHighlights) cascade.
+    // - posts/postComments/reactions reference the project polymorphically
+    //   (no FK constraint), so they don't block the delete — but they orphan
+    //   and can still surface in feeds. Clean them up explicitly: post_comments
+    //   cascade from posts, reactions on those posts/comments are polymorphic
+    //   so we delete them first.
     await db.transaction(async (tx) => {
+      // Collect post IDs and their comment IDs so we can clean up the
+      // polymorphic reactions before dropping the underlying rows.
+      const projectPosts = await tx
+        .select({ id: posts.id })
+        .from(posts)
+        .where(
+          and(
+            eq(posts.contextType, "project"),
+            eq(posts.contextId, data.projectId)
+          )
+        );
+      const postIds = projectPosts.map((p) => p.id);
+
+      if (postIds.length > 0) {
+        const postCommentRows = await tx
+          .select({ id: postComments.id })
+          .from(postComments)
+          .where(inArray(postComments.postId, postIds));
+        const commentIds = postCommentRows.map((c) => c.id);
+
+        if (commentIds.length > 0) {
+          await tx
+            .delete(reactions)
+            .where(
+              and(
+                eq(reactions.targetType, "comment"),
+                inArray(reactions.targetId, commentIds)
+              )
+            );
+        }
+
+        await tx
+          .delete(reactions)
+          .where(
+            and(
+              eq(reactions.targetType, "post"),
+              inArray(reactions.targetId, postIds)
+            )
+          );
+
+        // post_comments cascade from posts.id, but delete them explicitly so
+        // the order is obvious and we don't depend solely on the FK cascade.
+        await tx
+          .delete(postComments)
+          .where(inArray(postComments.postId, postIds));
+        await tx.delete(posts).where(inArray(posts.id, postIds));
+      }
+
       await tx
         .delete(projectMembers)
         .where(eq(projectMembers.projectId, data.projectId));
