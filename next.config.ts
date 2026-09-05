@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
       { hostname: "cdn.sanity.io" },
     ],
   },
+  deploymentId: process.env.VERCEL_DEPLOYMENT_ID || undefined,
   experimental: {
     // Propagate tracing headers for pageload performance monitoring
     clientTraceMetadata: ["sentry-trace", "baggage"],
